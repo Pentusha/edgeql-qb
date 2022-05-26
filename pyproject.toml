@@ -1,0 +1,45 @@
+[tool.poetry]
+name = "elgeql_qb"
+version = "0.0.1"
+description = "EdgeQL Query Builder"
+authors = ["Ivan Larin <pentusha@gmail.com>"]
+license = "MIT"
+maintainers = ["Ivan Larin <pentusha@gmail.com>"]
+readme = "README.md"
+homepage = "https://github.com/Pentusha/edgeql-qb"
+repository = "https://github.com/Pentusha/edgeql-qb"
+keywords = ["edgedb", "edgeql"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[tool.poetry.dev-dependencies]
+mypy = "^0.950"
+flake8 = "^4.0.1"
+flake8-broken-line = "^0.4.0"
+flake8-eradicate = "^1.2.1"
+flake8-print = "^5.0.0"
+flake8-quotes = "^3.3.1"
+flake8-simplify = "^0.19.2"
+flake8-annotations-complexity = "^0.0.7"
+flake8-multiline-containers = "^0.0.19"
+flake8-mock = "^0.3"
+flake8-type-checking = "^1.5.0"
+pre-commit = "^2.19.0"
+pytest = "^7.1.2"
+pytest-cov = "^3.0.0"
+isort = "^5.10.1"
+edgedb = "^0.23.0"
+commitizen = "^2.27.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

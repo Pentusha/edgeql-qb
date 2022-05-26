@@ -1,0 +1,40 @@
+default_language_version:
+    python: python3.10
+
+repos:
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v2.27.1
+    hooks:
+      - id: commitizen
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.2.0
+    hooks:
+      - id: check-byte-order-marker
+      - id: check-docstring-first
+      - id: check-merge-conflict
+      - id: check-added-large-files
+      - id: check-yaml
+      - id: check-ast
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+      - id: end-of-file-fixer
+  - repo: local
+    hooks:
+      - id: lint
+        name: Run flake8
+        entry: poetry run flake8 .
+        language: system
+        verbose: true
+        pass_filenames: false
+      - id: mypy
+        name: Run mypy
+        entry: poetry run mypy .
+        language: system
+        verbose: true
+        pass_filenames: false
+      - id: tests
+        name: Run tests
+        entry: bash -c 'cd tests && PYTHONPATH=.. poetry run pytest'
+        language: system
+        verbose: true
+        pass_filenames: false

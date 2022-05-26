@@ -1,0 +1,7 @@
+artefacts
+tests/artefacts
+.coverage
+.idea
+.mypy_cache
+.pytest_cache
+.hypothesis
