@@ -7,7 +7,7 @@ import pytest
 from edgedb.blocking_client import Client, create_client
 
 from edgeql_qb import EdgeDBModel
-from edgeql_qb.types import bigint, float32, float64, int32, int64, int16
+from edgeql_qb.types import bigint, float32, float64, int16, int32, int64
 
 A = EdgeDBModel('A')
 Nested1 = EdgeDBModel('Nested1')

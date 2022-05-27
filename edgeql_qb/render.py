@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
-from datetime import datetime, date, time, timedelta
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
-from functools import reduce
+from functools import reduce, singledispatchmethod
 from typing import Any, Callable, cast
 
 from edgeql_qb.expression import (
@@ -98,26 +98,38 @@ class Renderer:
             case _:
                 return [*cls.linearize_filter_left(column.parent), column]
 
-    def render_query_literal(self, name: str, value: Any) -> RenderedQuery:  # noqa: C901
-        if isinstance(value, GenericHolder):
-            return RenderedQuery(f'<{value.edgeql_name}>${name}', {name: value.value})
-        elif (
-            isinstance(value, (str, bool, bytes))
-            or (isinstance(value, datetime) and value.tzinfo is not None)
-        ):
+    @singledispatchmethod
+    def render_query_literal(self, value: Any, name: str) -> RenderedQuery:
+        if isinstance(value, (str, bool, bytes)):
+            # singledispatch not working for unions
             return RenderedQuery(f'<{value.__class__.__name__}>${name}', {name: value})
-        elif isinstance(value, datetime):
+        return RenderedQuery(f'${name}', {name: value})  # pragma: no cover
+
+    @render_query_literal.register
+    def _(self, value: GenericHolder, name: str) -> RenderedQuery:  # type: ignore
+        return RenderedQuery(f'<{value.edgeql_name}>${name}', {name: value.value})
+
+    @render_query_literal.register
+    def _(self, value: datetime, name: str) -> RenderedQuery:
+        if value.tzinfo is None:
             return RenderedQuery(f'<cal::local_datetime>${name}', {name: value})
-        elif isinstance(value, date):
-            return RenderedQuery(f'<cal::local_date>${name}', {name: value})
-        elif isinstance(value, time):
-            return RenderedQuery(f'<cal::local_time>${name}', {name: value})
-        elif isinstance(value, timedelta):
-            return RenderedQuery(f'<duration>${name}', {name: value})
-        elif isinstance(value, Decimal):
-            return RenderedQuery(f'<decimal>${name}', {name: value})
-        else:
-            return RenderedQuery(f'${name}', {name: value})  # pragma: no cover
+        return RenderedQuery(f'<{value.__class__.__name__}>${name}', {name: value})
+
+    @render_query_literal.register
+    def _(self, value: date, name: str) -> RenderedQuery:
+        return RenderedQuery(f'<cal::local_date>${name}', {name: value})
+
+    @render_query_literal.register
+    def _(self, value: time, name: str) -> RenderedQuery:
+        return RenderedQuery(f'<cal::local_time>${name}', {name: value})
+
+    @render_query_literal.register
+    def _(self, value: timedelta, name: str) -> RenderedQuery:
+        return RenderedQuery(f'<duration>${name}', {name: value})
+
+    @render_query_literal.register
+    def _(self, value: Decimal, name: str) -> RenderedQuery:
+        return RenderedQuery(f'<decimal>${name}', {name: value})
 
     def render_right_parentheses(
         self,
@@ -188,7 +200,7 @@ class Renderer:
                 ])
             case QueryLiteral(value, node_index):
                 name = f'{self.filter_prefix}_{index}_{node_index}'
-                return self.render_query_literal(name, value)
+                return self.render_query_literal(value, name)
             case Column(name):
                 columns = self.linearize_filter_left(expression)
                 dot_names = '.'.join(c.column_name for c in columns)
@@ -217,7 +229,7 @@ class Renderer:
                 ])
             case QueryLiteral(value, node_index):
                 name = f'{self.select_prefix}_{index}_{node_index}'
-                return self.render_query_literal(name, value)
+                return self.render_query_literal(value, name)
             case Node(left, op, None):  # unary
                 return combine_many_renderers([
                     RenderedQuery(op),
@@ -282,7 +294,7 @@ class Renderer:
                 )
             case QueryLiteral(value, node_index):
                 name = f'{self.order_by_prefix}_{index}_{node_index}'
-                return self.render_query_literal(name, value)
+                return self.render_query_literal(value, name)
             case _:  # pragma: no cover
                 assert False
 
