@@ -7,7 +7,7 @@ import pytest
 from edgedb.blocking_client import Client, create_client
 
 from edgeql_qb import EdgeDBModel
-from edgeql_qb.types import bigint, float32, float64, int32, int64
+from edgeql_qb.types import bigint, float32, float64, int32, int64, int16
 
 A = EdgeDBModel('A')
 Nested1 = EdgeDBModel('Nested1')
@@ -359,3 +359,23 @@ def test_limit_offset(client: Client) -> None:
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     assert result[0].p_int16 == 5
+
+
+def test_render_delete_all(client: Client) -> None:
+    client.query('insert A { p_int16 := 1 }')
+    rendered = A.delete.all()
+    assert rendered.query == 'delete A'
+    client.query(rendered.query, **rendered.context)
+    select = A.select().all()
+    result = client.query(select.query, **select.context)
+    assert len(result) == 0
+
+
+def test_delete_filter(client: Client) -> None:
+    client.query('insert A { p_int16 := 1 }')
+    client.query('insert A { p_int16 := 2 }')
+    rendered = A.delete.where(A.c.p_int16 == int16(1)).all()
+    client.query(rendered.query, **rendered.context)
+    select = A.select().all()
+    result = client.query(select.query, **select.context)
+    assert len(result) == 1

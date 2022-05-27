@@ -27,8 +27,12 @@ class EdgeDBModel:
     name: str
     c: Columns = field(default_factory=Columns)
 
-    def select(self, *selectables: SelectExpressions) -> 'Query':
-        return Query(self, select=[Expression(sel) for sel in selectables])
+    def select(self, *selectables: SelectExpressions) -> 'SelectQuery':
+        return SelectQuery(self, select=[Expression(sel) for sel in selectables])
+
+    @property
+    def delete(self) -> 'DeleteQuery':
+        return DeleteQuery(self)
 
 
 @dataclass
@@ -38,7 +42,7 @@ class RenderedQuery:
 
 
 @dataclass
-class Query:
+class SelectQuery:
     model: EdgeDBModel
     select: list[Expression] = field(default_factory=list)
     filters: list[Expression] = field(default_factory=list)
@@ -46,24 +50,37 @@ class Query:
     limit_val: int | None = None
     offset_val: int | None = None
 
-    def where(self, compared: BinaryOp | UnaryOp) -> 'Query':
+    def where(self, compared: BinaryOp | UnaryOp) -> 'SelectQuery':
         self.filters.append(Expression(compared))
         return self
 
-    def order_by(self, *columns: SortedExpression | Column | UnaryOp) -> 'Query':
+    def order_by(self, *columns: SortedExpression | Column | UnaryOp) -> 'SelectQuery':
         self.ordered_by = [Expression(exp) for exp in columns]
         return self
 
-    def limit(self, value: int) -> 'Query':
+    def limit(self, value: int) -> 'SelectQuery':
         self.limit_val = value
         return self
 
-    def offset(self, value: int) -> 'Query':
+    def offset(self, value: int) -> 'SelectQuery':
         self.offset_val = value
         return self
 
     def all(self) -> RenderedQuery:
-        return Renderer().render(self)
+        return Renderer().render_select_query(self)
+
+
+@dataclass
+class DeleteQuery:
+    model: EdgeDBModel
+    filters: list[Expression] = field(default_factory=list)
+
+    def where(self, compared: BinaryOp | UnaryOp) -> 'DeleteQuery':
+        self.filters.append(Expression(compared))
+        return self
+
+    def all(self) -> RenderedQuery:
+        return Renderer().render_delete_query(self)
 
 
 @dataclass
@@ -274,15 +291,22 @@ class Renderer:
             model_name: str,
             select: list[Expression],
     ) -> RenderedQuery:
-        renderers = [
-            self.render_select_expression(selectable.to_infix_notation(), index)
-            for index, selectable in enumerate(select)
-        ]
-        return combine_many_renderers([
-            RenderedQuery(f'select {model_name} {{ '),
-            reduce(join_renderers(', '), renderers),
-            RenderedQuery(' }'),
-        ])
+        select_model = RenderedQuery(f'select {model_name}')
+        if select:
+            renderers = [
+                self.render_select_expression(selectable.to_infix_notation(), index)
+                for index, selectable in enumerate(select)
+            ]
+            return combine_many_renderers([
+                select_model,
+                RenderedQuery(' { '),
+                reduce(join_renderers(', '), renderers),
+                RenderedQuery(' }'),
+            ])
+        return select_model
+
+    def render_delete(self, model_name: str) -> RenderedQuery:
+        return RenderedQuery(f'delete {model_name}')
 
     def render_filters(self, filters: list[Expression]) -> RenderedQuery:
         if filters:
@@ -320,7 +344,7 @@ class Renderer:
             return RenderedQuery(' offset <int64>$offset', {'offset': offset})
         return RenderedQuery()
 
-    def render(self, query: Query) -> RenderedQuery:
+    def render_select_query(self, query: SelectQuery) -> RenderedQuery:
         rendered_select = self.render_select(query.model.name, query.select)
         rendered_filters = self.render_filters(query.filters)
         rendered_order_by = self.render_order_by(query.ordered_by)
@@ -332,6 +356,14 @@ class Renderer:
             rendered_order_by,
             rendered_offset,
             rendered_limit,
+        ])
+
+    def render_delete_query(self, query: DeleteQuery) -> RenderedQuery:
+        rendered_delete = self.render_delete(query.model.name)
+        rendered_filters = self.render_filters(query.filters)
+        return combine_many_renderers([
+            rendered_delete,
+            rendered_filters,
         ])
 
 
