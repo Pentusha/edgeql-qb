@@ -1,0 +1,46 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  quality:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: edgedb/setup-edgedb@v1
+
+      - run: edgedb project init --non-interactive --server-start-conf=manual --server-instance=tests
+        working-directory: tests
+
+      - run: edgedb instance start tests
+        working-directory: tests
+
+      - name: Set up python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+
+      - uses: snok/install-poetry@v1.3
+        with:
+          version: 1.1.11
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Run flake8
+        run: poetry run flake8 .
+
+      - name: Run mypy
+        run: poetry run mypy .
+
+      - name: Run tests
+        run: poetry run pytest
+        working-directory: tests
