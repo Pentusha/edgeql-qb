@@ -137,13 +137,12 @@ class Renderer:
         expression: Node,
         right_column: RenderedQuery,
     ) -> RenderedQuery:
-        right_expr_parenthesis = (
+        if right_expr_parenthesis := (
             isinstance(right, Node)
             and right < expression
             or (right == expression and expression.assocright)
             or (getattr(right, 'op', None) == '-' and expression.assocright)
-        )
-        if right_expr_parenthesis:
+        ):
             right_column = combine_many_renderers([
                 RenderedQuery('('),
                 right_column,
