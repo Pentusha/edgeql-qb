@@ -1,33 +1,20 @@
-from contextlib import suppress
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import timezone, timedelta, datetime
 from decimal import Decimal
-from typing import Iterator, Any
+from typing import Any
 
 import pytest
-from edgedb.blocking_client import Client, create_client
+from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
-from edgeql_qb.operators import Column
-from edgeql_qb.types import bigint, float32, float64, int16, int32, int64, GenericHolder
+from edgeql_qb.operators import Column, BinaryOp
+from edgeql_qb.types import int32, int64, bigint, float32, float64, GenericHolder
 
+
+_dt = datetime(2022, 5, 26, 0, 0, 0)
 A = EdgeDBModel('A')
 Nested1 = EdgeDBModel('Nested1')
 Nested2 = EdgeDBModel('Nested2')
 Nested3 = EdgeDBModel('Nested3')
-
-
-class Rollback(Exception):
-    pass
-
-
-@pytest.fixture
-def client() -> Iterator[Client]:
-    client = create_client()
-    with suppress(Rollback):
-        for tx in client.transaction():
-            with tx:
-                yield tx
-                raise Rollback
 
 
 def test_select_column(client: Client) -> None:
@@ -37,9 +24,6 @@ def test_select_column(client: Client) -> None:
     assert rendered.context == {}
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
-
-
-_dt = datetime(2022, 5, 26, 0, 0, 0)
 
 
 @pytest.mark.parametrize(
@@ -227,37 +211,35 @@ def test_select_not_exists(client: Client) -> None:
     assert len(result) == 2
 
 
-def test_complex_filter_with_literal(client: Client) -> None:
+@pytest.mark.parametrize(
+    'condition, expected_condition, expected_context',
+    (
+        (A.c.p_int32 < A.c.p_int64, '.p_int32 < .p_int64', {}),
+        (A.c.p_int64 != int64(1), '.p_int64 != <int64>$filter_0_0', {'filter_0_0': 1}),
+        (A.c.p_int64 >= int64(1), '.p_int64 >= <int64>$filter_0_0', {'filter_0_0': 1}),
+        (A.c.p_int32 <= int32(1), '.p_int32 <= <int32>$filter_0_0', {'filter_0_0': 1}),
+        (
+            (A.c.p_int32 + A.c.p_int64) * int64(1) > int64(2),
+            '(.p_int32 + .p_int64) * <int64>$filter_0_1 > <int64>$filter_0_0',
+            {'filter_0_1': 1, 'filter_0_0': 2},
+        ),
+        (
+            A.c.p_int32 * (A.c.p_int64 + int64(1)) > int64(2),
+            '.p_int32 * (.p_int64 + <int64>$filter_0_1) > <int64>$filter_0_0',
+            {'filter_0_1': 1, 'filter_0_0': 2},
+        ),
+    ),
+)
+def test_complex_filter_with_literal(
+    client: Client,
+    condition: BinaryOp,
+    expected_condition: str,
+    expected_context: dict[str, Any],
+) -> None:
     client.query('insert A { p_int64 := 11, p_int32:= 1 }')
-    rendered = (
-        A.select(A.c.p_int64)
-        .where(A.c.p_int64 >= int64(10))
-        .where(A.c.p_int32 <= int32(15))
-        .where((A.c.p_int32 + A.c.p_int64) * int64(5) > int64(50))
-        .where(A.c.p_int32 * (A.c.p_int64 + int64(10)) > int64(20))
-        .where(A.c.p_int32 < A.c.p_int64)
-        .where(A.c.p_int64 != int64(1))
-        .all()
-    )
-    assert rendered.query == (
-        'select A { p_int64 } '
-        'filter '
-        '.p_int64 >= <int64>$filter_0_0 '
-        'and .p_int32 <= <int32>$filter_1_0 '
-        'and (.p_int32 + .p_int64) * <int64>$filter_2_1 > <int64>$filter_2_0 '
-        'and .p_int32 * (.p_int64 + <int64>$filter_3_1) > <int64>$filter_3_0 '
-        'and .p_int32 < .p_int64 '
-        'and .p_int64 != <int64>$filter_5_0'
-    )
-    assert rendered.context == {
-        'filter_0_0': 10,
-        'filter_1_0': 15,
-        'filter_2_0': 50,
-        'filter_2_1': 5,
-        'filter_3_0': 20,
-        'filter_3_1': 10,
-        'filter_5_0': 1,
-    }
+    rendered = A.select(A.c.p_int64).where(condition).all()
+    assert rendered.query == f'select A {{ p_int64 }} filter {expected_condition}'
+    assert rendered.context == expected_context
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 
@@ -344,23 +326,3 @@ def test_limit_offset(client: Client) -> None:
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     assert result[0].p_int16 == 5
-
-
-def test_render_delete_all(client: Client) -> None:
-    client.query('insert A { p_int16 := 1 }')
-    rendered = A.delete.all()
-    assert rendered.query == 'delete A'
-    client.query(rendered.query, **rendered.context)
-    select = A.select().all()
-    result = client.query(select.query, **select.context)
-    assert len(result) == 0
-
-
-def test_delete_filter(client: Client) -> None:
-    client.query('insert A { p_int16 := 1 }')
-    client.query('insert A { p_int16 := 2 }')
-    rendered = A.delete.where(A.c.p_int16 == int16(1)).all()
-    client.query(rendered.query, **rendered.context)
-    select = A.select().all()
-    result = client.query(select.query, **select.context)
-    assert len(result) == 1

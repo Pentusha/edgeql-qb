@@ -137,7 +137,7 @@ class Renderer:
         expression: Node,
         right_column: RenderedQuery,
     ) -> RenderedQuery:
-        if right_expr_parenthesis := (
+        if (
             isinstance(right, Node)
             and right < expression
             or (right == expression and expression.assocright)
