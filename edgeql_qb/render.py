@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
-from datetime import datetime, date, time, timedelta
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
-from functools import reduce
+from functools import reduce, singledispatchmethod
 from typing import Any, Callable, cast
 
 from edgeql_qb.expression import (
@@ -27,8 +27,12 @@ class EdgeDBModel:
     name: str
     c: Columns = field(default_factory=Columns)
 
-    def select(self, *selectables: SelectExpressions) -> 'Query':
-        return Query(self, select=[Expression(sel) for sel in selectables])
+    def select(self, *selectables: SelectExpressions) -> 'SelectQuery':
+        return SelectQuery(self, select=[Expression(sel) for sel in selectables])
+
+    @property
+    def delete(self) -> 'DeleteQuery':
+        return DeleteQuery(self)
 
 
 @dataclass
@@ -38,7 +42,7 @@ class RenderedQuery:
 
 
 @dataclass
-class Query:
+class SelectQuery:
     model: EdgeDBModel
     select: list[Expression] = field(default_factory=list)
     filters: list[Expression] = field(default_factory=list)
@@ -46,24 +50,37 @@ class Query:
     limit_val: int | None = None
     offset_val: int | None = None
 
-    def where(self, compared: BinaryOp | UnaryOp) -> 'Query':
+    def where(self, compared: BinaryOp | UnaryOp) -> 'SelectQuery':
         self.filters.append(Expression(compared))
         return self
 
-    def order_by(self, *columns: SortedExpression | Column | UnaryOp) -> 'Query':
+    def order_by(self, *columns: SortedExpression | Column | UnaryOp) -> 'SelectQuery':
         self.ordered_by = [Expression(exp) for exp in columns]
         return self
 
-    def limit(self, value: int) -> 'Query':
+    def limit(self, value: int) -> 'SelectQuery':
         self.limit_val = value
         return self
 
-    def offset(self, value: int) -> 'Query':
+    def offset(self, value: int) -> 'SelectQuery':
         self.offset_val = value
         return self
 
     def all(self) -> RenderedQuery:
-        return Renderer().render(self)
+        return Renderer().render_select_query(self)
+
+
+@dataclass
+class DeleteQuery:
+    model: EdgeDBModel
+    filters: list[Expression] = field(default_factory=list)
+
+    def where(self, compared: BinaryOp | UnaryOp) -> 'DeleteQuery':
+        self.filters.append(Expression(compared))
+        return self
+
+    def all(self) -> RenderedQuery:
+        return Renderer().render_delete_query(self)
 
 
 @dataclass
@@ -81,26 +98,38 @@ class Renderer:
             case _:
                 return [*cls.linearize_filter_left(column.parent), column]
 
-    def render_query_literal(self, name: str, value: Any) -> RenderedQuery:  # noqa: C901
-        if isinstance(value, GenericHolder):
-            return RenderedQuery(f'<{value.edgeql_name}>${name}', {name: value.value})
-        elif (
-            isinstance(value, (str, bool, bytes))
-            or (isinstance(value, datetime) and value.tzinfo is not None)
-        ):
+    @singledispatchmethod
+    def render_query_literal(self, value: Any, name: str) -> RenderedQuery:
+        if isinstance(value, (str, bool, bytes)):
+            # singledispatch not working for unions
             return RenderedQuery(f'<{value.__class__.__name__}>${name}', {name: value})
-        elif isinstance(value, datetime):
+        return RenderedQuery(f'${name}', {name: value})  # pragma: no cover
+
+    @render_query_literal.register
+    def _(self, value: GenericHolder, name: str) -> RenderedQuery:  # type: ignore
+        return RenderedQuery(f'<{value.edgeql_name}>${name}', {name: value.value})
+
+    @render_query_literal.register
+    def _(self, value: datetime, name: str) -> RenderedQuery:
+        if value.tzinfo is None:
             return RenderedQuery(f'<cal::local_datetime>${name}', {name: value})
-        elif isinstance(value, date):
-            return RenderedQuery(f'<cal::local_date>${name}', {name: value})
-        elif isinstance(value, time):
-            return RenderedQuery(f'<cal::local_time>${name}', {name: value})
-        elif isinstance(value, timedelta):
-            return RenderedQuery(f'<duration>${name}', {name: value})
-        elif isinstance(value, Decimal):
-            return RenderedQuery(f'<decimal>${name}', {name: value})
-        else:
-            return RenderedQuery(f'${name}', {name: value})  # pragma: no cover
+        return RenderedQuery(f'<{value.__class__.__name__}>${name}', {name: value})
+
+    @render_query_literal.register
+    def _(self, value: date, name: str) -> RenderedQuery:
+        return RenderedQuery(f'<cal::local_date>${name}', {name: value})
+
+    @render_query_literal.register
+    def _(self, value: time, name: str) -> RenderedQuery:
+        return RenderedQuery(f'<cal::local_time>${name}', {name: value})
+
+    @render_query_literal.register
+    def _(self, value: timedelta, name: str) -> RenderedQuery:
+        return RenderedQuery(f'<duration>${name}', {name: value})
+
+    @render_query_literal.register
+    def _(self, value: Decimal, name: str) -> RenderedQuery:
+        return RenderedQuery(f'<decimal>${name}', {name: value})
 
     def render_right_parentheses(
         self,
@@ -108,13 +137,12 @@ class Renderer:
         expression: Node,
         right_column: RenderedQuery,
     ) -> RenderedQuery:
-        right_expr_parenthesis = (
+        if (
             isinstance(right, Node)
             and right < expression
             or (right == expression and expression.assocright)
             or (getattr(right, 'op', None) == '-' and expression.assocright)
-        )
-        if right_expr_parenthesis:
+        ):
             right_column = combine_many_renderers([
                 RenderedQuery('('),
                 right_column,
@@ -171,7 +199,7 @@ class Renderer:
                 ])
             case QueryLiteral(value, node_index):
                 name = f'{self.filter_prefix}_{index}_{node_index}'
-                return self.render_query_literal(name, value)
+                return self.render_query_literal(value, name)
             case Column(name):
                 columns = self.linearize_filter_left(expression)
                 dot_names = '.'.join(c.column_name for c in columns)
@@ -200,7 +228,7 @@ class Renderer:
                 ])
             case QueryLiteral(value, node_index):
                 name = f'{self.select_prefix}_{index}_{node_index}'
-                return self.render_query_literal(name, value)
+                return self.render_query_literal(value, name)
             case Node(left, op, None):  # unary
                 return combine_many_renderers([
                     RenderedQuery(op),
@@ -265,7 +293,7 @@ class Renderer:
                 )
             case QueryLiteral(value, node_index):
                 name = f'{self.order_by_prefix}_{index}_{node_index}'
-                return self.render_query_literal(name, value)
+                return self.render_query_literal(value, name)
             case _:  # pragma: no cover
                 assert False
 
@@ -274,15 +302,22 @@ class Renderer:
             model_name: str,
             select: list[Expression],
     ) -> RenderedQuery:
-        renderers = [
-            self.render_select_expression(selectable.to_infix_notation(), index)
-            for index, selectable in enumerate(select)
-        ]
-        return combine_many_renderers([
-            RenderedQuery(f'select {model_name} {{ '),
-            reduce(join_renderers(', '), renderers),
-            RenderedQuery(' }'),
-        ])
+        select_model = RenderedQuery(f'select {model_name}')
+        if select:
+            renderers = [
+                self.render_select_expression(selectable.to_infix_notation(), index)
+                for index, selectable in enumerate(select)
+            ]
+            return combine_many_renderers([
+                select_model,
+                RenderedQuery(' { '),
+                reduce(join_renderers(', '), renderers),
+                RenderedQuery(' }'),
+            ])
+        return select_model
+
+    def render_delete(self, model_name: str) -> RenderedQuery:
+        return RenderedQuery(f'delete {model_name}')
 
     def render_filters(self, filters: list[Expression]) -> RenderedQuery:
         if filters:
@@ -320,7 +355,7 @@ class Renderer:
             return RenderedQuery(' offset <int64>$offset', {'offset': offset})
         return RenderedQuery()
 
-    def render(self, query: Query) -> RenderedQuery:
+    def render_select_query(self, query: SelectQuery) -> RenderedQuery:
         rendered_select = self.render_select(query.model.name, query.select)
         rendered_filters = self.render_filters(query.filters)
         rendered_order_by = self.render_order_by(query.ordered_by)
@@ -332,6 +367,14 @@ class Renderer:
             rendered_order_by,
             rendered_offset,
             rendered_limit,
+        ])
+
+    def render_delete_query(self, query: DeleteQuery) -> RenderedQuery:
+        rendered_delete = self.render_delete(query.model.name)
+        rendered_filters = self.render_filters(query.filters)
+        return combine_many_renderers([
+            rendered_delete,
+            rendered_filters,
         ])
 
 

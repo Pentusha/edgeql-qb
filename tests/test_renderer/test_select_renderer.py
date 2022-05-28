@@ -1,32 +1,20 @@
-from contextlib import suppress
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import timezone, timedelta, datetime
 from decimal import Decimal
-from typing import Iterator
+from typing import Any
 
 import pytest
-from edgedb.blocking_client import Client, create_client
+from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
-from edgeql_qb.types import bigint, float32, float64, int32, int64
+from edgeql_qb.operators import Column, BinaryOp
+from edgeql_qb.types import int32, int64, bigint, float32, float64, GenericHolder
 
+
+_dt = datetime(2022, 5, 26, 0, 0, 0)
 A = EdgeDBModel('A')
 Nested1 = EdgeDBModel('Nested1')
 Nested2 = EdgeDBModel('Nested2')
 Nested3 = EdgeDBModel('Nested3')
-
-
-class Rollback(Exception):
-    pass
-
-
-@pytest.fixture
-def client() -> Iterator[Client]:
-    client = create_client()
-    with suppress(Rollback):
-        for tx in client.transaction():
-            with tx:
-                yield tx
-                raise Rollback
 
 
 def test_select_column(client: Client) -> None:
@@ -38,57 +26,38 @@ def test_select_column(client: Client) -> None:
     assert len(result) == 1
 
 
-def test_select_datatypes(client: Client) -> None:
-    dt = datetime(2022, 5, 26, 0, 0, 0)
-    rendered = A.select(
-        (A.c.p_bool != False).label('bool_exp'),  # noqa: E712
-        (A.c.p_str != 'Hello').label('str_exp'),
-        (A.c.p_datetime != dt.replace(tzinfo=timezone.utc)).label('datetime_exp'),
-        (A.c.p_local_datetime != dt).label('local_datetime_exp'),
-        (A.c.p_local_date != dt.date()).label('local_date_exp'),
-        (A.c.p_local_time != dt.time()).label('local_time_exp'),
-        (A.c.p_duration != timedelta()).label('duration_exp'),
-        (A.c.p_int32 != int32(1)).label('int32_exp'),
-        (A.c.p_int64 != int64(1)).label('int64_exp'),
-        (A.c.p_bigint != bigint(1)).label('bigint_exp'),
-        (A.c.p_float32 != float32(1)).label('float32_exp'),
-        (A.c.p_float64 != float64(1)).label('float64_exp'),
-        (A.c.p_decimal != Decimal(1)).label('decimal_exp'),
-        (A.c.p_bytes != b'hello').label('bytes_exp'),
-    ).all()
+@pytest.mark.parametrize(
+    'label, column, value, expected_type',
+    (
+        ('bool_exp', A.c.p.p_bool, False, 'bool'),
+        ('str_exp', A.c.p.p_str, 'Hello', 'str'),
+        ('datetime_exp', A.c.p.p_local_datetime, _dt.replace(tzinfo=timezone.utc), 'datetime'),
+        ('local_datetime_exp', A.c.p.p_local_dattime, _dt, 'cal::local_datetime'),
+        ('local_date_exp', A.c.p.p_local_date, _dt.date(), 'cal::local_date'),
+        ('local_time_exp', A.c.p.p_local_time, _dt.time(), 'cal::local_time'),
+        ('duration_exp', A.c.p.p_duration, timedelta(), 'duration'),
+        ('int32_exp', A.c.p.p_int32, int32(1), 'int32'),
+        ('int64_exp', A.c.p.p_int64, int64(1), 'int64'),
+        ('bigint_exp', A.c.p.p_bigint, bigint(1), 'bigint'),
+        ('float32_exp', A.c.p.p_float32, float32(1), 'float32'),
+        ('float64_exp', A.c.p.p_float64, float64(1), 'float64'),
+        ('decimal_exp', A.c.p.p_decimal, Decimal(1), 'decimal'),
+        ('bytes_exp', A.c.p.p_bytes, b'Hello', 'bytes'),
+    ),
+)
+def test_select_datatypes(
+    client: Client,
+    label: str,
+    column: Column,
+    value: Any,
+    expected_type: str,
+) -> None:
+    rendered = A.select((column != value).label(label)).all()
     assert rendered.query == (
-        'select A { '
-        'bool_exp := .p_bool != <bool>$select_0_0, '
-        'str_exp := .p_str != <str>$select_1_0, '
-        'datetime_exp := .p_datetime != <datetime>$select_2_0, '
-        'local_datetime_exp := .p_local_datetime != <cal::local_datetime>$select_3_0, '
-        'local_date_exp := .p_local_date != <cal::local_date>$select_4_0, '
-        'local_time_exp := .p_local_time != <cal::local_time>$select_5_0, '
-        'duration_exp := .p_duration != <duration>$select_6_0, '
-        'int32_exp := .p_int32 != <int32>$select_7_0, '
-        'int64_exp := .p_int64 != <int64>$select_8_0, '
-        'bigint_exp := .p_bigint != <bigint>$select_9_0, '
-        'float32_exp := .p_float32 != <float32>$select_10_0, '
-        'float64_exp := .p_float64 != <float64>$select_11_0, '
-        'decimal_exp := .p_decimal != <decimal>$select_12_0, '
-        'bytes_exp := .p_bytes != <bytes>$select_13_0 '
-        '}'
+        f'select A {{ {label} := .{column.column_name} != <{expected_type}>$select_0_0 }}'
     )
     assert rendered.context == {
-        'select_0_0': False,
-        'select_10_0': 1,
-        'select_11_0': 1,
-        'select_12_0': Decimal('1'),
-        'select_13_0': b'hello',
-        'select_1_0': 'Hello',
-        'select_2_0': datetime(2022, 5, 26, 0, 0, tzinfo=timezone.utc),
-        'select_3_0': datetime(2022, 5, 26, 0, 0),
-        'select_4_0': date(2022, 5, 26),
-        'select_5_0': time(0, 0),
-        'select_6_0': timedelta(0),
-        'select_7_0': 1,
-        'select_8_0': 1,
-        'select_9_0': 1,
+        'select_0_0': isinstance(value, GenericHolder) and value.value or value,
     }
 
 
@@ -242,37 +211,35 @@ def test_select_not_exists(client: Client) -> None:
     assert len(result) == 2
 
 
-def test_complex_filter_with_literal(client: Client) -> None:
+@pytest.mark.parametrize(
+    'condition, expected_condition, expected_context',
+    (
+        (A.c.p_int32 < A.c.p_int64, '.p_int32 < .p_int64', {}),
+        (A.c.p_int64 != int64(1), '.p_int64 != <int64>$filter_0_0', {'filter_0_0': 1}),
+        (A.c.p_int64 >= int64(1), '.p_int64 >= <int64>$filter_0_0', {'filter_0_0': 1}),
+        (A.c.p_int32 <= int32(1), '.p_int32 <= <int32>$filter_0_0', {'filter_0_0': 1}),
+        (
+            (A.c.p_int32 + A.c.p_int64) * int64(1) > int64(2),
+            '(.p_int32 + .p_int64) * <int64>$filter_0_1 > <int64>$filter_0_0',
+            {'filter_0_1': 1, 'filter_0_0': 2},
+        ),
+        (
+            A.c.p_int32 * (A.c.p_int64 + int64(1)) > int64(2),
+            '.p_int32 * (.p_int64 + <int64>$filter_0_1) > <int64>$filter_0_0',
+            {'filter_0_1': 1, 'filter_0_0': 2},
+        ),
+    ),
+)
+def test_complex_filter_with_literal(
+    client: Client,
+    condition: BinaryOp,
+    expected_condition: str,
+    expected_context: dict[str, Any],
+) -> None:
     client.query('insert A { p_int64 := 11, p_int32:= 1 }')
-    rendered = (
-        A.select(A.c.p_int64)
-        .where(A.c.p_int64 >= int64(10))
-        .where(A.c.p_int32 <= int32(15))
-        .where((A.c.p_int32 + A.c.p_int64) * int64(5) > int64(50))
-        .where(A.c.p_int32 * (A.c.p_int64 + int64(10)) > int64(20))
-        .where(A.c.p_int32 < A.c.p_int64)
-        .where(A.c.p_int64 != int64(1))
-        .all()
-    )
-    assert rendered.query == (
-        'select A { p_int64 } '
-        'filter '
-        '.p_int64 >= <int64>$filter_0_0 '
-        'and .p_int32 <= <int32>$filter_1_0 '
-        'and (.p_int32 + .p_int64) * <int64>$filter_2_1 > <int64>$filter_2_0 '
-        'and .p_int32 * (.p_int64 + <int64>$filter_3_1) > <int64>$filter_3_0 '
-        'and .p_int32 < .p_int64 '
-        'and .p_int64 != <int64>$filter_5_0'
-    )
-    assert rendered.context == {
-        'filter_0_0': 10,
-        'filter_1_0': 15,
-        'filter_2_0': 50,
-        'filter_2_1': 5,
-        'filter_3_0': 20,
-        'filter_3_1': 10,
-        'filter_5_0': 1,
-    }
+    rendered = A.select(A.c.p_int64).where(condition).all()
+    assert rendered.query == f'select A {{ p_int64 }} filter {expected_condition}'
+    assert rendered.context == expected_context
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 

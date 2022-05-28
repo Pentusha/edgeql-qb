@@ -4,6 +4,8 @@ T = TypeVar('T')
 
 
 class GenericHolder(Generic[T]):
+    __match_args__ = 'edgeql_name', 'value'
+
     edgeql_name: str
 
     def __init__(self, value: T):
