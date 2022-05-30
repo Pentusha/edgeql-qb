@@ -2,12 +2,17 @@ from dataclasses import dataclass
 from typing import Any, Callable, Literal, Optional, Union
 
 OpLiterals = Literal[
-    '=', ':=', '!=', '>', '>=', '<', '<=', '*', '/', '//', '%',
+    '=', ':=', '!=', '>', '>=', '<', '<=', '*', '/', '//', '%', '^',
     'and', 'or', '+', '++', '-',
     'not ', 'exists ', 'not exists ',
 ]
-Ops = '=', '!=', '>', '>=', '*', '/', '//', '%', '+', '-', '++', 'and', 'or'
-prec_dict = {
+SortOpLiterals = Literal['asc', 'desc']
+Ops: set[OpLiterals] = {
+    '=', ':=', '!=', '>', '>=', '<', '<=',
+    '*', '/', '//', '%', '^', 'and', 'or', '+', '++', '-',
+    'not ', 'exists ', 'not exists ',
+}
+prec_dict: dict[OpLiterals, int] = {
     '^': 8,
 
     '/': 7,
@@ -41,15 +46,10 @@ sort_ops = {'asc', 'desc'}
 prec_dict_limit = max(prec_dict.values()) + 1
 
 
-@dataclass(unsafe_hash=True)
+@dataclass
 class SubSelect:
     parent: 'Column'
     columns: tuple[Union['Column', 'SubSelect'], ...]
-
-
-@dataclass(unsafe_hash=True)
-class FilterExists:
-    column: 'Column'
 
 
 class OperationsMixin:
@@ -158,7 +158,7 @@ class Columns:
         return Column(name)
 
 
-@dataclass(unsafe_hash=True)
+@dataclass
 class SortedExpression:
     expression: OperationsMixin
     order: Literal['asc', 'desc']

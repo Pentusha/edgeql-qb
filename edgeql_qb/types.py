@@ -4,6 +4,8 @@ T = TypeVar('T')
 
 
 class GenericHolder(Generic[T]):
+    __match_args__ = 'edgeql_name', 'value'
+
     edgeql_name: str
 
     def __init__(self, value: T):
@@ -35,3 +37,7 @@ class float32(GenericHolder[float]):
 
 class float64(GenericHolder[float]):
     edgeql_name = 'float64'
+
+
+class text(str):
+    pass
