@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "elgeql_qb"
-version = "0.0.1"
+version = "1.0.0"
 description = "EdgeQL Query Builder"
 authors = ["Ivan Larin <pentusha@gmail.com>"]
 license = "MIT"
@@ -41,6 +41,8 @@ pytest-cov = "^3.0.0"
 isort = "^5.10.1"
 edgedb = "^0.23.0"
 commitizen = "^2.27.1"
+
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
