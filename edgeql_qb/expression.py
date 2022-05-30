@@ -20,7 +20,7 @@ from edgeql_qb.operators import (
 from edgeql_qb.types import text
 
 if TYPE_CHECKING:
-    from edgeql_qb.render.types import RenderedQuery
+    from edgeql_qb.render.types import RenderedQuery  # pragma: no cover
 
 
 @dataclass(slots=True, frozen=True)

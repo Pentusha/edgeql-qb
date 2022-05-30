@@ -22,6 +22,7 @@ def render_insert(model_name: str) -> RenderedQuery:
 
 
 def render_values(values: list[Expression], query_index: int) -> RenderedQuery:
+    assert values
     if values:
         renderers = [
             render_insert_expression(value.to_infix_notation(query_index + 1), index)
@@ -32,7 +33,7 @@ def render_values(values: list[Expression], query_index: int) -> RenderedQuery:
             reduce(join_renderers(', '), renderers),
             RenderedQuery(' }'),
         )
-    return RenderedQuery()  # TODO: raise error when trying to insert Nothing?
+    return RenderedQuery()  # pragma: no cover
 
 
 @singledispatch
@@ -47,24 +48,14 @@ def _(expression: Column, index: int) -> RenderedQuery:
 
 @render_insert_expression.register
 def _(expression: Node, index: int) -> RenderedQuery:
-    if expression.right is None:
-        return combine_many_renderers(
-            RenderedQuery(expression.op),
-            render_insert_expression(expression.left, index),
-        )
-    right_column = render_insert_expression(
-        expression.right,
-        index,
-    )
+    assert expression.right is not None, 'Unary operations is not supported in insert expressions'
+    right_column = render_insert_expression(expression.right, index)
     right_column = render_right_parentheses(
         expression.right,
         expression,
         right_column,
     )
-    left_column = render_insert_expression(
-        expression.left,
-        index,
-    )
+    left_column = render_insert_expression(expression.left, index)
     left_column = render_left_parentheses(expression.left, expression, left_column)
     return combine_many_renderers(
         left_column,

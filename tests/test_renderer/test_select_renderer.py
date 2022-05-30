@@ -15,6 +15,7 @@ from edgeql_qb.types import (
     int16,
     int32,
     int64,
+    text,
 )
 
 _dt = datetime(2022, 5, 26, 0, 0, 0)
@@ -252,6 +253,7 @@ def test_select_not_exists(client: Client) -> None:
             '.p_int32 * (.p_int64 + <int64>$filter_1_0_1) > <int64>$filter_1_0_0',
             {'filter_1_0_1': 1, 'filter_1_0_0': 2},
         ),
+        (A.c.p_str == text("'Hello'"), ".p_str = 'Hello'", {}),
     ),
 )
 def test_complex_filter_with_literal(
@@ -260,7 +262,7 @@ def test_complex_filter_with_literal(
     expected_condition: str,
     expected_context: dict[str, Any],
 ) -> None:
-    insert = A.insert.values(p_int64=int64(11), p_int32=int32(1)).all()
+    insert = A.insert.values(p_int64=int64(11), p_int32=int32(1), p_str='Hello').all()
     client.query(insert.query, **insert.context)
     rendered = A.select(A.c.p_int64).where(condition).all()
     assert rendered.query == f'select A {{ p_int64 }} filter {expected_condition}'

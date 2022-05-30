@@ -50,6 +50,7 @@ def test_insert_from_select(client: Client) -> None:
             Nested2.select()
             .where(Nested2.c.name == 'n2')
             .limit(text('1'))
+            .offset(text('0'))
         ),
     ).all()
     result = client.query(rendered.query, **rendered.context)
