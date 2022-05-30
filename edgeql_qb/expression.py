@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from collections import deque
 from dataclasses import dataclass
 from enum import Enum, auto
+from functools import singledispatch
 from typing import TYPE_CHECKING, Any, Generic, Iterator, TypeVar, cast
 
 from edgeql_qb.operators import (
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
     from edgeql_qb.render.types import RenderedQuery
 
 
-@dataclass
+@dataclass(slots=True, frozen=True)
 class QueryLiteral:
     value: Any
     expression_index: int
@@ -54,7 +55,7 @@ class SubQuery(ABC):
         raise NotImplementedError()  # pragma: no cover
 
 
-@dataclass
+@dataclass(slots=True, frozen=True)
 class SubQueryExpression:
     subquery: SubQuery
     index: int
@@ -90,58 +91,61 @@ class Stack(Generic[StackType]):
         return [self._stack.pop() for _ in range(argcount)]
 
 
+@singledispatch
+def _determine_type(value: Any) -> SymbolType:
+    return SymbolType.literal
+
+
+@_determine_type.register
+def _(value: Column) -> SymbolType:
+    return SymbolType.column
+
+
+@_determine_type.register
+def _(value: SubSelect) -> SymbolType:
+    return SymbolType.subselect
+
+
+@_determine_type.register
+def _(value: SubQuery) -> SymbolType:
+    return SymbolType.subquery
+
+
+@_determine_type.register
+def _(value: text) -> SymbolType:
+    return SymbolType.text
+
+
+@_determine_type.register
+def _(value: str) -> SymbolType:
+    if value in sort_ops:
+        return SymbolType.sort_direction
+    elif value in Ops:
+        return SymbolType.operator
+    else:
+        return SymbolType.literal
+
+
 class Symbol:
     __slots__ = 'value', 'type', 'arity'
 
     def __init__(self, value: Any, arity: int | None = None):
         self.value = value
-        self.type = self._determine_type(value)
+        self.type = _determine_type(value)
         self.arity = arity
-
-    def _determine_type(self, value: Any) -> SymbolType:
-        if isinstance(value, Column):
-            return SymbolType.column
-        if isinstance(value, SubSelect):
-            return SymbolType.subselect
-        elif isinstance(value, SubQuery):
-            return SymbolType.subquery
-        elif isinstance(value, text):
-            return SymbolType.text
-        elif value in sort_ops:
-            return SymbolType.sort_direction
-        elif value in Ops:
-            return SymbolType.operator
-        else:
-            return SymbolType.literal
 
 
 def build_binary_op(op: OpLiterals, left: Node, right: Node) -> Node:
-    if (
-        op == getattr(right, 'op', None) == '-'
-        and right.right is None
-    ):
+    if op == getattr(right, 'op', None) == '-' and right.right is None:
         # a - -b = a + b
         return Node(left, '+', right.left)
-
     elif (
-        op == '-'
-        and getattr(right, 'op', None) == '+'
+        (op == '+' and getattr(right, 'op', None) == '-')
+        or (op == '-' and getattr(right, 'op', None) == '+')
         and right.right is None
     ):
-        # a - +b = a - b
+        # a + -b = a - +b = a - b
         return Node(left, '-', right.left)
-
-    elif (
-        op == '+'
-        and getattr(right, 'op', None) == '-'
-        and right.right is None
-    ):
-        # a + -b = a - b
-        return Node(
-            left,
-            '-',
-            right.left,
-        )
     else:
         return Node(left, op, right)
 

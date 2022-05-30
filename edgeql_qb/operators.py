@@ -46,7 +46,7 @@ sort_ops = {'asc', 'desc'}
 prec_dict_limit = max(prec_dict.values()) + 1
 
 
-@dataclass
+@dataclass(slots=True, frozen=True)
 class SubSelect:
     parent: 'Column'
     columns: tuple[Union['Column', 'SubSelect'], ...]
@@ -119,7 +119,7 @@ class OperationsMixin:
         return BinaryOp('%', self, other)
 
 
-@dataclass
+@dataclass(slots=True, frozen=True)
 class BinaryOp(OperationsMixin):
     operation: OpLiterals
     left: OperationsMixin
@@ -129,13 +129,13 @@ class BinaryOp(OperationsMixin):
         return BinaryOp('=', self, other)
 
 
-@dataclass
+@dataclass(slots=True, frozen=True)
 class UnaryOp(OperationsMixin):
     operation: OpLiterals
     element: Any
 
 
-@dataclass
+@dataclass(slots=True, frozen=True)
 class Column(OperationsMixin):
     column_name: str
     parent: Optional['Column'] = None
@@ -158,13 +158,13 @@ class Columns:
         return Column(name)
 
 
-@dataclass
+@dataclass(slots=True, frozen=True)
 class SortedExpression:
     expression: OperationsMixin
     order: Literal['asc', 'desc']
 
 
-@dataclass
+@dataclass(slots=True, frozen=True)
 class Node:
     left: 'Node'
     op: OpLiterals

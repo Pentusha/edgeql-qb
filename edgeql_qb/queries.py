@@ -19,7 +19,7 @@ from edgeql_qb.render.types import RenderedQuery
 from edgeql_qb.types import text
 
 
-@dataclass
+@dataclass(slots=True, frozen=True)
 class EdgeDBModel:
     name: str
     c: Columns = field(default_factory=Columns)
@@ -36,7 +36,7 @@ class EdgeDBModel:
         return InsertQuery(self)
 
 
-@dataclass
+@dataclass(slots=True, frozen=True)
 class SelectQuery(SubQuery):
     model: EdgeDBModel
     select: list[Expression] = field(default_factory=list)
@@ -50,16 +50,35 @@ class SelectQuery(SubQuery):
         return self
 
     def order_by(self, *columns: SortedExpression | Column | UnaryOp) -> 'SelectQuery':
-        self.ordered_by = [Expression(exp) for exp in columns]
-        return self
+        ordered_by = [Expression(exp) for exp in columns]
+        return SelectQuery(
+            model=self.model,
+            select=self.select,
+            limit_val=self.limit_val,
+            offset_val=self.offset_val,
+            filters=self.filters,
+            ordered_by=ordered_by,
+        )
 
     def limit(self, value: int | text) -> 'SelectQuery':
-        self.limit_val = value
-        return self
+        return SelectQuery(
+            model=self.model,
+            select=self.select,
+            limit_val=value,
+            offset_val=self.offset_val,
+            filters=self.filters,
+            ordered_by=self.ordered_by,
+        )
 
     def offset(self, value: int | text) -> 'SelectQuery':
-        self.offset_val = value
-        return self
+        return SelectQuery(
+            model=self.model,
+            select=self.select,
+            limit_val=self.limit_val,
+            offset_val=value,
+            filters=self.filters,
+            ordered_by=self.ordered_by,
+        )
 
     def all(self, query_index: int = 0) -> RenderedQuery:
         rendered_select = render_select(self.model.name, self.select)
@@ -76,7 +95,7 @@ class SelectQuery(SubQuery):
         )
 
 
-@dataclass
+@dataclass(slots=True, frozen=True)
 class DeleteQuery:
     model: EdgeDBModel
     filters: list[Expression] = field(default_factory=list)
@@ -91,18 +110,21 @@ class DeleteQuery:
         return combine_many_renderers(rendered_delete, rendered_filters)
 
 
-@dataclass
+@dataclass(slots=True, frozen=True)
 class InsertQuery(SubQuery):
     model: EdgeDBModel
     values_to_insert: list[Expression] = field(default_factory=list)
 
     def values(self, **to_insert: Any) -> 'InsertQuery':
         assert to_insert
-        self.values_to_insert = [
+        values_to_insert = [
             Expression(BinaryOp(':=', Column(name), exp))
             for name, exp in to_insert.items()
         ]
-        return self
+        return InsertQuery(
+            model=self.model,
+            values_to_insert=values_to_insert,
+        )
 
     def all(self, query_index: int = 0) -> RenderedQuery:
         assert self.values_to_insert

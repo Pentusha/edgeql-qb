@@ -1,8 +1,10 @@
-# Scope
-* Query builder for EdgeDB with syntax similar to the SQLAlchemy Core.
+# EdgeQL Query Builder
+
+## Scope
+* Syntax similar to the SQLAlchemy Core.
 * The library does not contain any code to connect to the database or to execute queries.
 
-# Description
+## Description
 * Project currently in pre-alpha status. It is not production-ready yet, and It may buggy and unstable as well.
 * The project is not affiliated with the official developers of EdgeDB.
 * This project only supports a small part of the EdgeDB syntax.
