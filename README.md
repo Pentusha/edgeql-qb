@@ -13,7 +13,7 @@
 * There is no external dependencies, even on EdgeDB itself.
 
 # TODO
-* Implement `update` queries.
+* Implement `upsert` queries.
 * Support functions calls.
 * Aggregations.
 * Support array/json types
@@ -27,7 +27,7 @@
 * Optimize binary op. `a - a = -a + a = empty`
 
 # Usage examples
-Many examples of queries are given in the [test](https://github.com/Pentusha/edgeql-qb/blob/master/tests/test_render.py) file.
+Many examples of queries are given in the [tests](https://github.com/Pentusha/edgeql-qb/tree/master/tests/test_renderer) directory.
 
 
 ```python
@@ -35,8 +35,6 @@ from edgeql_qb import EdgeDBModel
 from edgeql_qb.types import int16, text
 from edgedb.blocking_client import Client, create_client
 
-
-director_id = ''  #
 
 client = create_client()
 Movie = EdgeDBModel('Movie')

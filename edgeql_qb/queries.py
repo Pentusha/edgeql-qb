@@ -11,11 +11,14 @@ from edgeql_qb.operators import (
 )
 from edgeql_qb.render.condition import render_conditions
 from edgeql_qb.render.delete import render_delete
-from edgeql_qb.render.insert import render_insert, render_values
+from edgeql_qb.render.insert import render_insert
+from edgeql_qb.render.insert import render_values as render_insert_values
 from edgeql_qb.render.order_by import render_order_by
 from edgeql_qb.render.select import render_limit, render_offset, render_select
 from edgeql_qb.render.tools import combine_many_renderers
 from edgeql_qb.render.types import RenderedQuery
+from edgeql_qb.render.update import render_update
+from edgeql_qb.render.update import render_values as render_update_values
 from edgeql_qb.types import text
 
 
@@ -34,6 +37,10 @@ class EdgeDBModel:
     @property
     def insert(self) -> 'InsertQuery':
         return InsertQuery(self)
+
+    @property
+    def update(self) -> 'UpdateQuery':
+        return UpdateQuery(self)
 
 
 @dataclass(slots=True, frozen=True)
@@ -129,5 +136,34 @@ class InsertQuery(SubQuery):
     def all(self, query_index: int = 0) -> RenderedQuery:
         assert self.values_to_insert
         rendered_insert = render_insert(self.model.name)
-        rendered_values = render_values(self.values_to_insert, query_index)
+        rendered_values = render_insert_values(self.values_to_insert, query_index)
         return combine_many_renderers(rendered_insert, rendered_values)
+
+
+@dataclass(slots=True, frozen=True)
+class UpdateQuery:
+    model: EdgeDBModel
+    values_to_update: list[Expression] = field(default_factory=list)
+    filters: list[Expression] = field(default_factory=list)
+
+    def where(self, compared: BinaryOp | UnaryOp) -> 'UpdateQuery':
+        self.filters.append(Expression(compared))
+        return self
+
+    def values(self, **to_update: Any) -> 'UpdateQuery':
+        assert to_update
+        values_to_update = [
+            Expression(BinaryOp(':=', Column(name), exp))
+            for name, exp in to_update.items()
+        ]
+        return UpdateQuery(
+            model=self.model,
+            values_to_update=values_to_update,
+        )
+
+    def all(self, query_index: int = 0) -> RenderedQuery:
+        assert self.values_to_update
+        rendered_insert = render_update(self.model.name)
+        rendered_filters = render_conditions(self.filters, query_index)
+        rendered_values = render_update_values(self.values_to_update, query_index)
+        return combine_many_renderers(rendered_insert, rendered_filters, rendered_values)
