@@ -1,3 +1,3 @@
-from edgeql_qb.render import EdgeDBModel
+from edgeql_qb.queries import EdgeDBModel
 
 __all__ = ['EdgeDBModel']

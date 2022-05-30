@@ -1,4 +1,4 @@
-from datetime import timezone, timedelta, datetime
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any
 
@@ -6,9 +6,17 @@ import pytest
 from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
-from edgeql_qb.operators import Column, BinaryOp
-from edgeql_qb.types import int32, int64, bigint, float32, float64, GenericHolder
-
+from edgeql_qb.operators import BinaryOp, Column
+from edgeql_qb.types import (
+    GenericHolder,
+    bigint,
+    float32,
+    float64,
+    int16,
+    int32,
+    int64,
+    text,
+)
 
 _dt = datetime(2022, 5, 26, 0, 0, 0)
 A = EdgeDBModel('A')
@@ -19,7 +27,8 @@ Nested3 = EdgeDBModel('Nested3')
 
 def test_select_column(client: Client) -> None:
     rendered = A.select(A.c.p_str).all()
-    client.query('insert A { p_str := "Hello" }')
+    insert = A.insert.values(p_str='Hello').all()
+    client.query(insert.query, **insert.context)
     assert rendered.query == 'select A { p_str }'
     assert rendered.context == {}
     result = client.query(rendered.query, **rendered.context)
@@ -54,10 +63,10 @@ def test_select_datatypes(
 ) -> None:
     rendered = A.select((column != value).label(label)).all()
     assert rendered.query == (
-        f'select A {{ {label} := .{column.column_name} != <{expected_type}>$select_0_0 }}'
+        f'select A {{ {label} := .{column.column_name} != <{expected_type}>$select_0_0_0 }}'
     )
     assert rendered.context == {
-        'select_0_0': isinstance(value, GenericHolder) and value.value or value,
+        'select_0_0_0': isinstance(value, GenericHolder) and value.value or value,
     }
 
 
@@ -69,24 +78,26 @@ def test_select_operators(client: Client) -> None:
         (A.c.p_int32 // A.c.p_int32).label('floor_div_result'),
         (A.c.p_int32 % A.c.p_int32).label('mod_result'),
     ).all()
-    client.query('insert A { p_bool := True, p_int32 := 10 }')
+    insert = A.insert.values(p_bool=True, p_int32=int32(10)).all()
+    client.query(insert.query, **insert.context)
     assert rendered.query == (
         'select A { '
-        'and_result := .p_bool and <bool>$select_0_0, '
-        'or_result := .p_bool or <bool>$select_1_0, '
+        'and_result := .p_bool and <bool>$select_0_0_0, '
+        'or_result := .p_bool or <bool>$select_0_1_0, '
         'true_div_result := .p_int32 / .p_int32, '
         'floor_div_result := .p_int32 // .p_int32, '
         'mod_result := .p_int32 % .p_int32 '
         '}'
     )
-    assert rendered.context == {'select_0_0': True, 'select_1_0': True}
+    assert rendered.context == {'select_0_0_0': True, 'select_0_1_0': True}
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 
 
 def test_select_concatenation(client: Client) -> None:
     rendered = A.select(A.c.p_str.op('++')(A.c.p_str).label('result')).all()
-    client.query('insert A { p_str := "Hello" }')
+    insert = A.insert.values(p_str='Hello').all()
+    client.query(insert.query, **insert.context)
     assert rendered.query == 'select A { result := .p_str ++ .p_str }'
     assert rendered.context == {}
     result = client.query(rendered.query, **rendered.context)
@@ -96,7 +107,8 @@ def test_select_concatenation(client: Client) -> None:
 
 def test_select_unary_expression(client: Client) -> None:
     rendered = A.select((-A.c.p_int32).label('minus_p_int32')).all()
-    client.query('insert A { p_int32 := 5 }')
+    insert = A.insert.values(p_int32=int32(5)).all()
+    client.query(insert.query, **insert.context)
     assert rendered.query == 'select A { minus_p_int32 := -.p_int32 }'
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
@@ -104,7 +116,8 @@ def test_select_unary_expression(client: Client) -> None:
 
 
 def test_select_left_parentheses(client: Client) -> None:
-    client.query('insert A { p_int32 := 5 }')
+    insert = A.insert.values(p_int32=int32(5)).all()
+    client.query(insert.query, **insert.context)
     rendered = A.select(((A.c.p_int32 + A.c.p_int32) * A.c.p_int32).label('result')).all()
     assert rendered.query == 'select A { result := (.p_int32 + .p_int32) * .p_int32 }'
     result = client.query(rendered.query, **rendered.context)
@@ -114,9 +127,12 @@ def test_select_left_parentheses(client: Client) -> None:
 
 def test_simple_select_with_simple_order_by(client: Client) -> None:
     rendered = A.select(A.c.p_str).order_by(A.c.p_str).all()
-    client.query('insert A { p_str := "2" }')
-    client.query('insert A { p_str := "1" }')
-    client.query('insert A { p_str := "3" }')
+    insert1 = A.insert.values(p_str='2').all()
+    insert2 = A.insert.values(p_str='1').all()
+    insert3 = A.insert.values(p_str='3').all()
+    client.query(insert1.query, **insert1.context)
+    client.query(insert2.query, **insert2.context)
+    client.query(insert3.query, **insert3.context)
     assert rendered.query == 'select A { p_str } order by .p_str'
     assert rendered.context == {}
     result = client.query(rendered.query, **rendered.context)
@@ -125,9 +141,12 @@ def test_simple_select_with_simple_order_by(client: Client) -> None:
 
 
 def test_simple_select_with_complex_order_by(client: Client) -> None:
-    client.query('insert A { p_int32 := 2, p_int64 := 0, p_bool := False }')
-    client.query('insert A { p_int32 := 1, p_int64 := 0, p_bool := False }')
-    client.query('insert A { p_int32 := 3, p_int64 := 0, p_bool := False }')
+    insert1 = A.insert.values(p_int32=int32(2), p_int64=int64(0), p_bool=False).all()
+    insert2 = A.insert.values(p_int32=int32(1), p_int64=int64(0), p_bool=False).all()
+    insert3 = A.insert.values(p_int32=int32(3), p_int64=int64(0), p_bool=False).all()
+    client.query(insert1.query, **insert1.context)
+    client.query(insert2.query, **insert2.context)
+    client.query(insert3.query, **insert3.context)
     rendered = (
         A
         .select(A.c.p_str)
@@ -160,11 +179,14 @@ def test_nested_select_used(client: Client) -> None:
             ),
         ),
     ).all()
-    client.query(
-        'insert Nested1 { name := "n1", nested2 := ('
-        'insert Nested2 { name := "n2", nested3 := ('
-        'insert Nested3 { name := "n3" }) }) }'
-    )
+    insert = Nested1.insert.values(
+        name='n1',
+        nested2=Nested2.insert.values(
+            name='n2',
+            nested3=Nested3.insert.values(name='n3'),
+        ),
+    ).all()
+    client.query(insert.query, **insert.context)
     assert rendered.query == 'select Nested1 { name, nested2: { name, nested3: { name } } }'
     assert rendered.context == {}
     result = client.query(rendered.query, **rendered.context)
@@ -180,11 +202,14 @@ def test_select_exists(client: Client) -> None:
         Nested1.c.name,
         Nested1.c.nested2.exists().label('nested2_exists'),
     ).all()
-    client.query(
-        'insert Nested1 { name := "n1", nested2 := ('
-        'insert Nested2 { name := "n2", nested3 := ('
-        'insert Nested3 { name := "n3" }) }) }'
-    )
+    insert = Nested1.insert.values(
+        name='n1',
+        nested2=Nested2.insert.values(
+            name='n2',
+            nested3=Nested3.insert.values(name='n3'),
+        ),
+    ).all()
+    client.query(insert.query, **insert.context)
     assert rendered.query == 'select Nested1 { name, nested2_exists := exists .nested2 }'
     assert rendered.context == {}
     result = client.query(rendered.query, **rendered.context)
@@ -198,13 +223,13 @@ def test_select_not_exists(client: Client) -> None:
         Nested1.c.name,
         Nested1.c.nested2.not_exists().label('nested2_not_exists'),
     ).all()
-    client.query(
-        'insert Nested1 { name := "n1", nested2 := ('
-        'insert Nested2 { name := "n2" }) }'
-    )
-    client.query(
-        'insert Nested1 { name := "p1" }'
-    )
+    insert = Nested1.insert.values(
+        name='n1',
+        nested2=Nested2.insert.values(name='n2'),
+    ).all()
+    client.query(insert.query, **insert.context)
+    insert = Nested1.insert.values(name='p1').all()
+    client.query(insert.query, **insert.context)
     assert rendered.query == 'select Nested1 { name, nested2_not_exists := not exists .nested2 }'
     assert rendered.context == {}
     result = client.query(rendered.query, **rendered.context)
@@ -215,19 +240,20 @@ def test_select_not_exists(client: Client) -> None:
     'condition, expected_condition, expected_context',
     (
         (A.c.p_int32 < A.c.p_int64, '.p_int32 < .p_int64', {}),
-        (A.c.p_int64 != int64(1), '.p_int64 != <int64>$filter_0_0', {'filter_0_0': 1}),
-        (A.c.p_int64 >= int64(1), '.p_int64 >= <int64>$filter_0_0', {'filter_0_0': 1}),
-        (A.c.p_int32 <= int32(1), '.p_int32 <= <int32>$filter_0_0', {'filter_0_0': 1}),
+        (A.c.p_int64 != int64(1), '.p_int64 != <int64>$filter_1_0_0', {'filter_1_0_0': 1}),
+        (A.c.p_int64 >= int64(1), '.p_int64 >= <int64>$filter_1_0_0', {'filter_1_0_0': 1}),
+        (A.c.p_int32 <= int32(1), '.p_int32 <= <int32>$filter_1_0_0', {'filter_1_0_0': 1}),
         (
             (A.c.p_int32 + A.c.p_int64) * int64(1) > int64(2),
-            '(.p_int32 + .p_int64) * <int64>$filter_0_1 > <int64>$filter_0_0',
-            {'filter_0_1': 1, 'filter_0_0': 2},
+            '(.p_int32 + .p_int64) * <int64>$filter_1_0_1 > <int64>$filter_1_0_0',
+            {'filter_1_0_1': 1, 'filter_1_0_0': 2},
         ),
         (
             A.c.p_int32 * (A.c.p_int64 + int64(1)) > int64(2),
-            '.p_int32 * (.p_int64 + <int64>$filter_0_1) > <int64>$filter_0_0',
-            {'filter_0_1': 1, 'filter_0_0': 2},
+            '.p_int32 * (.p_int64 + <int64>$filter_1_0_1) > <int64>$filter_1_0_0',
+            {'filter_1_0_1': 1, 'filter_1_0_0': 2},
         ),
+        (A.c.p_str == text("'Hello'"), ".p_str = 'Hello'", {}),
     ),
 )
 def test_complex_filter_with_literal(
@@ -236,7 +262,8 @@ def test_complex_filter_with_literal(
     expected_condition: str,
     expected_context: dict[str, Any],
 ) -> None:
-    client.query('insert A { p_int64 := 11, p_int32:= 1 }')
+    insert = A.insert.values(p_int64=int64(11), p_int32=int32(1), p_str='Hello').all()
+    client.query(insert.query, **insert.context)
     rendered = A.select(A.c.p_int64).where(condition).all()
     assert rendered.query == f'select A {{ p_int64 }} filter {expected_condition}'
     assert rendered.context == expected_context
@@ -245,7 +272,8 @@ def test_complex_filter_with_literal(
 
 
 def test_filter_with_unary_op(client: Client) -> None:
-    client.query('insert A { p_int64 := 11, p_bool := False }')
+    insert = A.insert.values(p_int64=int64(11), p_bool=False).all()
+    client.query(insert.query, **insert.context)
     rendered = (
         A.select(A.c.p_int64)
         .where(~A.c.p_bool)
@@ -262,17 +290,20 @@ def test_nested_filter(client: Client) -> None:
     rendered = Nested1.select(
         Nested1.c.name,
     ).where(Nested1.c.nested2.name == 'n2').all()
-    client.query(
-        'insert Nested1 { name := "n1", nested2 := (insert Nested2 { name := "n2" }) }'
-    )
-    assert rendered.query == 'select Nested1 { name } filter .nested2.name = <str>$filter_0_0'
-    assert rendered.context == {'filter_0_0': 'n2'}
+    insert = Nested1.insert.values(
+        name='n1',
+        nested2=Nested2.insert.values(name='n2'),
+    ).all()
+    client.query(insert.query, **insert.context)
+    assert rendered.query == 'select Nested1 { name } filter .nested2.name = <str>$filter_1_0_0'
+    assert rendered.context == {'filter_1_0_0': 'n2'}
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 
 
 def test_select_expression(client: Client) -> None:
-    client.query('insert A { p_int16 := 16, p_int32 := 4, p_int64 := 11 }')
+    insert = A.insert.values(p_int16=int16(16), p_int32=int32(4), p_int64=int64(11)).all()
+    client.query(insert.query, **insert.context)
     rendered = A.select((A.c.p_int64 + A.c.p_int64).label('my_sum')).all()
     assert rendered.query == 'select A { my_sum := .p_int64 + .p_int64 }'
     result = client.query(rendered.query, **rendered.context)
@@ -284,9 +315,10 @@ def test_select_expression(client: Client) -> None:
 
 
 def test_select_expression_with_literal(client: Client) -> None:
-    client.query('insert A { p_int64 := 11 }')
+    insert = A.insert.values(p_int64=int64(11)).all()
+    client.query(insert.query, **insert.context)
     rendered = A.select((A.c.p_int64 + int64(1)).label('my_sum')).all()
-    assert rendered.query == 'select A { my_sum := .p_int64 + <int64>$select_0_0 }'
+    assert rendered.query == 'select A { my_sum := .p_int64 + <int64>$select_0_0_0 }'
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     assert result[0].my_sum == 12
@@ -304,11 +336,9 @@ def test_select_binary_optimisations() -> None:
 
 
 def test_limit_offset(client: Client) -> None:
-    client.query('insert A { p_int16 := 1 }')
-    client.query('insert A { p_int16 := 2 }')
-    client.query('insert A { p_int16 := 3 }')
-    client.query('insert A { p_int16 := 4 }')
-    client.query('insert A { p_int16 := 5 }')
+    for num in range(1, 6):
+        insert = A.insert.values(p_int16=int16(num)).all()
+        client.query(insert.query, **insert.context)
     rendered = (
         A.select(A.c.p_int16)
         .order_by(A.c.p_int16.asc())
@@ -319,10 +349,10 @@ def test_limit_offset(client: Client) -> None:
     assert rendered.query == (
         'select A { p_int16 } '
         'order by .p_int16 asc '
-        'offset <int64>$offset '
-        'limit <int64>$limit'
+        'offset <int64>$offset_0 '
+        'limit <int64>$limit_0'
     )
-    assert rendered.context == {'limit': 2, 'offset': 4}
+    assert rendered.context == {'limit_0': 2, 'offset_0': 4}
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     assert result[0].p_int16 == 5

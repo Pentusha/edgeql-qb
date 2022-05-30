@@ -1,8 +1,10 @@
-# Scope
-* Query builder for EdgeDB with syntax similar to the SQLAlchemy Core.
+# EdgeQL Query Builder
+
+## Scope
+* Syntax similar to the SQLAlchemy Core.
 * The library does not contain any code to connect to the database or to execute queries.
 
-# Description
+## Description
 * Project currently in pre-alpha status. It is not production-ready yet, and It may buggy and unstable as well.
 * The project is not affiliated with the official developers of EdgeDB.
 * This project only supports a small part of the EdgeDB syntax.
@@ -11,27 +13,49 @@
 * There is no external dependencies, even on EdgeDB itself.
 
 # TODO
+* Implement `upsert` queries.
+* Support functions calls.
+* Aggregations.
 * Support array/json types
 * Build a simple queries `select [1,2,3]`
-* Optimize involution op. `-(-a) = a`, `not not a = a` etc.
-* Optimize binary op. `a - a = -a + a = empty`
-* Aggregations.
-* Support functions calls.
-* Implement `insert`/`update`/`delete` queries.
 * Optional (Maybe) filters.
 * Describe response schema.
 * Support if/else statements.
 * Validate query against declared schema.
 * It would be cool to have mypy plugin.
+* Optimize involution op. `-(-a) = a`, `not not a = a` etc.
+* Optimize binary op. `a - a = -a + a = empty`
 
 # Usage examples
-Many examples of queries are given in the [test](https://github.com/Pentusha/edgeql-qb/blob/master/tests/test_render.py) file.
+Many examples of queries are given in the [tests](https://github.com/Pentusha/edgeql-qb/tree/master/tests/test_renderer) directory.
+
 
 ```python
+from edgeql_qb import EdgeDBModel
+from edgeql_qb.types import int16, text
+from edgedb.blocking_client import Client, create_client
+
+
+client = create_client()
 Movie = EdgeDBModel('Movie')
+Person = EdgeDBModel('Person')
+
+insert = Movie.insert.values(
+    title='Blade Runner 2049',
+    year=int16(2017),
+    director=(
+        Person.select()
+        .where(Person.c.id == director_id)
+        .limit(text('1')) 
+    ),
+    actors=Person.insert.values(
+        first_name='Harrison', 
+        last_name='Ford',
+    ),
+).all()
 
 
-query = (
+select = (
     Movie.select(
         Movie.c.title,
         Movie.c.year,
@@ -48,5 +72,9 @@ query = (
     .all()
 )
 
-result = client.query(query.query, **query.context)
+delete = Movie.delete.where(Movie.c.title == 'Blade Runner 2049').all()
+
+client.query(insert.query, **insert.context)
+result = client.query(select.query, **select.context)
+client.delete(delete.query, **delete.context)
 ```

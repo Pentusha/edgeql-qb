@@ -16,6 +16,11 @@ class TestNode:
         assert n1 > ':='
         assert n2 > ':='
 
+    def test_eq_operator(self) -> None:
+        n1 = Node(left='n1_left', op='+', right=2)  # type: ignore
+        n2 = '+'
+        assert n1 == n2
+
     def test_ne_operator(self) -> None:
         n1 = Node(left='n1_left', op='+', right=2)  # type: ignore
         n2 = Node(left='n2_left', op='=', right=4)  # type: ignore

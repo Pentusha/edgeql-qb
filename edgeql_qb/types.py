@@ -37,3 +37,7 @@ class float32(GenericHolder[float]):
 
 class float64(GenericHolder[float]):
     edgeql_name = 'float64'
+
+
+class text(str):
+    pass
