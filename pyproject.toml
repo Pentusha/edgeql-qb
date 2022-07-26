@@ -40,7 +40,7 @@ pytest = "^7.1.2"
 pytest-cov = "^3.0.0"
 isort = "^5.10.1"
 edgedb = "^0.23.0"
-commitizen = "^2.27.1"
+commitizen = "^2.29.1"
 
 
 
