@@ -27,7 +27,7 @@ rend = "^6.4.2"
 slots = "^0.4.0"
 
 [tool.poetry.dev-dependencies]
-mypy = "^0.960"
+mypy = "^0.971"
 flake8 = "^4.0.1"
 flake8-broken-line = "^0.4.0"
 flake8-eradicate = "^1.2.1"
