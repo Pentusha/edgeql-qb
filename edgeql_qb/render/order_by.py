@@ -7,31 +7,31 @@ from edgeql_qb.render.tools import (
     combine_many_renderers,
     combine_renderers,
     join_renderers,
-    render_left_parentheses,
-    render_right_parentheses,
+    render_binary_node,
 )
 from edgeql_qb.render.types import RenderedQuery
 
 
-def render_order_by(ordered_by: list[Expression], query_index: int) -> RenderedQuery:
-    if ordered_by:
-        renderers = [
-            render_order_by_expression(expression.to_infix_notation(query_index + 1), index)
-            for index, expression in enumerate(ordered_by)
-        ]
-        return combine_renderers(
-            RenderedQuery(' order by '),
-            reduce(join_renderers(' then '), renderers)
-        )
-    else:
-        return RenderedQuery()
+def render_order_by_expressions(
+    ordered_by: tuple[Expression, ...],
+    query_index: int,
+) -> RenderedQuery:
+    renderers = (
+        render_order_by_expression(expression.to_infix_notation(query_index + 1), index)
+        for index, expression in enumerate(ordered_by)
+    )
+    return combine_renderers(
+        RenderedQuery(' order by '),
+        reduce(join_renderers(' then '), renderers)
+    )
+
+
+def render_order_by(ordered_by: tuple[Expression, ...], query_index: int) -> RenderedQuery:
+    return ordered_by and render_order_by_expressions(ordered_by, query_index) or RenderedQuery()
 
 
 @singledispatch
-def render_order_by_expression(
-        expression: AnyExpression,
-        index: int,
-) -> RenderedQuery:
+def render_order_by_expression(expression: AnyExpression, index: int) -> RenderedQuery:
     raise NotImplementedError(f'{expression!r} {index=} is not supported')  # pragma: no cover
 
 
@@ -47,19 +47,10 @@ def _(expression: Node, index: int) -> RenderedQuery:
             RenderedQuery(expression.op),
             render_order_by_expression(expression.left, index),
         )
-
-    right_column = render_order_by_expression(expression.right, index)
-    right_column = render_right_parentheses(
-        expression.right,
-        expression,
-        right_column,
-    )
-    left_column = render_order_by_expression(expression.left, index)
-    left_column = render_left_parentheses(expression.left, expression, left_column)
-    return combine_many_renderers(
-        left_column,
-        RenderedQuery(f' {expression.op} '),
-        right_column,
+    return render_binary_node(
+        left=render_order_by_expression(expression.left, index),
+        right=render_order_by_expression(expression.right, index),
+        expression=expression,
     )
 
 

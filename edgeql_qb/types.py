@@ -39,5 +39,11 @@ class float64(GenericHolder[float]):
     edgeql_name = 'float64'
 
 
-class text(str):
-    pass
+class unsafe_text(str):
+    """
+    Wrapper for rendering a text node as is.
+
+    WARNING: Don't pass unvalidated user input to this wrapper.
+    Otherwise, you may be the first victim of EdgeQL Injection attack.
+    There's no honor in this.
+    """

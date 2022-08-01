@@ -1,6 +1,7 @@
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from functools import singledispatch
+from types import MappingProxyType
 from typing import Any
 
 from edgeql_qb.render.types import RenderedQuery
@@ -11,37 +12,40 @@ from edgeql_qb.types import GenericHolder
 def render_query_literal(value: Any, name: str) -> RenderedQuery:
     if isinstance(value, (str, bool, bytes)):
         # singledispatch not working for unions
-        return RenderedQuery(f'<{value.__class__.__name__}>${name}', {name: value})
-    return RenderedQuery(f'${name}', {name: value})  # pragma: no cover
+        return RenderedQuery(
+            f'<{value.__class__.__name__}>${name}',
+            MappingProxyType({name: value}),
+        )
+    return RenderedQuery(f'${name}', MappingProxyType({name: value}))  # pragma: no cover
 
 
 @render_query_literal.register
 def _(value: GenericHolder, name: str) -> RenderedQuery:  # type: ignore
-    return RenderedQuery(f'<{value.edgeql_name}>${name}', {name: value.value})
+    return RenderedQuery(f'<{value.edgeql_name}>${name}', MappingProxyType({name: value.value}))
 
 
 @render_query_literal.register
 def _(value: datetime, name: str) -> RenderedQuery:
     if value.tzinfo is None:
-        return RenderedQuery(f'<cal::local_datetime>${name}', {name: value})
-    return RenderedQuery(f'<{value.__class__.__name__}>${name}', {name: value})
+        return RenderedQuery(f'<cal::local_datetime>${name}', MappingProxyType({name: value}))
+    return RenderedQuery(f'<{value.__class__.__name__}>${name}', MappingProxyType({name: value}))
 
 
 @render_query_literal.register
 def _(value: date, name: str) -> RenderedQuery:
-    return RenderedQuery(f'<cal::local_date>${name}', {name: value})
+    return RenderedQuery(f'<cal::local_date>${name}', MappingProxyType({name: value}))
 
 
 @render_query_literal.register
 def _(value: time, name: str) -> RenderedQuery:
-    return RenderedQuery(f'<cal::local_time>${name}', {name: value})
+    return RenderedQuery(f'<cal::local_time>${name}', MappingProxyType({name: value}))
 
 
 @render_query_literal.register
 def _(value: timedelta, name: str) -> RenderedQuery:
-    return RenderedQuery(f'<duration>${name}', {name: value})
+    return RenderedQuery(f'<duration>${name}', MappingProxyType({name: value}))
 
 
 @render_query_literal.register
 def _(value: Decimal, name: str) -> RenderedQuery:
-    return RenderedQuery(f'<decimal>${name}', {name: value})
+    return RenderedQuery(f'<decimal>${name}', MappingProxyType({name: value}))

@@ -1,7 +1,9 @@
+from types import MappingProxyType
+
 from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
-from edgeql_qb.types import int16, text
+from edgeql_qb.types import int16, unsafe_text
 
 A = EdgeDBModel('A')
 Nested1 = EdgeDBModel('Nested1')
@@ -18,7 +20,7 @@ def test_simple_update(client: Client) -> None:
         'update A filter .p_int16 = <int16>$filter_1_0_0 set { p_str := '
         '<str>$update_1_0_0 }'
     )
-    assert rendered.context == {'update_1_0_0': 'New hello', 'filter_1_0_0': 1}
+    assert rendered.context == MappingProxyType({'update_1_0_0': 'New hello', 'filter_1_0_0': 1})
 
     client.query(rendered.query, **rendered.context)
     select = A.select(A.c.p_str).all()
@@ -44,18 +46,18 @@ def test_update_subquery(client: Client) -> None:
         nested2=(
             Nested2.select()
             .where(Nested2.c.name == 'new n2')
-            .limit(text('1'))
+            .limit(unsafe_text('1'))
         )
     ).all()
     assert rendered.query == (
         'update Nested1 set { nested2 := '
         '(select Nested2 filter .name = <str>$filter_2_0_0 limit 1) }'
     )
-    assert rendered.context == {'filter_2_0_0': 'new n2'}
+    assert rendered.context == MappingProxyType({'filter_2_0_0': 'new n2'})
 
     client.query(rendered.query, **rendered.context)
 
-    select = Nested1.select(Nested1.c.nested2.select(Nested1.c.nested2.name)).all()
+    select = Nested1.select(Nested1.c.nested2(Nested1.c.nested2.name)).all()
     result = client.query(select.query, **select.context)
     assert len(result) == 1
     assert result[0].nested2.name == 'new n2'

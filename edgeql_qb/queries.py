@@ -19,16 +19,18 @@ from edgeql_qb.render.tools import combine_many_renderers
 from edgeql_qb.render.types import RenderedQuery
 from edgeql_qb.render.update import render_update
 from edgeql_qb.render.update import render_values as render_update_values
-from edgeql_qb.types import text
+from edgeql_qb.types import unsafe_text
 
 
 @dataclass(slots=True, frozen=True)
 class EdgeDBModel:
     name: str
+    module: str | None = None
+    schema: str = 'default'
     c: Columns = field(default_factory=Columns)
 
     def select(self, *selectables: SelectExpressions) -> 'SelectQuery':
-        return SelectQuery(self, select=[Expression(sel) for sel in selectables])
+        return SelectQuery(self, select=tuple(Expression(sel) for sel in selectables))
 
     @property
     def delete(self) -> 'DeleteQuery':
@@ -46,28 +48,34 @@ class EdgeDBModel:
 @dataclass(slots=True, frozen=True)
 class SelectQuery(SubQuery):
     model: EdgeDBModel
-    select: list[Expression] = field(default_factory=list)
-    filters: list[Expression] = field(default_factory=list)
-    ordered_by: list[Expression] = field(default_factory=list)
-    limit_val: int | text | None = None
-    offset_val: int | text | None = None
+    select: tuple[Expression, ...] = field(default_factory=tuple)
+    filters: tuple[Expression, ...] = field(default_factory=tuple)
+    ordered_by: tuple[Expression, ...] = field(default_factory=tuple)
+    limit_val: int | unsafe_text | None = None
+    offset_val: int | unsafe_text | None = None
 
     def where(self, compared: BinaryOp | UnaryOp) -> 'SelectQuery':
-        self.filters.append(Expression(compared))
-        return self
+        return SelectQuery(
+            model=self.model,
+            select=self.select,
+            limit_val=self.limit_val,
+            offset_val=self.offset_val,
+            filters=(*self.filters, Expression(compared)),
+            ordered_by=self.ordered_by,
+        )
 
     def order_by(self, *columns: SortedExpression | Column | UnaryOp) -> 'SelectQuery':
-        ordered_by = [Expression(exp) for exp in columns]
+        new_expressions = [Expression(exp) for exp in columns]
         return SelectQuery(
             model=self.model,
             select=self.select,
             limit_val=self.limit_val,
             offset_val=self.offset_val,
             filters=self.filters,
-            ordered_by=ordered_by,
+            ordered_by=(*self.ordered_by, *new_expressions),
         )
 
-    def limit(self, value: int | text) -> 'SelectQuery':
+    def limit(self, value: int | unsafe_text) -> 'SelectQuery':
         return SelectQuery(
             model=self.model,
             select=self.select,
@@ -77,7 +85,7 @@ class SelectQuery(SubQuery):
             ordered_by=self.ordered_by,
         )
 
-    def offset(self, value: int | text) -> 'SelectQuery':
+    def offset(self, value: int | unsafe_text) -> 'SelectQuery':
         return SelectQuery(
             model=self.model,
             select=self.select,
@@ -88,7 +96,7 @@ class SelectQuery(SubQuery):
         )
 
     def all(self, query_index: int = 0) -> RenderedQuery:
-        rendered_select = render_select(self.model.name, self.select)
+        rendered_select = render_select(self.model.name, self.select, self.model.module)
         rendered_filters = render_conditions(self.filters, query_index)
         rendered_order_by = render_order_by(self.ordered_by, query_index)
         rendered_offset = render_offset(self.offset_val, query_index)
@@ -105,11 +113,13 @@ class SelectQuery(SubQuery):
 @dataclass(slots=True, frozen=True)
 class DeleteQuery:
     model: EdgeDBModel
-    filters: list[Expression] = field(default_factory=list)
+    filters: tuple[Expression, ...] = field(default_factory=tuple)
 
     def where(self, compared: BinaryOp | UnaryOp) -> 'DeleteQuery':
-        self.filters.append(Expression(compared))
-        return self
+        return DeleteQuery(
+            model=self.model,
+            filters=(*self.filters, Expression(compared)),
+        )
 
     def all(self, query_index: int = 0) -> RenderedQuery:
         rendered_delete = render_delete(self.model.name)
@@ -143,22 +153,26 @@ class InsertQuery(SubQuery):
 @dataclass(slots=True, frozen=True)
 class UpdateQuery:
     model: EdgeDBModel
-    values_to_update: list[Expression] = field(default_factory=list)
-    filters: list[Expression] = field(default_factory=list)
+    values_to_update: tuple[Expression, ...] = field(default_factory=tuple)
+    filters: tuple[Expression, ...] = field(default_factory=tuple)
 
     def where(self, compared: BinaryOp | UnaryOp) -> 'UpdateQuery':
-        self.filters.append(Expression(compared))
-        return self
+        return UpdateQuery(
+            model=self.model,
+            filters=(*self.filters, Expression(compared)),
+            values_to_update=self.values_to_update
+        )
 
     def values(self, **to_update: Any) -> 'UpdateQuery':
         assert to_update
-        values_to_update = [
+        values_to_update = tuple(
             Expression(BinaryOp(':=', Column(name), exp))
             for name, exp in to_update.items()
-        ]
+        )
         return UpdateQuery(
             model=self.model,
             values_to_update=values_to_update,
+            filters=self.filters,
         )
 
     def all(self, query_index: int = 0) -> RenderedQuery:

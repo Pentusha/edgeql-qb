@@ -11,8 +11,7 @@ from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
     combine_many_renderers,
     join_renderers,
-    render_left_parentheses,
-    render_right_parentheses,
+    render_binary_node,
 )
 from edgeql_qb.render.types import RenderedQuery
 
@@ -21,19 +20,17 @@ def render_update(model_name: str) -> RenderedQuery:
     return RenderedQuery(f'update {model_name}')
 
 
-def render_values(values: list[Expression], query_index: int) -> RenderedQuery:
+def render_values(values: tuple[Expression, ...], query_index: int) -> RenderedQuery:
     assert values
-    if values:
-        renderers = [
-            render_update_expression(value.to_infix_notation(query_index + 1), index)
-            for index, value in enumerate(values)
-        ]
-        return combine_many_renderers(
-            RenderedQuery(' set { '),
-            reduce(join_renderers(', '), renderers),
-            RenderedQuery(' }'),
-        )
-    return RenderedQuery()  # pragma: no cover
+    renderers = [
+        render_update_expression(value.to_infix_notation(query_index + 1), index)
+        for index, value in enumerate(values)
+    ]
+    return combine_many_renderers(
+        RenderedQuery(' set { '),
+        reduce(join_renderers(', '), renderers),
+        RenderedQuery(' }'),
+    )
 
 
 @singledispatch
@@ -49,18 +46,10 @@ def _(expression: Column, index: int) -> RenderedQuery:
 @render_update_expression.register
 def _(expression: Node, index: int) -> RenderedQuery:
     assert expression.right is not None, 'Unary operations is not supported in update expressions'
-    right_column = render_update_expression(expression.right, index)
-    right_column = render_right_parentheses(
-        expression.right,
-        expression,
-        right_column,
-    )
-    left_column = render_update_expression(expression.left, index)
-    left_column = render_left_parentheses(expression.left, expression, left_column)
-    return combine_many_renderers(
-        left_column,
-        RenderedQuery(f' {expression.op} '),
-        right_column,
+    return render_binary_node(
+        left=render_update_expression(expression.left, index),
+        right=render_update_expression(expression.right, index),
+        expression=expression,
     )
 
 

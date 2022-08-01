@@ -3,31 +3,35 @@ from typing import Any, Callable, Literal, Optional, Union
 
 OpLiterals = Literal[
     '=', ':=', '!=', '>', '>=', '<', '<=', '*', '/', '//', '%', '^',
-    'and', 'or', '+', '++', '-',
+    'and', 'or', '+', '++', '-', 'like', 'ilike',
     'not ', 'exists ', 'not exists ',
 ]
 SortOpLiterals = Literal['asc', 'desc']
 Ops: set[OpLiterals] = {
     '=', ':=', '!=', '>', '>=', '<', '<=',
     '*', '/', '//', '%', '^', 'and', 'or', '+', '++', '-',
+    'like', 'ilike',
     'not ', 'exists ', 'not exists ',
 }
 prec_dict: dict[OpLiterals, int] = {
-    '^': 8,
+    '^': 9,
 
-    '/': 7,
-    '*': 7,
-    '//': 7,
-    '%': 7,
+    '/': 8,
+    '*': 8,
+    '//': 8,
+    '%': 8,
 
-    '+': 6,
-    '-': 6,
-    '++': 6,
+    '+': 7,
+    '-': 7,
+    '++': 7,
 
-    '>': 5,
-    '<': 5,
-    '>=': 5,
-    '<=': 5,
+    '>': 6,
+    '<': 6,
+    '>=': 6,
+    '<=': 6,
+
+    'like': 5,
+    'ilike': 5,
 
     '=': 4,
     '!=': 4,
@@ -66,6 +70,12 @@ class OperationsMixin:
 
     def label(self, name: str) -> 'BinaryOp':
         return BinaryOp(':=', Column(name), self)
+
+    def like(self, other: Any) -> 'BinaryOp':
+        return BinaryOp('like', self, other)
+
+    def ilike(self, other: Any) -> 'BinaryOp':
+        return BinaryOp('ilike', self, other)
 
     def exists(self) -> 'UnaryOp':
         return UnaryOp('exists ', self)
@@ -140,7 +150,7 @@ class Column(OperationsMixin):
     column_name: str
     parent: Optional['Column'] = None
 
-    def select(self, *columns: Union['Column', SubSelect]) -> SubSelect:
+    def __call__(self, *columns: Union['Column', SubSelect]) -> SubSelect:
         return SubSelect(self, columns)
 
     def __getattr__(self, name: str) -> 'Column':

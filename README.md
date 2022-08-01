@@ -32,7 +32,7 @@ Many examples of queries are given in the [tests](https://github.com/Pentusha/ed
 
 ```python
 from edgeql_qb import EdgeDBModel
-from edgeql_qb.types import int16, text
+from edgeql_qb.types import int16, unsafe_text
 from edgedb.blocking_client import Client, create_client
 
 
@@ -46,7 +46,7 @@ insert = Movie.insert.values(
     director=(
         Person.select()
         .where(Person.c.id == director_id)
-        .limit(text('1')) 
+        .limit(unsafe_text('1')) 
     ),
     actors=Person.insert.values(
         first_name='Harrison', 
@@ -59,11 +59,11 @@ select = (
     Movie.select(
         Movie.c.title,
         Movie.c.year,
-        Movie.c.director.select(
+        Movie.c.director(
             Movie.c.director.first_name,
             Movie.c.director.last_name,
         ),
-        Movie.c.actors.select(
+        Movie.c.actors(
             Movie.c.actors.first_name,
             Movie.c.actors.last_name,
         ),

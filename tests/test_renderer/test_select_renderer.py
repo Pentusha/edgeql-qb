@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+from types import MappingProxyType
 from typing import Any
 
 import pytest
@@ -15,7 +16,7 @@ from edgeql_qb.types import (
     int16,
     int32,
     int64,
-    text,
+    unsafe_text,
 )
 
 _dt = datetime(2022, 5, 26, 0, 0, 0)
@@ -30,7 +31,7 @@ def test_select_column(client: Client) -> None:
     insert = A.insert.values(p_str='Hello').all()
     client.query(insert.query, **insert.context)
     assert rendered.query == 'select A { p_str }'
-    assert rendered.context == {}
+    assert rendered.context == MappingProxyType({})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 
@@ -65,9 +66,9 @@ def test_select_datatypes(
     assert rendered.query == (
         f'select A {{ {label} := .{column.column_name} != <{expected_type}>$select_0_0_0 }}'
     )
-    assert rendered.context == {
+    assert rendered.context == MappingProxyType({
         'select_0_0_0': isinstance(value, GenericHolder) and value.value or value,
-    }
+    })
 
 
 def test_select_operators(client: Client) -> None:
@@ -89,7 +90,7 @@ def test_select_operators(client: Client) -> None:
         'mod_result := .p_int32 % .p_int32 '
         '}'
     )
-    assert rendered.context == {'select_0_0_0': True, 'select_0_1_0': True}
+    assert rendered.context == MappingProxyType({'select_0_0_0': True, 'select_0_1_0': True})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 
@@ -99,10 +100,25 @@ def test_select_concatenation(client: Client) -> None:
     insert = A.insert.values(p_str='Hello').all()
     client.query(insert.query, **insert.context)
     assert rendered.query == 'select A { result := .p_str ++ .p_str }'
-    assert rendered.context == {}
+    assert rendered.context == MappingProxyType({})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     assert result[0].result == 'HelloHello'
+
+
+def test_select_like_ilike(client: Client) -> None:
+    insert_lower = A.insert.values(p_str='hello').all()
+    insert_upper = A.insert.values(p_str='HELLO').all()
+    client.query(insert_lower.query, **insert_lower.context)
+    client.query(insert_upper.query, **insert_upper.context)
+    select = A.select(A.c.p_str).where(A.c.p_str.like('%ell%')).all()
+    result = client.query(select.query, **select.context)
+    assert len(result) == 1
+    assert result[0].p_str == 'hello'
+
+    select = A.select(A.c.p_str).where(A.c.p_str.ilike('%ell%')).all()
+    result = client.query(select.query, **select.context)
+    assert len(result) == 2
 
 
 def test_select_unary_expression(client: Client) -> None:
@@ -134,7 +150,7 @@ def test_simple_select_with_simple_order_by(client: Client) -> None:
     client.query(insert2.query, **insert2.context)
     client.query(insert3.query, **insert3.context)
     assert rendered.query == 'select A { p_str } order by .p_str'
-    assert rendered.context == {}
+    assert rendered.context == MappingProxyType({})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 3
     assert [row.p_str for row in result] == ['1', '2', '3']
@@ -164,7 +180,7 @@ def test_simple_select_with_complex_order_by(client: Client) -> None:
         'then (.p_int32 + <int32>$order_by_1_1) * .p_int16 desc '
         'then not .p_bool'
     )
-    assert rendered.context == {'order_by_1_1': 2}
+    assert rendered.context == MappingProxyType({'order_by_1_1': 2})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 3
 
@@ -172,9 +188,9 @@ def test_simple_select_with_complex_order_by(client: Client) -> None:
 def test_nested_select_used(client: Client) -> None:
     rendered = Nested1.select(
         Nested1.c.name,
-        Nested1.c.nested2.select(
+        Nested1.c.nested2(
             Nested1.c.nested2.name,
-            Nested1.c.nested3.select(
+            Nested1.c.nested3(
                 Nested1.c.nested2.nested3.name,
             ),
         ),
@@ -188,7 +204,7 @@ def test_nested_select_used(client: Client) -> None:
     ).all()
     client.query(insert.query, **insert.context)
     assert rendered.query == 'select Nested1 { name, nested2: { name, nested3: { name } } }'
-    assert rendered.context == {}
+    assert rendered.context == MappingProxyType({})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     res = result[0]
@@ -211,7 +227,7 @@ def test_select_exists(client: Client) -> None:
     ).all()
     client.query(insert.query, **insert.context)
     assert rendered.query == 'select Nested1 { name, nested2_exists := exists .nested2 }'
-    assert rendered.context == {}
+    assert rendered.context == MappingProxyType({})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     res = result[0]
@@ -231,7 +247,7 @@ def test_select_not_exists(client: Client) -> None:
     insert = Nested1.insert.values(name='p1').all()
     client.query(insert.query, **insert.context)
     assert rendered.query == 'select Nested1 { name, nested2_not_exists := not exists .nested2 }'
-    assert rendered.context == {}
+    assert rendered.context == MappingProxyType({})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 2
 
@@ -253,7 +269,7 @@ def test_select_not_exists(client: Client) -> None:
             '.p_int32 * (.p_int64 + <int64>$filter_1_0_1) > <int64>$filter_1_0_0',
             {'filter_1_0_1': 1, 'filter_1_0_0': 2},
         ),
-        (A.c.p_str == text("'Hello'"), ".p_str = 'Hello'", {}),
+        (A.c.p_str == unsafe_text("'Hello'"), ".p_str = 'Hello'", {}),
     ),
 )
 def test_complex_filter_with_literal(
@@ -266,7 +282,7 @@ def test_complex_filter_with_literal(
     client.query(insert.query, **insert.context)
     rendered = A.select(A.c.p_int64).where(condition).all()
     assert rendered.query == f'select A {{ p_int64 }} filter {expected_condition}'
-    assert rendered.context == expected_context
+    assert rendered.context == MappingProxyType(expected_context)
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 
@@ -280,7 +296,7 @@ def test_filter_with_unary_op(client: Client) -> None:
         .all()
     )
     assert rendered.query == 'select A { p_int64 } filter not .p_bool'
-    assert rendered.context == {}
+    assert rendered.context == MappingProxyType({})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     assert result[0].p_int64 == 11
@@ -296,7 +312,7 @@ def test_nested_filter(client: Client) -> None:
     ).all()
     client.query(insert.query, **insert.context)
     assert rendered.query == 'select Nested1 { name } filter .nested2.name = <str>$filter_1_0_0'
-    assert rendered.context == {'filter_1_0_0': 'n2'}
+    assert rendered.context == MappingProxyType({'filter_1_0_0': 'n2'})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 
@@ -352,7 +368,7 @@ def test_limit_offset(client: Client) -> None:
         'offset <int64>$offset_0 '
         'limit <int64>$limit_0'
     )
-    assert rendered.context == {'limit_0': 2, 'offset_0': 4}
+    assert rendered.context == MappingProxyType({'limit_0': 2, 'offset_0': 4})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     assert result[0].p_int16 == 5

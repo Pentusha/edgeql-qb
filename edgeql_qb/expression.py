@@ -17,7 +17,7 @@ from edgeql_qb.operators import (
     UnaryOp,
     sort_ops,
 )
-from edgeql_qb.types import text
+from edgeql_qb.types import unsafe_text
 
 if TYPE_CHECKING:
     from edgeql_qb.render.types import RenderedQuery  # pragma: no cover
@@ -71,7 +71,7 @@ AnyExpression = (
     | SortedExpression
     | OperationsMixin
     | SubQueryExpression
-    | text
+    | unsafe_text
 )
 FilterExpressions = BinaryOp | UnaryOp
 StackType = TypeVar('StackType')
@@ -112,7 +112,7 @@ def _(value: SubQuery) -> SymbolType:
 
 
 @_determine_type.register
-def _(value: text) -> SymbolType:
+def _(value: unsafe_text) -> SymbolType:
     return SymbolType.text
 
 

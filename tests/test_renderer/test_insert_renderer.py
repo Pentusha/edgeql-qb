@@ -1,7 +1,9 @@
+from types import MappingProxyType
+
 from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
-from edgeql_qb.types import int16, text
+from edgeql_qb.types import int16, unsafe_text
 
 A = EdgeDBModel('A')
 Nested1 = EdgeDBModel('Nested1')
@@ -14,7 +16,7 @@ def test_insert_literals(client: Client) -> None:
     assert rendered.query == (
         'insert A { p_int16 := <int16>$insert_1_0_0, p_str := <str>$insert_1_1_0 }'
     )
-    assert rendered.context == {'insert_1_0_0': 1, 'insert_1_1_0': 'Hello'}
+    assert rendered.context == MappingProxyType({'insert_1_0_0': 1, 'insert_1_1_0': 'Hello'})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 
@@ -32,11 +34,11 @@ def test_nested_insert(client: Client) -> None:
         'name := <str>$insert_2_0_0, nested3 := (insert Nested3 { name := '
         '<str>$insert_3_0_0 }) }) }'
     )
-    assert rendered.context == {
+    assert rendered.context == MappingProxyType({
         'insert_1_0_0': 'n1',
         'insert_2_0_0': 'n2',
         'insert_3_0_0': 'n3',
-    }
+    })
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 
@@ -49,8 +51,8 @@ def test_insert_from_select(client: Client) -> None:
         nested2=(
             Nested2.select()
             .where(Nested2.c.name == 'n2')
-            .limit(text('1'))
-            .offset(text('0'))
+            .limit(unsafe_text('1'))
+            .offset(unsafe_text('0'))
         ),
     ).all()
     result = client.query(rendered.query, **rendered.context)
@@ -58,7 +60,7 @@ def test_insert_from_select(client: Client) -> None:
 
     query = Nested1.select(
         Nested1.c.name,
-        Nested1.c.nested2.select(Nested1.c.nested2.name),
+        Nested1.c.nested2(Nested1.c.nested2.name),
     ).all()
 
     result = client.query(query.query, **query.context)
