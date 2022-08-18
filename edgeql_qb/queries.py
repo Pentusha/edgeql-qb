@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from edgeql_qb.expression import Expression, SelectExpressions, SubQuery
@@ -55,45 +55,17 @@ class SelectQuery(SubQuery):
     offset_val: int | unsafe_text | None = None
 
     def where(self, compared: BinaryOp | UnaryOp) -> 'SelectQuery':
-        return SelectQuery(
-            model=self.model,
-            select=self.select,
-            limit_val=self.limit_val,
-            offset_val=self.offset_val,
-            filters=(*self.filters, Expression(compared)),
-            ordered_by=self.ordered_by,
-        )
+        return replace(self, filters=(*self.filters, Expression(compared)))
 
     def order_by(self, *columns: SortedExpression | Column | UnaryOp) -> 'SelectQuery':
         new_expressions = [Expression(exp) for exp in columns]
-        return SelectQuery(
-            model=self.model,
-            select=self.select,
-            limit_val=self.limit_val,
-            offset_val=self.offset_val,
-            filters=self.filters,
-            ordered_by=(*self.ordered_by, *new_expressions),
-        )
+        return replace(self, ordered_by=(*self.ordered_by, *new_expressions))
 
     def limit(self, value: int | unsafe_text) -> 'SelectQuery':
-        return SelectQuery(
-            model=self.model,
-            select=self.select,
-            limit_val=value,
-            offset_val=self.offset_val,
-            filters=self.filters,
-            ordered_by=self.ordered_by,
-        )
+        return replace(self, limit_val=value)
 
     def offset(self, value: int | unsafe_text) -> 'SelectQuery':
-        return SelectQuery(
-            model=self.model,
-            select=self.select,
-            limit_val=self.limit_val,
-            offset_val=value,
-            filters=self.filters,
-            ordered_by=self.ordered_by,
-        )
+        return replace(self, offset_val=value)
 
     def all(self, query_index: int = 0) -> RenderedQuery:
         rendered_select = render_select(self.model.name, self.select, self.model.module)
@@ -116,10 +88,7 @@ class DeleteQuery:
     filters: tuple[Expression, ...] = field(default_factory=tuple)
 
     def where(self, compared: BinaryOp | UnaryOp) -> 'DeleteQuery':
-        return DeleteQuery(
-            model=self.model,
-            filters=(*self.filters, Expression(compared)),
-        )
+        return replace(self, filters=(*self.filters, Expression(compared)))
 
     def all(self, query_index: int = 0) -> RenderedQuery:
         rendered_delete = render_delete(self.model.name)
@@ -138,10 +107,7 @@ class InsertQuery(SubQuery):
             Expression(BinaryOp(':=', Column(name), exp))
             for name, exp in to_insert.items()
         ]
-        return InsertQuery(
-            model=self.model,
-            values_to_insert=values_to_insert,
-        )
+        return replace(self, values_to_insert=values_to_insert)
 
     def all(self, query_index: int = 0) -> RenderedQuery:
         assert self.values_to_insert
@@ -157,11 +123,7 @@ class UpdateQuery:
     filters: tuple[Expression, ...] = field(default_factory=tuple)
 
     def where(self, compared: BinaryOp | UnaryOp) -> 'UpdateQuery':
-        return UpdateQuery(
-            model=self.model,
-            filters=(*self.filters, Expression(compared)),
-            values_to_update=self.values_to_update
-        )
+        return replace(self, filters=(*self.filters, Expression(compared)))
 
     def values(self, **to_update: Any) -> 'UpdateQuery':
         assert to_update
@@ -169,11 +131,7 @@ class UpdateQuery:
             Expression(BinaryOp(':=', Column(name), exp))
             for name, exp in to_update.items()
         )
-        return UpdateQuery(
-            model=self.model,
-            values_to_update=values_to_update,
-            filters=self.filters,
-        )
+        return replace(self, values_to_update=values_to_update)
 
     def all(self, query_index: int = 0) -> RenderedQuery:
         assert self.values_to_update
