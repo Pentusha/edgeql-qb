@@ -12,23 +12,14 @@
 * Minimal required version of python is 3.10. Not sure if I'll ever do a backport.
 * There is no external dependencies, even on EdgeDB itself.
 
-# TODO
-* Implement `upsert` queries.
-* Support functions calls.
-* Aggregations.
-* Support array/json types
-* Build a simple queries `select [1,2,3]`
-* Optional (Maybe) filters.
-* Describe response schema.
-* Support if/else statements.
-* Validate query against declared schema.
-* It would be cool to have mypy plugin.
-* Optimize involution op. `-(-a) = a`, `not not a = a` etc.
-* Optimize binary op. `a - a = -a + a = empty`
+## Features
+* Supports building `select`, `group`, `update`, `delete` and `insert` queries.
+* Supports filtering and ordering.
+* Support limit and offset.
+* Supports nested scopes.
 
 # Usage examples
 Many examples of queries are given in the [tests](https://github.com/Pentusha/edgeql-qb/tree/master/tests/test_renderer) directory.
-
 
 ```python
 from edgeql_qb import EdgeDBModel
@@ -74,10 +65,27 @@ select = (
 
 delete = Movie.delete.where(Movie.c.title == 'Blade Runner 2049').all()
 
+decade = (Movie.c.year // 10).label('decade')
+group = Movie.group().using(decade).by(decade).all()
+
 client.query(insert.query, **insert.context)
 result = client.query(select.query, **select.context)
-client.query(delete.query, **delete.context)
 
-decade = (Movie.c.year // 10).label('decade')
-Movie.group().using(decade).by(decade).all()
+movies_by_decade = client.query(group.query, group.context)
+
+client.query(delete.query, **delete.context)
 ```
+
+# TODO
+* Implement `upsert` queries.
+* Support functions calls.
+* Aggregations.
+* Support array/json types
+* Build a simple queries `select [1,2,3]`
+* Optional (Maybe) filters.
+* Describe response schema.
+* Support if/else statements.
+* Validate query against declared schema.
+* It would be cool to have mypy plugin.
+* Optimize involution op. `-(-a) = a`, `not not a = a` etc.
+* Optimize binary op. `a - a = -a + a = empty`
