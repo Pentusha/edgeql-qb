@@ -635,7 +635,7 @@ testing = ["coverage (>=6.2)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "009d30694697301dcd1b0f65b0ba53610b4957903193a6298c31ec231358e33a"
+content-hash = "37bdd694999cbcf00ef2b1b4d4f0be0498340199f40d79de5c8cd8ed2eb75fd0"
 
 [metadata.files]
 aiofiles = [
