@@ -253,7 +253,7 @@ def test_select_not_exists(client: Client) -> None:
 
 
 @pytest.mark.parametrize(
-    'condition, expected_condition, expected_context',
+    ['condition', 'expected_condition', 'expected_context'],
     (
         (A.c.p_int32 < A.c.p_int64, '.p_int32 < .p_int64', {}),
         (A.c.p_int64 != int64(1), '.p_int64 != <int64>$filter_1_0_0', {'filter_1_0_0': 1}),
@@ -340,15 +340,17 @@ def test_select_expression_with_literal(client: Client) -> None:
     assert result[0].my_sum == 12
 
 
-def test_select_binary_optimisations() -> None:
-    rendered = A.select((A.c.p_int64 - -A.c.p_int64).label('my_sum')).all()
-    assert rendered.query == 'select A { my_sum := .p_int64 + .p_int64 }'
-
-    rendered = A.select((A.c.p_int64 + -A.c.p_int64).label('my_sum')).all()
-    assert rendered.query == 'select A { my_sum := .p_int64 - .p_int64 }'
-
-    rendered = A.select((A.c.p_int64 - +A.c.p_int64).label('my_sum')).all()
-    assert rendered.query == 'select A { my_sum := .p_int64 - .p_int64 }'
+@pytest.mark.parametrize(
+    ['expression', 'expected_query'],
+    (
+        (A.c.p_int64 - -A.c.p_int64, 'select A { my_sum := .p_int64 + .p_int64 }'),
+        (A.c.p_int64 + -A.c.p_int64, 'select A { my_sum := .p_int64 - .p_int64 }'),
+        (A.c.p_int64 - +A.c.p_int64, 'select A { my_sum := .p_int64 - .p_int64 }'),
+    ),
+)
+def test_select_binary_optimisations(expression: BinaryOp, expected_query: str) -> None:
+    rendered = A.select(expression.label('my_sum')).all()
+    assert rendered.query == expected_query
 
 
 def test_limit_offset(client: Client) -> None:
