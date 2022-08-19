@@ -3,7 +3,7 @@ from types import MappingProxyType
 from typing import Any
 
 from edgeql_qb.expression import AnyExpression, Expression, QueryLiteral
-from edgeql_qb.operators import Column, Node, SubSelect
+from edgeql_qb.operators import Alias, Column, Node, SubSelect
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
     combine_many_renderers,
@@ -50,6 +50,11 @@ def render_select_expression(
 @render_select_expression.register
 def _(expression: Column, index: int, column_prefix: str = '') -> RenderedQuery:
     return RenderedQuery(f'{column_prefix}{expression.column_name}')
+
+
+@render_select_expression.register
+def _(expression: Alias, index: int, column_prefix: str = '') -> RenderedQuery:
+    return RenderedQuery(expression.name)
 
 
 @render_select_expression.register

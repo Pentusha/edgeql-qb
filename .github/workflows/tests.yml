@@ -46,9 +46,3 @@ jobs:
         env:
           PYTHONPATH: ..
         working-directory: tests
-
-      - uses: bjoluc/semantic-release-config-poetry@v1
-        if: github.repository_owner == 'Pentusha' && github.event_name == 'push' && github.ref == 'refs/heads/master'
-        with:
-          pypi_token: ${{ secrets.PYPI_TOKEN }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}

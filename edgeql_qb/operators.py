@@ -69,7 +69,7 @@ class OperationsMixin:
         return inner
 
     def label(self, name: str) -> 'BinaryOp':
-        return BinaryOp(':=', Column(name), self)
+        return BinaryOp(':=', Alias(name), self)
 
     def like(self, other: Any) -> 'BinaryOp':
         return BinaryOp('like', self, other)
@@ -161,6 +161,11 @@ class Column(OperationsMixin):
 
     def __ne__(self, other: Any) -> BinaryOp:  # type: ignore
         return BinaryOp('!=', self, other)
+
+
+@dataclass(slots=True, frozen=True)
+class Alias(OperationsMixin):
+    name: str
 
 
 class Columns:

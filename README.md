@@ -76,5 +76,8 @@ delete = Movie.delete.where(Movie.c.title == 'Blade Runner 2049').all()
 
 client.query(insert.query, **insert.context)
 result = client.query(select.query, **select.context)
-client.delete(delete.query, **delete.context)
+client.query(delete.query, **delete.context)
+
+decade = (Movie.c.year // 10).label('decade')
+Movie.group().using(decade).by(decade).all()
 ```

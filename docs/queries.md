@@ -119,15 +119,49 @@ Movie.insert.values(
 
 ```python
 Movie.update.values(
-    budget_usd=185_000_000,
+    budget_usd=int16(185_000_000),
 ).where(Movie.c.title == 'Blade Runner 2049').all()
 ```
-will produce = 
+will produce: 
+```
+update Movie filter .title = <str>$filter_1_0_0 set { budget_usd := <int16>$update_1_0_0 }
+{'filter_1_0_0': 'Blade Runner 2049', 'update_1_0_0': 185000000}
 ```
 
-```
 # Delete
 
 ```python
 Movie.delete.where(Movie.c.title == 'Blade Runner 2049').all()
+```
+will produce:
+```
+delete Movie filter .title = <str>$filter_1_0_0
+{'filter_1_0_0': 'Blade Runner 2049'}
+```
+
+# Group
+```python
+Movie.group(Movie.c.title).by(Movie.c.year).all()
+```
+will produce:
+```
+group Movie { title } by .year
+```
+
+More complex example:
+```python
+decade = (Movie.c.year // 10).label('decade')
+Movie.group().using(decade).by(decade).all()
+```
+will produce:
+```
+group Movie using decade := .year // $using_0_0_0 by decade
+{'$using_0_0_0': 10}
+```
+
+Using syntax also supports nested expressions.
+```python
+weight_kg = (Person.c.weight_grams / 1000).label('weight_kg')
+height_cm = (Person.c.height_m * 100).label('height_cm')
+bmi = (weight_kg / height_cm ** 2).label('bmi')
 ```

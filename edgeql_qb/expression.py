@@ -6,6 +6,7 @@ from functools import singledispatch
 from typing import TYPE_CHECKING, Any, Generic, Iterator, TypeVar, cast
 
 from edgeql_qb.operators import (
+    Alias,
     BinaryOp,
     Column,
     Node,
@@ -37,6 +38,7 @@ class SymbolType(Enum):
     literal = auto()
     operator = auto()
     subquery = auto()
+    alias = auto()
     text = auto()
 
 
@@ -112,6 +114,11 @@ def _(value: SubQuery) -> SymbolType:
 
 
 @_determine_type.register
+def _(value: Alias) -> SymbolType:
+    return SymbolType.alias
+
+
+@_determine_type.register
 def _(value: unsafe_text) -> SymbolType:
     return SymbolType.text
 
@@ -127,12 +134,13 @@ def _(value: str) -> SymbolType:
 
 
 class Symbol:
-    __slots__ = 'value', 'type', 'arity'
+    __slots__ = 'value', 'type', 'arity', 'depth'
 
-    def __init__(self, value: Any, arity: int | None = None):
+    def __init__(self, value: Any, arity: int | None = None, depth: int = 0):
         self.value = value
         self.type = _determine_type(value)
         self.arity = arity
+        self.depth = depth
 
 
 def build_binary_op(op: OpLiterals, left: Node, right: Node) -> Node:
@@ -146,8 +154,7 @@ def build_binary_op(op: OpLiterals, left: Node, right: Node) -> Node:
     ):
         # a + -b = a - +b = a - b
         return Node(left, '-', right.left)
-    else:
-        return Node(left, op, right)
+    return Node(left, op, right)
 
 
 def build_unary_op(op: OpLiterals, argument: Node) -> Node:
@@ -161,7 +168,7 @@ def evaluate(
     expression_index: int,
 ) -> None:
     match symbol.type:
-        case SymbolType.column | SymbolType.subselect | SymbolType.text:
+        case SymbolType.column | SymbolType.subselect | SymbolType.text | SymbolType.alias:
             stack.push(symbol.value)
         case SymbolType.subquery:
             stack.push(SubQueryExpression(symbol.value, query_index))
@@ -197,19 +204,26 @@ class Expression:
     def _to_polish_notation(
             self,
             expr: AnyExpression,
+            depth: int = 0,
     ) -> Iterator[Symbol]:
         match expr:
-            case Column():
-                yield Symbol(expr)
+            case Column() | Alias():
+                yield Symbol(expr, depth=depth)
             case UnaryOp(operation, element):
-                yield Symbol(operation, arity=1)
-                yield from self._to_polish_notation(element)
+                yield Symbol(operation, arity=1, depth=depth)
+                yield from self._to_polish_notation(element, depth + 1)
             case BinaryOp(operation, left, right):
-                yield Symbol(operation, arity=2)
-                yield from self._to_polish_notation(left)
-                yield from self._to_polish_notation(right)
+                yield Symbol(operation, arity=2, depth=depth)
+                if isinstance(left, BinaryOp) and left.operation == ':=' and depth > 0:
+                    yield from self._to_polish_notation(left.left, depth + 1)
+                else:
+                    yield from self._to_polish_notation(left, depth + 1)
+                if isinstance(right, BinaryOp) and right.operation == ':=' and depth > 0:
+                    yield from self._to_polish_notation(right.left, depth + 1)
+                else:
+                    yield from self._to_polish_notation(right, depth + 1)
             case SortedExpression(expression, direction):
-                yield Symbol(direction)
-                yield from self._to_polish_notation(expression)
+                yield Symbol(direction, depth=depth)
+                yield from self._to_polish_notation(expression, depth + 1)
             case _:
-                yield Symbol(expr)
+                yield Symbol(expr, depth=depth)

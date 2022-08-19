@@ -11,6 +11,11 @@ from edgeql_qb.operators import (
 )
 from edgeql_qb.render.condition import render_conditions
 from edgeql_qb.render.delete import render_delete
+from edgeql_qb.render.group import (
+    render_group,
+    render_group_by_expressions,
+    render_using_expressions,
+)
 from edgeql_qb.render.insert import render_insert
 from edgeql_qb.render.insert import render_values as render_insert_values
 from edgeql_qb.render.order_by import render_order_by
@@ -31,6 +36,9 @@ class EdgeDBModel:
 
     def select(self, *selectables: SelectExpressions) -> 'SelectQuery':
         return SelectQuery(self, select=tuple(Expression(sel) for sel in selectables))
+
+    def group(self, *selectables: SelectExpressions) -> 'GroupQuery':
+        return GroupQuery(self, select=tuple(Expression(sel) for sel in selectables))
 
     @property
     def delete(self) -> 'DeleteQuery':
@@ -79,6 +87,31 @@ class SelectQuery(SubQuery):
             rendered_order_by,
             rendered_offset,
             rendered_limit,
+        )
+
+
+@dataclass(slots=True, frozen=True)
+class GroupQuery:
+    model: EdgeDBModel
+    select: tuple[Expression, ...] = field(default_factory=tuple)
+    group_by: tuple[Column, ...] = field(default_factory=tuple)
+    using_expressions: tuple[Expression, ...] = field(default_factory=tuple)
+
+    def using(self, *using_expressions: BinaryOp) -> 'GroupQuery':
+        expressions = tuple(Expression(exp) for exp in using_expressions)
+        return replace(self, using_expressions=expressions)
+
+    def by(self, *group_by: Column | BinaryOp) -> 'GroupQuery':
+        return replace(self, group_by=group_by)
+
+    def all(self, query_index: int = 0) -> RenderedQuery:
+        rendered_group = render_group(self.model.name, self.select)
+        rendered_using = render_using_expressions(self.using_expressions)
+        rendered_group_by = render_group_by_expressions(self.group_by)
+        return combine_many_renderers(
+            rendered_group,
+            rendered_using,
+            rendered_group_by,
         )
 
 
