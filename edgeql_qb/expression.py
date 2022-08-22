@@ -215,13 +215,11 @@ class Expression:
             case BinaryOp(operation, left, right):
                 yield Symbol(operation, arity=2, depth=depth)
                 if isinstance(left, BinaryOp) and left.operation == ':=' and depth > 0:
-                    yield from self._to_polish_notation(left.left, depth + 1)
-                else:
-                    yield from self._to_polish_notation(left, depth + 1)
+                    left = left.left
                 if isinstance(right, BinaryOp) and right.operation == ':=' and depth > 0:
-                    yield from self._to_polish_notation(right.left, depth + 1)
-                else:
-                    yield from self._to_polish_notation(right, depth + 1)
+                    right = right.left
+                yield from self._to_polish_notation(left, depth + 1)
+                yield from self._to_polish_notation(right, depth + 1)
             case SortedExpression(expression, direction):
                 yield Symbol(direction, depth=depth)
                 yield from self._to_polish_notation(expression, depth + 1)
