@@ -5,6 +5,7 @@ from enum import Enum, auto
 from functools import singledispatch
 from typing import TYPE_CHECKING, Any, Generic, Iterator, TypeVar, cast
 
+from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import (
     Alias,
     BinaryOp,
@@ -40,6 +41,7 @@ class SymbolType(Enum):
     subquery = auto()
     alias = auto()
     text = auto()
+    func_invocation = auto()
 
 
 SelectExpressions = (
@@ -73,6 +75,7 @@ AnyExpression = (
     | SortedExpression
     | OperationsMixin
     | SubQueryExpression
+    | FuncInvocation
     | unsafe_text
 )
 FilterExpressions = BinaryOp | UnaryOp
@@ -121,6 +124,11 @@ def _(value: Alias) -> SymbolType:
 @_determine_type.register
 def _(value: unsafe_text) -> SymbolType:
     return SymbolType.text
+
+
+@_determine_type.register
+def _(value: FuncInvocation) -> SymbolType:
+    return SymbolType.func_invocation
 
 
 @_determine_type.register
@@ -187,6 +195,14 @@ def evaluate(
         case SymbolType.sort_direction:
             sorted_expression = stack.pop()
             stack.push(SortedExpression(cast(OperationsMixin, sorted_expression), symbol.value))
+        case SymbolType.func_invocation:
+            args = stack.popn(symbol.value.arity)
+            invocation = FuncInvocation(
+                func=symbol.value.func,
+                args=tuple(args),
+                arity=symbol.value.arity,
+            )
+            stack.push(invocation)
         case _:  # pragma: no cover
             assert False
 
@@ -208,20 +224,31 @@ class Expression:
     ) -> Iterator[Symbol]:
         match expr:
             case Column() | Alias():
-                yield Symbol(expr, depth=depth)
+                yield Symbol(expr, depth=depth + 1)
             case UnaryOp(operation, element):
-                yield Symbol(operation, arity=1, depth=depth)
+                yield Symbol(operation, arity=1, depth=depth + 1)
                 yield from self._to_polish_notation(element, depth + 1)
             case BinaryOp(operation, left, right):
-                yield Symbol(operation, arity=2, depth=depth)
+                yield Symbol(operation, arity=2, depth=depth + 1)
+
+                # replace nested alias assignments with corresponding symbol
+                # a := (b := value) + 1 -> a := b + 1
+                #   ^ 0   ^ 1       ^ 2 depth
                 if isinstance(left, BinaryOp) and left.operation == ':=' and depth > 0:
                     left = left.left
+                # a := 1 + (b := value) -> a := 1 + b
+                #   ^ 0  ^ 2  ^ 1 depth
                 if isinstance(right, BinaryOp) and right.operation == ':=' and depth > 0:
                     right = right.left
+
                 yield from self._to_polish_notation(left, depth + 1)
                 yield from self._to_polish_notation(right, depth + 1)
             case SortedExpression(expression, direction):
                 yield Symbol(direction, depth=depth)
                 yield from self._to_polish_notation(expression, depth + 1)
+            case FuncInvocation(_, args):
+                yield Symbol(expr, arity=expr.arity, depth=depth)
+                for arg in args:
+                    yield from self._to_polish_notation(arg, depth + 1)
             case _:
                 yield Symbol(expr, depth=depth)

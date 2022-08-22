@@ -3,6 +3,7 @@ from types import MappingProxyType
 from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
+from edgeql_qb.func import math
 from edgeql_qb.types import int16, unsafe_text
 
 A = EdgeDBModel('A')
@@ -17,6 +18,14 @@ def test_insert_literals(client: Client) -> None:
         'insert A { p_int16 := <int16>$insert_1_0_0, p_str := <str>$insert_1_1_0 }'
     )
     assert rendered.context == MappingProxyType({'insert_1_0_0': 1, 'insert_1_1_0': 'Hello'})
+    result = client.query(rendered.query, **rendered.context)
+    assert len(result) == 1
+
+
+def test_insert_from_function_from_literal(client: Client) -> None:
+    rendered = A.insert.values(p_int16=math.abs(int16(-1))).all()
+    assert rendered.query == 'insert A { p_int16 := math::abs(<int16>$insert_1_0_0) }'
+    assert rendered.context == MappingProxyType({'insert_1_0_0': -1})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 

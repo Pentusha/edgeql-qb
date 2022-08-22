@@ -1,5 +1,5 @@
 from functools import reduce, singledispatch
-from typing import Any, Literal
+from typing import Any
 
 from edgeql_qb.expression import AnyExpression, Expression, QueryLiteral
 from edgeql_qb.operators import Alias, BinaryOp, Column, Node
@@ -12,8 +12,6 @@ from edgeql_qb.render.tools import (
     render_binary_node,
 )
 from edgeql_qb.render.types import RenderedQuery
-
-Side = Literal['left', 'right']
 
 
 def render_group(model_name: str, select: tuple[Expression, ...]) -> RenderedQuery:

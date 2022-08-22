@@ -1,6 +1,7 @@
 from functools import reduce, singledispatch
 
 from edgeql_qb.expression import AnyExpression, Expression, QueryLiteral
+from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Column, Node
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
@@ -32,6 +33,20 @@ def render_conditions(filters: tuple[Expression, ...], query_index: int) -> Rend
 @singledispatch
 def render_condition(expression: AnyExpression, index: int) -> RenderedQuery:
     raise NotImplementedError(f'{expression!r} {index=} is not supported')  # pragma: no cover
+
+
+@render_condition.register
+def _(expression: FuncInvocation, index: int) -> RenderedQuery:
+    func = expression.func
+    arg_renderers = [
+        render_condition(arg, index)
+        for arg in expression.args
+    ]
+    return combine_many_renderers(
+        RenderedQuery(f'{func.module}::{func.name}('),
+        reduce(join_renderers(', '), arg_renderers),
+        RenderedQuery(')'),
+    )
 
 
 @render_condition.register

@@ -2,6 +2,7 @@ from dataclasses import dataclass, field, replace
 from typing import Any
 
 from edgeql_qb.expression import Expression, SelectExpressions, SubQuery
+from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import (
     BinaryOp,
     Column,
@@ -62,17 +63,20 @@ class SelectQuery(SubQuery):
     limit_val: int | unsafe_text | None = None
     offset_val: int | unsafe_text | None = None
 
-    def where(self, compared: BinaryOp | UnaryOp) -> 'SelectQuery':
+    def where(self, compared: BinaryOp | UnaryOp | FuncInvocation) -> 'SelectQuery':
         return replace(self, filters=(*self.filters, Expression(compared)))
 
-    def order_by(self, *columns: SortedExpression | Column | UnaryOp) -> 'SelectQuery':
+    def order_by(
+        self,
+        *columns: SortedExpression | Column | UnaryOp | FuncInvocation,
+    ) -> 'SelectQuery':
         new_expressions = [Expression(exp) for exp in columns]
         return replace(self, ordered_by=(*self.ordered_by, *new_expressions))
 
-    def limit(self, value: int | unsafe_text) -> 'SelectQuery':
+    def limit(self, value: int | FuncInvocation | unsafe_text) -> 'SelectQuery':
         return replace(self, limit_val=value)
 
-    def offset(self, value: int | unsafe_text) -> 'SelectQuery':
+    def offset(self, value: int | FuncInvocation | unsafe_text) -> 'SelectQuery':
         return replace(self, offset_val=value)
 
     def all(self, query_index: int = 0) -> RenderedQuery:
