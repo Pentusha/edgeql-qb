@@ -78,7 +78,7 @@ def test_insert_from_select(client: Client) -> None:
         nested2=(
             Nested2.select()
             .where(Nested2.c.name == 'n2')
-            .limit(unsafe_text('1'))
+            .limit1
             .offset(unsafe_text('0'))
         ),
     ).all()

@@ -35,7 +35,7 @@ Query builder for EdgeDB
     - [x] function calls
     - [x] nested queries
   - [x] delete
-    - [x] delete without filters 
+    - [x] delete without filters
     - [x] function calls
   - [x] insert
     - [x] nested inserts
@@ -100,10 +100,10 @@ insert = Movie.insert.values(
     director=(
         Person.select()
         .where(Person.c.id == director_id)
-        .limit(unsafe_text('1')) 
+        .limit1
     ),
     actors=Person.insert.values(
-        first_name='Harrison', 
+        first_name='Harrison',
         last_name='Ford',
     ),
 ).all()
@@ -134,7 +134,7 @@ group = Movie.group().using(decade).by(decade).all()
 client.query(insert.query, **insert.context)
 result = client.query(select.query, **select.context)
 
-movies_by_decade = client.query(group.query, group.context)
+movies_by_decade = client.query(group.query, **group.context)
 
 client.query(delete.query, **delete.context)
 ```

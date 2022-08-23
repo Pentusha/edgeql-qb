@@ -76,6 +76,10 @@ class SelectQuery(SubQuery):
     def limit(self, value: int | FuncInvocation | unsafe_text) -> 'SelectQuery':
         return replace(self, limit_val=value)
 
+    @property
+    def limit1(self) -> 'SelectQuery':
+        return replace(self, limit_val=unsafe_text('1'))
+
     def offset(self, value: int | FuncInvocation | unsafe_text) -> 'SelectQuery':
         return replace(self, offset_val=value)
 

@@ -4,7 +4,7 @@ from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
 from edgeql_qb.func import std
-from edgeql_qb.types import int16, unsafe_text
+from edgeql_qb.types import int16
 
 A = EdgeDBModel('A')
 Nested1 = EdgeDBModel('Nested1')
@@ -66,7 +66,7 @@ def test_update_subquery(client: Client) -> None:
         nested2=(
             Nested2.select()
             .where(Nested2.c.name == 'new n2')
-            .limit(unsafe_text('1'))
+            .limit1
         )
     ).all()
     assert rendered.query == (
