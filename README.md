@@ -56,7 +56,7 @@ Query builder for EdgeDB
   - [x] std::bytes
   - [x] std::datetime
   - [x] std::decimal
-  - [ ] std::duration
+  - [x] std::duration
   - [x] std::float32
   - [x] std::float64
   - [x] std::int16
