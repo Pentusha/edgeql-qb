@@ -37,4 +37,7 @@ type Nested1 {
     link nested2 -> Nested2;
 }
 
+function exclamation(word: str) -> str
+  using (word ++ '!');
+
 }

@@ -1,8 +1,9 @@
 from functools import reduce, singledispatch
-from types import MappingProxyType
+from types import MappingProxyType, NoneType
 from typing import Any
 
 from edgeql_qb.expression import AnyExpression, Expression, QueryLiteral
+from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Alias, Column, Node, SubSelect
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
@@ -53,6 +54,20 @@ def _(expression: Column, index: int, column_prefix: str = '') -> RenderedQuery:
 
 
 @render_select_expression.register
+def _(expression: FuncInvocation, index: int, column_prefix: str = '') -> RenderedQuery:
+    func = expression.func
+    arg_renderers = [
+        render_select_expression(arg, index, column_prefix)
+        for arg in expression.args
+    ]
+    return combine_many_renderers(
+        RenderedQuery(f'{func.module}::{func.name}('),
+        reduce(join_renderers(', '), arg_renderers),
+        RenderedQuery(')'),
+    )
+
+
+@render_select_expression.register
 def _(expression: Alias, index: int, column_prefix: str = '') -> RenderedQuery:
     return RenderedQuery(expression.name)
 
@@ -92,7 +107,32 @@ def _(expression: Node, index: int, column_prefix: str = '') -> RenderedQuery:
 
 @singledispatch
 def render_offset(offset: Any, query_index: int) -> RenderedQuery:
+    raise NotImplementedError(f'{offset!r} {query_index=} is not supported')  # pragma: no cover
+
+
+@render_offset.register
+def _(offset: NoneType, query_index: int) -> RenderedQuery:
     return RenderedQuery()
+
+
+@render_offset.register
+def _(offset: QueryLiteral, query_index: int) -> RenderedQuery:
+    name = f'offset_{query_index}_{offset.expression_index}'
+    return render_query_literal(offset.value, name)
+
+
+@render_offset.register
+def _(offset: FuncInvocation, query_index: int) -> RenderedQuery:
+    func = offset.func
+    arg_renderers = [
+        render_offset(Expression(arg).to_infix_notation(query_index), query_index)
+        for arg in offset.args
+    ]
+    return combine_many_renderers(
+        RenderedQuery(f' offset {func.module}::{func.name}('),
+        reduce(join_renderers(', '), arg_renderers),
+        RenderedQuery(')'),
+    )
 
 
 @render_offset.register
@@ -108,6 +148,11 @@ def _(offset: unsafe_text, query_index: int) -> RenderedQuery:
 
 @singledispatch
 def render_limit(limit: Any, query_index: int) -> RenderedQuery:
+    raise NotImplementedError(f'{limit!r} {query_index=} is not supported')  # pragma: no cover
+
+
+@render_limit.register
+def _(limit: NoneType, query_index: int) -> RenderedQuery:
     return RenderedQuery()
 
 
@@ -120,3 +165,23 @@ def _(limit: int, query_index: int) -> RenderedQuery:
 @render_limit.register
 def _(limit: unsafe_text, query_index: int) -> RenderedQuery:
     return RenderedQuery(f' limit {limit!s}')
+
+
+@render_limit.register
+def _(limit: QueryLiteral, query_index: int) -> RenderedQuery:
+    name = f'limit_{query_index}_{limit.expression_index}'
+    return render_query_literal(limit.value, name)
+
+
+@render_limit.register
+def _(limit: FuncInvocation, query_index: int) -> RenderedQuery:
+    func = limit.func
+    arg_renderers = [
+        render_limit(Expression(arg).to_infix_notation(query_index), query_index)
+        for arg in limit.args
+    ]
+    return combine_many_renderers(
+        RenderedQuery(f' limit {func.module}::{func.name}('),
+        reduce(join_renderers(', '), arg_renderers),
+        RenderedQuery(')'),
+    )

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "elgeql_qb"
-version = "0.2.0"
+version = "0.3.0"
 description = "EdgeQL Query Builder"
 authors = ["Ivan Larin <pentusha@gmail.com>"]
 license = "MIT"
@@ -23,8 +23,6 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.10"
-rend = "^6.4.2"
-slots = "^0.4.0"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.971"

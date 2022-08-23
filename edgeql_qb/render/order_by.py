@@ -1,6 +1,7 @@
 from functools import reduce, singledispatch
 
 from edgeql_qb.expression import AnyExpression, Expression, QueryLiteral
+from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Column, Node, SortedExpression
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
@@ -38,6 +39,20 @@ def render_order_by_expression(expression: AnyExpression, index: int) -> Rendere
 @render_order_by_expression.register
 def _(expression: Column, index: int) -> RenderedQuery:
     return RenderedQuery(f'.{expression.column_name}')
+
+
+@render_order_by_expression.register
+def _(expression: FuncInvocation, index: int) -> RenderedQuery:
+    func = expression.func
+    arg_renderers = [
+        render_order_by_expression(arg, index)
+        for arg in expression.args
+    ]
+    return combine_many_renderers(
+        RenderedQuery(f'{func.module}::{func.name}('),
+        reduce(join_renderers(', '), arg_renderers),
+        RenderedQuery(')'),
+    )
 
 
 @render_order_by_expression.register
