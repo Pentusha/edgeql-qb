@@ -57,7 +57,6 @@ def test_select_column(client: Client) -> None:
     ),
 )
 def test_select_datatypes(
-    client: Client,
     label: str,
     column: Column,
     value: Any,

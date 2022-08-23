@@ -18,6 +18,7 @@
 * Support limit and offset.
 * Supports nested scopes.
 * Supports functions calls.
+* Aggregations
 
 # Usage examples
 Many examples of queries are given in the [tests](https://github.com/Pentusha/edgeql-qb/tree/master/tests/test_renderer) directory.
@@ -80,7 +81,6 @@ client.query(delete.query, **delete.context)
 # TODO
 * `with` clause.
 * `upsert` queries.
-* Aggregations.
 * Support array/json types
 * Build a simple queries `select [1,2,3]`
 * Optional (Maybe) filters.

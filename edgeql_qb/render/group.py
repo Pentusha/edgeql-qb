@@ -2,6 +2,7 @@ from functools import reduce, singledispatch
 from typing import Any
 
 from edgeql_qb.expression import AnyExpression, Expression, QueryLiteral
+from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Alias, BinaryOp, Column, Node
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.select import render_select_columns
@@ -28,6 +29,20 @@ def render_using_expression(
     column_prefix: str = '',
 ) -> RenderedQuery:
     raise NotImplementedError(f'{expression!r} {index=} is not supported')  # pragma: no cover
+
+
+@render_using_expression.register
+def _(expression: FuncInvocation, index: int, column_prefix: str = '') -> RenderedQuery:
+    func = expression.func
+    arg_renderers = [
+        render_using_expression(Expression(arg).to_infix_notation(index), index, column_prefix)
+        for arg in expression.args
+    ]
+    return combine_many_renderers(
+        RenderedQuery(f'{func.module}::{func.name}('),
+        reduce(join_renderers(', '), arg_renderers),
+        RenderedQuery(')'),
+    )
 
 
 @render_using_expression.register

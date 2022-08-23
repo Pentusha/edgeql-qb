@@ -249,6 +249,8 @@ class Expression:
             case FuncInvocation(_, args):
                 yield Symbol(expr, arity=expr.arity, depth=depth)
                 for arg in args:
+                    if isinstance(arg, BinaryOp) and arg.operation == ':=':
+                        arg = arg.left
                     yield from self._to_polish_notation(arg, depth + 1)
             case _:
                 yield Symbol(expr, depth=depth)

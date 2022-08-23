@@ -33,7 +33,16 @@ from edgeql_qb.func import math
 ```python
 from edgeql_qb.func import std
 ```
-
+    std::assert_distinct
+    std::assert_single
+    std::assert_exists
+    std::count
+    std::sum
+    std::all
+    std::any
+    std::enumerate
+    std::min
+    std::max
     std::len
     std::contains
     std::find
