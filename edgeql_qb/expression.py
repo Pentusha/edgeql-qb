@@ -5,6 +5,7 @@ from enum import Enum, auto
 from functools import singledispatch
 from typing import TYPE_CHECKING, Any, Generic, Iterator, TypeVar, cast
 
+from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import (
     Alias,
     BinaryOp,
@@ -40,6 +41,7 @@ class SymbolType(Enum):
     subquery = auto()
     alias = auto()
     text = auto()
+    func_invocation = auto()
 
 
 SelectExpressions = (
@@ -73,6 +75,7 @@ AnyExpression = (
     | SortedExpression
     | OperationsMixin
     | SubQueryExpression
+    | FuncInvocation
     | unsafe_text
 )
 FilterExpressions = BinaryOp | UnaryOp
@@ -121,6 +124,11 @@ def _(value: Alias) -> SymbolType:
 @_determine_type.register
 def _(value: unsafe_text) -> SymbolType:
     return SymbolType.text
+
+
+@_determine_type.register
+def _(value: FuncInvocation) -> SymbolType:
+    return SymbolType.func_invocation
 
 
 @_determine_type.register
@@ -187,8 +195,28 @@ def evaluate(
         case SymbolType.sort_direction:
             sorted_expression = stack.pop()
             stack.push(SortedExpression(cast(OperationsMixin, sorted_expression), symbol.value))
+        case SymbolType.func_invocation:
+            args = stack.popn(symbol.value.arity)
+            invocation = FuncInvocation(
+                func=symbol.value.func,
+                args=tuple(args),
+                arity=symbol.value.arity,
+            )
+            stack.push(invocation)
         case _:  # pragma: no cover
             assert False
+
+
+def _replace_alias_with_label(node: Any, depth: int) -> Any:
+    """Replace assignment operation with label.
+    Top level expression should not be replaced, so depth checking is necessary as well.
+    Node(':=', left=Alias('test'), right=1) -> Alias('test')
+    """
+    match node:
+        case BinaryOp(':=', left, _) if depth > 0:
+            return left
+        case _:
+            return node
 
 
 class Expression:
@@ -211,17 +239,27 @@ class Expression:
                 yield Symbol(expr, depth=depth)
             case UnaryOp(operation, element):
                 yield Symbol(operation, arity=1, depth=depth)
+                # a := -(b := 1) -> a := -b
+                element = _replace_alias_with_label(element, depth)
                 yield from self._to_polish_notation(element, depth + 1)
             case BinaryOp(operation, left, right):
                 yield Symbol(operation, arity=2, depth=depth)
-                if isinstance(left, BinaryOp) and left.operation == ':=' and depth > 0:
-                    left = left.left
-                if isinstance(right, BinaryOp) and right.operation == ':=' and depth > 0:
-                    right = right.left
+
+                # a := (b := value) + 1 -> a := b + 1
+                left = _replace_alias_with_label(left, depth)
+                # a := 1 + (b := value) -> a := 1 + b
+                right = _replace_alias_with_label(right, depth)
+
                 yield from self._to_polish_notation(left, depth + 1)
                 yield from self._to_polish_notation(right, depth + 1)
             case SortedExpression(expression, direction):
                 yield Symbol(direction, depth=depth)
                 yield from self._to_polish_notation(expression, depth + 1)
+            case FuncInvocation(_, args):
+                yield Symbol(expr, arity=expr.arity, depth=depth)
+                for arg in args:
+                    # a := fun(b := 1, c := 2) -> a := fun(b, c)
+                    arg = _replace_alias_with_label(arg, depth)
+                    yield from self._to_polish_notation(arg, depth + 1)
             case _:
                 yield Symbol(expr, depth=depth)

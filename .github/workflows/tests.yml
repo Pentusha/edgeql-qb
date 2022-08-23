@@ -20,7 +20,7 @@ jobs:
       - run: edgedb project init --non-interactive --server-start-conf=manual --server-instance=tests
         working-directory: tests
 
-      - run: edgedb instance start tests
+      - run: edgedb instance start --instance tests
         working-directory: tests
 
       - name: Set up python

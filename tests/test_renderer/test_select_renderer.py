@@ -7,6 +7,7 @@ import pytest
 from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
+from edgeql_qb.func import FuncInvocation, math, std
 from edgeql_qb.operators import BinaryOp, Column
 from edgeql_qb.types import (
     GenericHolder,
@@ -37,7 +38,7 @@ def test_select_column(client: Client) -> None:
 
 
 @pytest.mark.parametrize(
-    'label, column, value, expected_type',
+    ['label', 'column', 'value', 'expected_type'],
     (
         ('bool_exp', A.c.p.p_bool, False, 'bool'),
         ('str_exp', A.c.p.p_str, 'Hello', 'str'),
@@ -56,7 +57,6 @@ def test_select_column(client: Client) -> None:
     ),
 )
 def test_select_datatypes(
-    client: Client,
     label: str,
     column: Column,
     value: Any,
@@ -78,6 +78,7 @@ def test_select_operators(client: Client) -> None:
         (A.c.p_int32 / A.c.p_int32).label('true_div_result'),
         (A.c.p_int32 // A.c.p_int32).label('floor_div_result'),
         (A.c.p_int32 % A.c.p_int32).label('mod_result'),
+        (math.abs(A.c.p_int32 - int32(20)) + int32(1)).label('abs')
     ).all()
     insert = A.insert.values(p_bool=True, p_int32=int32(10)).all()
     client.query(insert.query, **insert.context)
@@ -87,10 +88,16 @@ def test_select_operators(client: Client) -> None:
         'or_result := .p_bool or <bool>$select_0_1_0, '
         'true_div_result := .p_int32 / .p_int32, '
         'floor_div_result := .p_int32 // .p_int32, '
-        'mod_result := .p_int32 % .p_int32 '
+        'mod_result := .p_int32 % .p_int32, '
+        'abs := math::abs(.p_int32 - <int32>$select_0_5_1) + <int32>$select_0_5_0 '
         '}'
     )
-    assert rendered.context == MappingProxyType({'select_0_0_0': True, 'select_0_1_0': True})
+    assert rendered.context == MappingProxyType({
+        'select_0_0_0': True,
+        'select_0_1_0': True,
+        'select_0_5_0': 1,
+        'select_0_5_1': 20,
+    })
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 
@@ -170,6 +177,7 @@ def test_simple_select_with_complex_order_by(client: Client) -> None:
             A.c.p_int64.asc(),
             ((A.c.p_int32 + int32(2)) * A.c.p_int16).desc(),
             ~A.c.p_bool,
+            math.floor(A.c.p_int32),
         )
         .all()
     )
@@ -178,7 +186,8 @@ def test_simple_select_with_complex_order_by(client: Client) -> None:
         'order by '
         '.p_int64 asc '
         'then (.p_int32 + <int32>$order_by_1_1) * .p_int16 desc '
-        'then not .p_bool'
+        'then not .p_bool '
+        'then math::floor(.p_int32)'
     )
     assert rendered.context == MappingProxyType({'order_by_1_1': 2})
     result = client.query(rendered.query, **rendered.context)
@@ -270,11 +279,16 @@ def test_select_not_exists(client: Client) -> None:
             {'filter_1_0_1': 1, 'filter_1_0_0': 2},
         ),
         (A.c.p_str == unsafe_text("'Hello'"), ".p_str = 'Hello'", {}),
+        (
+            std.contains(A.c.p_str, 'He'),
+            'std::contains(.p_str, <str>$filter_1_0_0)',
+            {'filter_1_0_0': 'He'},
+        ),
     ),
 )
 def test_complex_filter_with_literal(
     client: Client,
-    condition: BinaryOp,
+    condition: BinaryOp | FuncInvocation,
     expected_condition: str,
     expected_context: dict[str, Any],
 ) -> None:
@@ -374,3 +388,25 @@ def test_limit_offset(client: Client) -> None:
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     assert result[0].p_int16 == 5
+
+
+def test_limit_offset_function(client: Client) -> None:
+    for num in range(1, 6):
+        insert = A.insert.values(p_int16=int16(num)).all()
+        client.query(insert.query, **insert.context)
+    rendered = (
+        A
+        .select(A.c.p_int16)
+        .order_by(A.c.p_int16.asc())
+        .limit(math.abs(int16(-2)))
+        .offset(math.abs(int16(-4)))
+        .all()
+    )
+    assert rendered.query == (
+        'select A { p_int16 } order by .p_int16 asc '
+        'offset math::abs(<int16>$offset_0_0) '
+        'limit math::abs(<int16>$limit_0_0)'
+    )
+    assert rendered.context == MappingProxyType({'limit_0_0': -2, 'offset_0_0': -4})
+    result = client.query(rendered.query, **rendered.context)
+    assert len(result) == 1

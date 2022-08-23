@@ -64,7 +64,7 @@ Subqueries are supported as well, but pay attention about limit argument for sin
 EdgeDB requires you to specify `limit 1` until you have not create unique constraint covering this condition.
 When you pass python value without wrapper `limit(limit)` it will be rendered 
 as context's variable and will pass to EdgeDB dynamically, which will cause an error on EdgeDB side.
-Similar to how it works in SQLAlchemy's `text` wrapper make this expression hardcoded into final query as is, 
+Similar to how it works in SQLAlchemy's `unsafe_text` wrapper make this expression hardcoded into final query as is, 
 without dynamic context.
 ```python
 insert = Movie.insert.values(
@@ -73,7 +73,7 @@ insert = Movie.insert.values(
     director=(
         Person.select()
         .where(Person.c.id == director_id)
-        .limit(types.text('1')) 
+        .limit(types.unsafe_text('1')) 
     ),
     actors=Person.insert.values(
         first_name='Harrison', 
@@ -85,6 +85,8 @@ print(insert.query)
 print(insert.context)
 # {'insert_1_0_0': 'Blade Runner 2049', 'insert_1_1_0': 2017, 'filter_2_0_0': UUID('15e1155f-c94d-4ac0-bae6-f3d709b91a0e'), 'insert_2_0_0': 'Harrison', 'insert_2_1_0': 'Ford'}
 ```
+
+For convenience, the `.limit1` property has been added, which is a shorthand for `limit(unsafe_text('1'))`.
 
 ### Delete query
 You can delete all records `delete = Movie.delete.all()` or by condition:
