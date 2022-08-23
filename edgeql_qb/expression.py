@@ -239,6 +239,8 @@ class Expression:
                 yield Symbol(expr, depth=depth)
             case UnaryOp(operation, element):
                 yield Symbol(operation, arity=1, depth=depth)
+                # a := -(b := 1) -> a := -b
+                element = _replace_alias_with_label(element, depth)
                 yield from self._to_polish_notation(element, depth + 1)
             case BinaryOp(operation, left, right):
                 yield Symbol(operation, arity=2, depth=depth)
