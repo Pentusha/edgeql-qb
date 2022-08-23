@@ -3,6 +3,7 @@ from types import MappingProxyType
 from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
+from edgeql_qb.func import std
 from edgeql_qb.types import int16, unsafe_text
 
 A = EdgeDBModel('A')
@@ -26,6 +27,25 @@ def test_simple_update(client: Client) -> None:
     select = A.select(A.c.p_str).all()
     result = client.query(select.query, **select.context)
     assert result[0].p_str == 'New hello'
+
+
+def test_update_with_functions(client: Client) -> None:
+    insert = A.insert.values(p_int16=int16(1), p_str='Hello').all()
+    client.query(insert.query, **insert.context)
+    rendered = (
+        A
+        .update
+        .values(p_int16=std.len(A.c.p_str))
+        .where(A.c.p_str == 'Hello')
+        .all()
+    )
+    assert rendered.query == (
+        'update A filter .p_str = <str>$filter_1_0_0 '
+        'set { p_int16 := std::len(p_str) }'
+    )
+    assert rendered.context == MappingProxyType({'filter_1_0_0': 'Hello'})
+    result = client.query(insert.query, **insert.context)
+    assert len(result) == 1
 
 
 def test_update_subquery(client: Client) -> None:

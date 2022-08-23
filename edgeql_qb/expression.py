@@ -256,7 +256,7 @@ class Expression:
             case FuncInvocation(_, args):
                 yield Symbol(expr, arity=expr.arity, depth=depth)
                 for arg in args:
-                    # a := fun(b := 1) -> a := fun(b)
+                    # a := fun(b := 1, c := 2) -> a := fun(b, c)
                     arg = _replace_alias_with_label(arg, depth)
                     yield from self._to_polish_notation(arg, depth + 1)
             case _:

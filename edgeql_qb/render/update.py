@@ -6,6 +6,7 @@ from edgeql_qb.expression import (
     QueryLiteral,
     SubQueryExpression,
 )
+from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Column, Node
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
@@ -50,6 +51,20 @@ def _(expression: Node, index: int) -> RenderedQuery:
         left=render_update_expression(expression.left, index),
         right=render_update_expression(expression.right, index),
         expression=expression,
+    )
+
+
+@render_update_expression.register
+def _(expression: FuncInvocation, index: int) -> RenderedQuery:
+    func = expression.func
+    arg_renderers = [
+        render_update_expression(arg, index)
+        for arg in expression.args
+    ]
+    return combine_many_renderers(
+        RenderedQuery(f'{func.module}::{func.name}('),
+        reduce(join_renderers(', '), arg_renderers),
+        RenderedQuery(')'),
     )
 
 
