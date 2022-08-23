@@ -10,6 +10,20 @@ from edgeql_qb.func import math
 Movie.select(std.math.len(Movie.c.title).label('title_len')).all()
 ```
 
+## User-defined functions
+You can call custom functions:
+```
+function exclamation(word: str) -> str
+  using (word ++ '!');
+```
+
+```python
+from edgeql_qb.func import Function
+
+exclamation = Function('default', 'exclamation')
+Movie.select(exclamation(Movie.c.title).label('title_exclamation')).all()
+```
+
 ## Standard functions
 
 ### Math
