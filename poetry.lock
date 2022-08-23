@@ -160,14 +160,6 @@ eradicate = ">=2.0,<3.0"
 flake8 = ">=3.5,<6"
 
 [[package]]
-name = "flake8-mock"
-version = "0.3"
-description = "Provides checking for non-existent mock methods"
-category = "dev"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "flake8-multiline-containers"
 version = "0.0.19"
 description = "Ensure a consistent format for multiline containers."
@@ -463,7 +455,7 @@ testing = ["coverage (>=6.2)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "7bbc8f05699a2c90832d7e21c231ec9250b8223bc89aa1d59d719514ed8d1c9f"
+content-hash = "df740c02b01576d1e86c4b4b6548e883aaf8826d5c5cf18910ca38f1f92e2888"
 
 [metadata.files]
 astor = [
@@ -502,9 +494,6 @@ flake8-annotations-complexity = [
 ]
 flake8-broken-line = []
 flake8-eradicate = []
-flake8-mock = [
-    {file = "flake8-mock-0.3.tar.gz", hash = "sha256:2fa775e7589f4e1ad74f35d60953eb20937f5d7355235e54bf852c6837f2bede"},
-]
 flake8-multiline-containers = [
     {file = "flake8-multiline-containers-0.0.19.tar.gz", hash = "sha256:7c47527f1a2b0a991b876e58a2758e0ecc6b2d10a5fd4ee7740d042722f2f281"},
     {file = "flake8_multiline_containers-0.0.19-py3-none-any.whl", hash = "sha256:1b684da84b401f42f1ad36f0f90e24b7f49b2691458cb582911fb99d871bb0b2"},
