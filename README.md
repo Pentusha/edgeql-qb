@@ -1,24 +1,85 @@
 # EdgeQL Query Builder
 
-## Scope
-* Syntax similar to the SQLAlchemy Core.
-* The library does not contain any code to connect to the database or to execute queries.
+Query builder for EdgeDB
 
 ## Description
-* Project currently in pre-alpha status. It is not production-ready yet, and It may buggy and unstable as well.
+* Project currently in pre-alpha status. It is not production-ready yet, and It may be buggy and unstable as well.
 * The project is not affiliated with the official developers of EdgeDB.
 * This project only supports a small part of the EdgeDB syntax.
+* The library does not contain any code to connect to the database or to execute queries.
 * The library does not introspect the database and will not check if you made a typo somewhere in a column name. What you write is what you get.
 * Minimal required version of python is 3.10. Not sure if I'll ever do a backport.
 * There is no external dependencies, even on EdgeDB itself.
 
-## Features
-* Supports building `select`, `group`, `update`, `delete` and `insert` queries.
-* Supports filtering and ordering.
-* Support limit and offset.
-* Supports nested scopes.
-* Supports functions calls.
-* Aggregations
+## Status
+- Queries:
+  - [x] select
+    - [x] nested shapes
+      - [ ] filters for nested shapes
+      - [x] aggregations for nested shapes
+    - [x] function calls
+    - [x] computed fields
+    - [x] filters
+      - [x] filter by nested objects
+    - [x] limit & offset
+    - [x] order by
+    - [ ] backlinks
+    - [ ] subqueries
+    - [ ] polymorphic fields
+  - [x] group
+    - [x] columns
+    - [x] using
+    - [x] by
+    - [x] function calls
+  - [x] update
+    - [x] function calls
+    - [x] nested queries
+  - [x] delete
+    - [x] delete without filters 
+    - [x] function calls
+  - [x] insert
+    - [x] nested inserts
+    - [ ] conditional inserts
+    - [ ] idempotent insert
+    - [ ] select-or-insert
+  - [x] function calls
+    - [x] positional arguments 
+    - [ ] keyword arguments
+  - [ ] with clause
+  - [ ] if statements
+  - [ ] for statements
+  - [ ] queries without models, like  select [1,2,3]
+- Types:
+  - [x] type casts
+  - [x] std::bigint
+  - [x] std::bool
+  - [x] std::bytes
+  - [x] std::datetime
+  - [x] std::decimal
+  - [ ] std::duration
+  - [x] std::float32
+  - [x] std::float64
+  - [x] std::int16
+  - [x] std::int32
+  - [x] std::int64
+  - [ ] std::json
+  - [x] cal::local_date
+  - [x] cal::local_datetime
+  - [x] cal::local_time
+  - [x] cal::local_date
+  - [ ] cal::relative_duration
+  - [ ] cal::date_duration
+  - [x] std::str
+  - [x] std::uuid
+  - [ ] std::set
+  - [ ] std::array
+  - [ ] std::tuple
+  - [ ] std::range
+- Functions
+  - [x] std
+  - [x] sys
+  - [x] cal
+  - [x] math
 
 # Usage examples
 Many examples of queries are given in the [tests](https://github.com/Pentusha/edgeql-qb/tree/master/tests/test_renderer) directory.
@@ -77,16 +138,3 @@ movies_by_decade = client.query(group.query, group.context)
 
 client.query(delete.query, **delete.context)
 ```
-
-# TODO
-* `with` clause.
-* `upsert` queries.
-* Support array/json types
-* Build a simple queries `select [1,2,3]`
-* Optional (Maybe) filters.
-* Describe response schema.
-* Support if/else statements.
-* Validate query against declared schema.
-* It would be cool to have mypy plugin.
-* Optimize involution op. `-(-a) = a`, `not not a = a` etc.
-* Optimize binary op. `a - a = -a + a = empty`
