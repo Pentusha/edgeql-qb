@@ -11,7 +11,7 @@ For example:
 Person.c.first_name.op('++')(' ').op('++')(Person.c.last_name)
 ```
 `.first_name ++ ' ' ++ .last_name` could not be expressed with python because 
-python unlikely EdgeQl uses `+` for both addition and concatenation.  
+python unlikely EdgeQL uses `+` for both addition and concatenation.  
 
 ## Implemented
 

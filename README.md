@@ -45,12 +45,23 @@ Query builder for EdgeDB
   - [x] function calls
     - [x] positional arguments 
     - [ ] keyword arguments
-  - [ ] with clause
+  - [x] with clause
   - [ ] if statements
   - [ ] for statements
   - [ ] queries without models, like  select [1,2,3]
 - Types:
   - [x] type casts
+  - [ ] cal::date_duration
+  - [ ] cal::relative_duration
+  - [ ] std::array
+  - [ ] std::json
+  - [ ] std::range
+  - [ ] std::set
+  - [ ] std::tuple
+  - [x] cal::local_date
+  - [x] cal::local_date
+  - [x] cal::local_datetime
+  - [x] cal::local_time
   - [x] std::bigint
   - [x] std::bool
   - [x] std::bytes
@@ -62,24 +73,14 @@ Query builder for EdgeDB
   - [x] std::int16
   - [x] std::int32
   - [x] std::int64
-  - [ ] std::json
-  - [x] cal::local_date
-  - [x] cal::local_datetime
-  - [x] cal::local_time
-  - [x] cal::local_date
-  - [ ] cal::relative_duration
-  - [ ] cal::date_duration
   - [x] std::str
   - [x] std::uuid
-  - [ ] std::set
-  - [ ] std::array
-  - [ ] std::tuple
-  - [ ] std::range
+
 - Functions
-  - [x] std
-  - [x] sys
   - [x] cal
   - [x] math
+  - [x] std
+  - [x] sys
 
 # Usage examples
 Many examples of queries are given in the [tests](https://github.com/Pentusha/edgeql-qb/tree/master/tests/test_renderer) directory.

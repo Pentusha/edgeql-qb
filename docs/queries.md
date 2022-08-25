@@ -60,7 +60,7 @@ select Villain { id, name } filter .name = <str>$filter_1_0_0
 You could pass any number of binary or unary expressions or even columns to `order_by` method:
 ```
 Movie.select().order_by(
-    Movie.c.rating.desc(), 
+    Movie.c.rating.desc(),
     Movie.c.year.desc(),
     Movie.c.title,
 ).all()
@@ -88,13 +88,13 @@ select Movie order by .rating desc limit $limit_1 offset $offset_1
 In case you are using select or insert subquery for singular relationship then you need to know:
 
 EdgeDB requires you to specify `limit 1` until you have not create unique constraint covering this condition.
-When you pass python value without wrapper `unsafe_text(limit)` it will be rendered 
+When you pass python value without wrapper `unsafe_text(limit)` it will be rendered
 as context's variable `limit_N` and will pass to EdgeDB dynamically, which will cause an error on EdgeDB side.
-Similar to how it works in SQLAlchemy's `text` wrapper make this expression hardcoded into final query as is, 
+Similar to how it works in SQLAlchemy's `unsafe_text` wrapper make this expression hardcoded into final query as is, 
 without dynamic contexts.
 
-Please note that `offset` by design producing not optional execution plan 
-and you have to avoid to use this keyword and method as far as you can. 
+Please note that `offset` by design producing not optional execution plan
+and you have to avoid to use this keyword and method as far as you can.
 
 
 # Insert
@@ -106,7 +106,7 @@ Movie.insert.values(
     director=(
         Person.select()
         .where(Person.c.id == director_id)
-        .limit(text('1')) 
+        .limit1
     ),
     actors=Person.insert.values(
         first_name='Harrison', 
@@ -115,6 +115,8 @@ Movie.insert.values(
 ).all()
 ```
 
+For convenience, the `.limit1` property has been added, which is a shorthand for `limit(unsafe_text('1'))`.
+
 # Update
 
 ```python
@@ -122,7 +124,7 @@ Movie.update.values(
     budget_usd=int16(185_000_000),
 ).where(Movie.c.title == 'Blade Runner 2049').all()
 ```
-will produce: 
+will produce:
 ```
 update Movie filter .title = <str>$filter_1_0_0 set { budget_usd := <int16>$update_1_0_0 }
 {'filter_1_0_0': 'Blade Runner 2049', 'update_1_0_0': 185000000}
@@ -156,7 +158,7 @@ Movie.group().using(decade).by(decade).all()
 will produce:
 ```
 group Movie using decade := .year // $using_0_0_0 by decade
-{'$using_0_0_0': 10}
+{'using_0_0_0': 10}
 ```
 
 Using syntax also supports nested expressions.

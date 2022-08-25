@@ -73,7 +73,7 @@ insert = Movie.insert.values(
     director=(
         Person.select()
         .where(Person.c.id == director_id)
-        .limit(types.unsafe_text('1')) 
+        .limit1 
     ),
     actors=Person.insert.values(
         first_name='Harrison', 
@@ -85,8 +85,6 @@ print(insert.query)
 print(insert.context)
 # {'insert_1_0_0': 'Blade Runner 2049', 'insert_1_1_0': 2017, 'filter_2_0_0': UUID('15e1155f-c94d-4ac0-bae6-f3d709b91a0e'), 'insert_2_0_0': 'Harrison', 'insert_2_1_0': 'Ford'}
 ```
-
-For convenience, the `.limit1` property has been added, which is a shorthand for `limit(unsafe_text('1'))`.
 
 ### Delete query
 You can delete all records `delete = Movie.delete.all()` or by condition:

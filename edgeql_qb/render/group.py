@@ -1,16 +1,13 @@
 from functools import reduce, singledispatch
 from typing import Any
 
-from edgeql_qb.expression import AnyExpression, Expression, QueryLiteral
-from edgeql_qb.func import FuncInvocation
-from edgeql_qb.operators import Alias, BinaryOp, Column, Node
-from edgeql_qb.render.query_literal import render_query_literal
+from edgeql_qb.expression import Expression
+from edgeql_qb.operators import Alias, BinaryOp, Column
+from edgeql_qb.render.expression import render_expression
 from edgeql_qb.render.select import render_select_columns
 from edgeql_qb.render.tools import (
-    combine_many_renderers,
     combine_renderers,
     join_renderers,
-    render_binary_node,
 )
 from edgeql_qb.render.types import RenderedQuery
 
@@ -22,62 +19,9 @@ def render_group(model_name: str, select: tuple[Expression, ...]) -> RenderedQue
     )
 
 
-@singledispatch
-def render_using_expression(
-    expression: AnyExpression,
-    index: int,
-    column_prefix: str = '',
-) -> RenderedQuery:
-    raise NotImplementedError(f'{expression!r} {index=} is not supported')  # pragma: no cover
-
-
-@render_using_expression.register
-def _(expression: FuncInvocation, index: int, column_prefix: str = '') -> RenderedQuery:
-    func = expression.func
-    arg_renderers = [
-        render_using_expression(Expression(arg).to_infix_notation(index), index, column_prefix)
-        for arg in expression.args
-    ]
-    return combine_many_renderers(
-        RenderedQuery(f'{func.module}::{func.name}('),
-        reduce(join_renderers(', '), arg_renderers),
-        RenderedQuery(')'),
-    )
-
-
-@render_using_expression.register
-def _(expression: Column, index: int, column_prefix: str = '') -> RenderedQuery:
-    return RenderedQuery(f'{column_prefix}{expression.column_name}')
-
-
-@render_using_expression.register
-def _(expression: Alias, index: int, column_prefix: str = '') -> RenderedQuery:
-    return RenderedQuery(expression.name)
-
-
-@render_using_expression.register
-def _(expression: QueryLiteral, index: int, column_prefix: str = '') -> RenderedQuery:
-    name = f'using_{expression.query_index}_{index}_{expression.expression_index}'
-    return render_query_literal(expression.value, name)
-
-
-@render_using_expression.register
-def _(expression: Node, index: int, column_prefix: str = '') -> RenderedQuery:
-    if expression.right is None:
-        return combine_many_renderers(
-            RenderedQuery(expression.op),
-            render_using_expression(expression.left, index, column_prefix),
-        )
-    return render_binary_node(
-        left=render_using_expression(expression.left, index, expression.op != ':=' and '.' or ''),
-        right=render_using_expression(expression.right, index, '.'),
-        expression=expression,
-    )
-
-
 def render_using(using: tuple[Expression, ...]) -> RenderedQuery:
     using_expressions = [
-        render_using_expression(use.to_infix_notation(), index)
+        render_expression(use.to_infix_notation(), index, 'using')
         for index, use in enumerate(using)
     ]
     return combine_renderers(
