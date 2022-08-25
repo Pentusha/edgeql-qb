@@ -20,7 +20,8 @@ from edgeql_qb.render.group import (
 from edgeql_qb.render.insert import render_insert
 from edgeql_qb.render.insert import render_values as render_insert_values
 from edgeql_qb.render.order_by import render_order_by
-from edgeql_qb.render.select import render_limit, render_offset, render_select
+from edgeql_qb.render.pagination import render_limit, render_offset
+from edgeql_qb.render.select import render_select
 from edgeql_qb.render.tools import combine_many_renderers
 from edgeql_qb.render.types import RenderedQuery
 from edgeql_qb.render.update import render_update

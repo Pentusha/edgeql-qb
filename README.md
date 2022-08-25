@@ -24,7 +24,7 @@ Query builder for EdgeDB
     - [x] limit & offset
     - [x] order by
     - [ ] backlinks
-    - [ ] subqueries
+    - [x] subqueries
     - [ ] polymorphic fields
   - [x] group
     - [x] columns
@@ -45,8 +45,9 @@ Query builder for EdgeDB
   - [x] function calls
     - [x] positional arguments 
     - [ ] keyword arguments
-  - [x] with clause
+  - [ ] with clause
   - [ ] if statements
+  - [ ] globals
   - [ ] for statements
   - [ ] queries without models, like  select [1,2,3]
 - Types:
