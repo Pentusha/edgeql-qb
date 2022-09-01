@@ -41,7 +41,7 @@ def test_update_with_functions(client: Client) -> None:
     )
     assert rendered.query == (
         'update A filter .p_str = <str>$filter_1_0_0 '
-        'set { p_int16 := std::len(.p_str) }'
+        'set { p_int16 := len(.p_str) }'
     )
     assert rendered.context == MappingProxyType({'filter_1_0_0': 'Hello'})
     result = client.query(insert.query, **insert.context)

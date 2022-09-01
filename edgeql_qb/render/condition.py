@@ -43,7 +43,8 @@ def _(expression: FuncInvocation, index: int) -> RenderedQuery:
         for arg in expression.args
     ]
     return combine_many_renderers(
-        RenderedQuery(f'{func.module}::{func.name}('),
+        RenderedQuery(f'{func.module}::' if func.module != 'std' else ''),
+        RenderedQuery(f'{func.name}('),
         reduce(join_renderers(', '), arg_renderers),
         RenderedQuery(')'),
     )

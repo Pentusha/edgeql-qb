@@ -64,7 +64,7 @@ def test_group_with_function_in_select(client: Client, bootstrap: NoneType) -> N
         .all()
     )
     assert rendered.query == (
-        'group A { p_str, str_int32 := std::to_str(.p_int32) } '
+        'group A { p_str, str_int32 := to_str(.p_int32) } '
         'by .p_int16'
     )
     result = client.query(rendered.query, **rendered.context)
@@ -86,7 +86,7 @@ def test_group_with_function_in_using(client: Client, bootstrap: NoneType) -> No
     )
     assert rendered.query == (
         'group A { p_str } '
-        'using str_int16 := std::to_str(.p_int16), str_len := std::len(str_int16) '
+        'using str_int16 := to_str(.p_int16), str_len := len(str_int16) '
         'by str_len'
     )
     assert rendered.context == MappingProxyType({})

@@ -34,7 +34,9 @@ def _(offset: FuncInvocation, query_index: int) -> RenderedQuery:
         for arg in offset.args
     ]
     return combine_many_renderers(
-        RenderedQuery(f' offset {func.module}::{func.name}('),
+        RenderedQuery(' offset '),
+        RenderedQuery(f'{func.module}::' if func.module != 'std' else ''),
+        RenderedQuery(f'{func.name}('),
         reduce(join_renderers(', '), arg_renderers),
         RenderedQuery(')'),
     )
@@ -86,7 +88,9 @@ def _(limit: FuncInvocation, query_index: int) -> RenderedQuery:
         for arg in limit.args
     ]
     return combine_many_renderers(
-        RenderedQuery(f' limit {func.module}::{func.name}('),
+        RenderedQuery(' limit '),
+        RenderedQuery(f'{func.module}::' if func.module != 'std' else ''),
+        RenderedQuery(f'{func.name}('),
         reduce(join_renderers(', '), arg_renderers),
         RenderedQuery(')'),
     )

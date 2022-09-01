@@ -281,7 +281,7 @@ def test_select_not_exists(client: Client) -> None:
         (A.c.p_str == unsafe_text("'Hello'"), ".p_str = 'Hello'", {}),
         (
             std.contains(A.c.p_str, 'He'),
-            'std::contains(.p_str, <str>$filter_1_0_0)',
+            'contains(.p_str, <str>$filter_1_0_0)',
             {'filter_1_0_0': 'He'},
         ),
     ),
