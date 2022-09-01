@@ -41,7 +41,7 @@ def test_update_with_functions(client: Client) -> None:
     )
     assert rendered.query == (
         'update A filter .p_str = <str>$filter_1_0_0 '
-        'set { p_int16 := std::len(p_str) }'
+        'set { p_int16 := std::len(.p_str) }'
     )
     assert rendered.context == MappingProxyType({'filter_1_0_0': 'Hello'})
     result = client.query(insert.query, **insert.context)
@@ -81,3 +81,17 @@ def test_update_subquery(client: Client) -> None:
     result = client.query(select.query, **select.context)
     assert len(result) == 1
     assert result[0].nested2.name == 'new n2'
+
+
+def test_update_existing(client: Client) -> None:
+    insert = A.insert.values(p_int16=int16(1), p_str='Hello').all()
+    client.query(insert.query, **insert.context)
+
+    rendered = A.update.values(p_int16=A.c.p_int16 + int16(1)).all()
+    assert rendered.query == 'update A set { p_int16 := .p_int16 + <int16>$update_1_0_0 }'
+    assert rendered.context == MappingProxyType({'update_1_0_0': 1})
+    client.query(rendered.query, **rendered.context)
+    select = A.select(A.c.p_int16).all()
+    result = client.query(select.query, **select.context)
+    assert len(result) == 1
+    assert result[0].p_int16 == 2
