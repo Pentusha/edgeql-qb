@@ -75,9 +75,9 @@ def test_select_operators(client: Client) -> None:
     rendered = A.select(
         (A.c.p_bool & True).label('and_result'),
         (A.c.p_bool | True).label('or_result'),
-        (A.c.p_int32 / A.c.p_int32).label('true_div_result'),
-        (A.c.p_int32 // A.c.p_int32).label('floor_div_result'),
-        (A.c.p_int32 % A.c.p_int32).label('mod_result'),
+        (A.c.p_int32 / A.c.p_int64).label('true_div_result'),
+        (A.c.p_int32 // A.c.p_int64).label('floor_div_result'),
+        (A.c.p_int32 % A.c.p_int64).label('mod_result'),
         (math.abs(A.c.p_int32 - int32(20)) + int32(1)).label('abs')
     ).all()
     insert = A.insert.values(p_bool=True, p_int32=int32(10)).all()
@@ -86,9 +86,9 @@ def test_select_operators(client: Client) -> None:
         'select A { '
         'and_result := .p_bool and <bool>$select_0_0_0, '
         'or_result := .p_bool or <bool>$select_0_1_0, '
-        'true_div_result := .p_int32 / .p_int32, '
-        'floor_div_result := .p_int32 // .p_int32, '
-        'mod_result := .p_int32 % .p_int32, '
+        'true_div_result := .p_int32 / .p_int64, '
+        'floor_div_result := .p_int32 // .p_int64, '
+        'mod_result := .p_int32 % .p_int64, '
         'abs := math::abs(.p_int32 - <int32>$select_0_5_1) + <int32>$select_0_5_0 '
         '}'
     )
