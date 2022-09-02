@@ -15,7 +15,7 @@ Query builder for EdgeDB
 - Queries:
   - [x] select
     - [x] nested shapes
-      - [ ] filters for nested shapes
+      - [x] filters for nested shapes
       - [x] aggregations for nested shapes
     - [x] function calls
     - [x] computed fields

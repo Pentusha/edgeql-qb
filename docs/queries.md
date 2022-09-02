@@ -55,6 +55,16 @@ select Villain { id, name } filter .name = <str>$filter_1_0_0
 {'filter_1_0_0': 'Doc Ock'}
 ```
 
+You also may filter nested objects:
+```python
+Post.select(
+    Post.c.title,
+    Post.c.text,
+    Post.c.comments(
+        Comment.c.text,
+    ).where(Comment.c.craated_at >= created_after),
+)
+```
 
 ### Ordering
 You could pass any number of binary or unary expressions or even columns to `order_by` method:
