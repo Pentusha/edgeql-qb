@@ -8,7 +8,8 @@ from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
 from edgeql_qb.func import FuncInvocation, math, std
-from edgeql_qb.operators import BinaryOp, Column
+from edgeql_qb.operators import BinaryOp
+from edgeql_qb.expression import Column
 from edgeql_qb.types import (
     GenericHolder,
     bigint,
@@ -201,7 +202,7 @@ def test_nested_select_used(client: Client) -> None:
             Nested1.c.nested2.name,
             Nested1.c.nested3(
                 Nested1.c.nested2.nested3.name,
-            ),
+            ).where(Nested3.c.name == 'n3'),
         ),
     ).all()
     insert = Nested1.insert.values(
@@ -212,8 +213,13 @@ def test_nested_select_used(client: Client) -> None:
         ),
     ).all()
     client.query(insert.query, **insert.context)
-    assert rendered.query == 'select Nested1 { name, nested2: { name, nested3: { name } } }'
-    assert rendered.context == MappingProxyType({})
+    assert rendered.query == (
+        'select Nested1 {'
+        ' name, nested2: {'
+        ' name, nested3: { name } filter .name = <str>$filter_1_0_0 '
+        '} }'
+    )
+    assert rendered.context == MappingProxyType({'filter_1_0_0': 'n3'})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     res = result[0]

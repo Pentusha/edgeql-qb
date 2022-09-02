@@ -1,21 +1,19 @@
 from abc import ABC, abstractmethod
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from enum import Enum, auto
 from functools import singledispatch
-from typing import TYPE_CHECKING, Any, Generic, Iterator, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Generic, Iterator, TypeVar, cast, Union, Optional
 
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import (
     Alias,
     BinaryOp,
-    Column,
     Node,
     OperationsMixin,
     OpLiterals,
     Ops,
     SortedExpression,
-    SubSelect,
     UnaryOp,
     sort_ops,
 )
@@ -34,7 +32,7 @@ class QueryLiteral:
 
 class SymbolType(Enum):
     column = auto()
-    subselect = auto()
+    shape = auto()
     sort_direction = auto()
     literal = auto()
     operator = auto()
@@ -44,9 +42,37 @@ class SymbolType(Enum):
     func_invocation = auto()
 
 
+@dataclass(slots=True, frozen=True)
+class Shape:
+    parent: 'Column'
+    columns: tuple[Union['Column', 'Shape'], ...]
+    filters: tuple['Expression', ...] = field(default_factory=tuple)
+
+    def where(self, compared: Union['BinaryOp', 'UnaryOp', 'FuncInvocation']) -> 'Shape':
+        return replace(self, filters=(*self.filters, Expression(compared)))
+
+
+@dataclass(slots=True, frozen=True)
+class Column(OperationsMixin):
+    column_name: str
+    parent: Optional['Column'] = None
+
+    def __call__(self, *columns: Union['Column', Shape]) -> Shape:
+        return Shape(self, columns)
+
+    def __getattr__(self, name: str) -> 'Column':
+        return Column(name, self)
+
+    def __eq__(self, other: Any) -> BinaryOp:  # type: ignore
+        return BinaryOp('=', self, other)
+
+    def __ne__(self, other: Any) -> BinaryOp:  # type: ignore
+        return BinaryOp('!=', self, other)
+
+
 SelectExpressions = (
     Column
-    | SubSelect
+    | Shape
     | BinaryOp
     | Node
     | QueryLiteral
@@ -67,7 +93,7 @@ class SubQueryExpression:
 
 AnyExpression = (
     Column
-    | SubSelect
+    | Shape
     | BinaryOp
     | Node
     | QueryLiteral
@@ -107,8 +133,8 @@ def _(value: Column) -> SymbolType:
 
 
 @_determine_type.register
-def _(value: SubSelect) -> SymbolType:
-    return SymbolType.subselect
+def _(value: Shape) -> SymbolType:
+    return SymbolType.shape
 
 
 @_determine_type.register
@@ -176,7 +202,7 @@ def evaluate(
     expression_index: int,
 ) -> None:
     match symbol.type:
-        case SymbolType.column | SymbolType.subselect | SymbolType.text | SymbolType.alias:
+        case SymbolType.column | SymbolType.shape | SymbolType.text | SymbolType.alias:
             stack.push(symbol.value)
         case SymbolType.subquery:
             stack.push(SubQueryExpression(symbol.value, query_index))
@@ -263,3 +289,8 @@ class Expression:
                     yield from self._to_polish_notation(arg, depth + 1)
             case _:
                 yield Symbol(expr, depth=depth)
+
+
+class Columns:
+    def __getattribute__(self, name: str) -> Column:
+        return Column(name)

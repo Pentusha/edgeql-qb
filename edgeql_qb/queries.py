@@ -1,12 +1,10 @@
 from dataclasses import dataclass, field, replace
 from typing import Any
 
-from edgeql_qb.expression import Expression, SelectExpressions, SubQuery
+from edgeql_qb.expression import Expression, SelectExpressions, SubQuery, Column, Columns
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import (
     BinaryOp,
-    Column,
-    Columns,
     SortedExpression,
     UnaryOp,
 )

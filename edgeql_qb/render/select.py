@@ -1,8 +1,9 @@
 from functools import reduce, singledispatch
 
-from edgeql_qb.expression import AnyExpression, Expression, QueryLiteral
+from edgeql_qb.expression import AnyExpression, Expression, QueryLiteral, Shape, Column
 from edgeql_qb.func import FuncInvocation
-from edgeql_qb.operators import Alias, Column, Node, SubSelect
+from edgeql_qb.operators import Alias, Node
+from edgeql_qb.render.condition import render_conditions
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
     combine_many_renderers,
@@ -71,15 +72,17 @@ def _(expression: Alias, index: int, column_prefix: str = '') -> RenderedQuery:
 
 
 @render_select_expression.register
-def _(expression: SubSelect, index: int, column_prefix: str = '') -> RenderedQuery:
+def _(expression: Shape, index: int, column_prefix: str = '') -> RenderedQuery:
     expressions = (
         render_select_expression(exp, index, column_prefix)
         for exp in expression.columns
     )
+    conditions = render_conditions(expression.filters, query_index=0)
     return combine_many_renderers(
         RenderedQuery(f'{expression.parent.column_name}: {{ '),
         reduce(join_renderers(', '), expressions),
-        RenderedQuery(' }')
+        RenderedQuery(' }'),
+        conditions,
     )
 
 

@@ -4,10 +4,10 @@ from edgeql_qb.expression import (
     AnyExpression,
     Expression,
     QueryLiteral,
-    SubQueryExpression,
+    SubQueryExpression, Column,
 )
 from edgeql_qb.func import FuncInvocation
-from edgeql_qb.operators import Column, Node
+from edgeql_qb.operators import Node
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
     combine_many_renderers,

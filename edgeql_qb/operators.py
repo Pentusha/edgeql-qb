@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Callable, Literal, Optional, Union
+from typing import Any, Callable, Literal, Optional
 
 OpLiterals = Literal[
     '=', ':=', '!=', '>', '>=', '<', '<=', '*', '/', '//', '%', '^',
@@ -48,12 +48,6 @@ prec_dict: dict[OpLiterals, int] = {
 right_assoc_operations = {'^'}
 sort_ops = {'asc', 'desc'}
 prec_dict_limit = max(prec_dict.values()) + 1
-
-
-@dataclass(slots=True, frozen=True)
-class SubSelect:
-    parent: 'Column'
-    columns: tuple[Union['Column', 'SubSelect'], ...]
 
 
 class OperationsMixin:
@@ -146,31 +140,8 @@ class UnaryOp(OperationsMixin):
 
 
 @dataclass(slots=True, frozen=True)
-class Column(OperationsMixin):
-    column_name: str
-    parent: Optional['Column'] = None
-
-    def __call__(self, *columns: Union['Column', SubSelect]) -> SubSelect:
-        return SubSelect(self, columns)
-
-    def __getattr__(self, name: str) -> 'Column':
-        return Column(name, self)
-
-    def __eq__(self, other: Any) -> BinaryOp:  # type: ignore
-        return BinaryOp('=', self, other)
-
-    def __ne__(self, other: Any) -> BinaryOp:  # type: ignore
-        return BinaryOp('!=', self, other)
-
-
-@dataclass(slots=True, frozen=True)
 class Alias(OperationsMixin):
     name: str
-
-
-class Columns:
-    def __getattribute__(self, name: str) -> Column:
-        return Column(name)
 
 
 @dataclass(slots=True, frozen=True)
