@@ -6,7 +6,6 @@ from edgeql_qb import EdgeDBModel
 from edgeql_qb.func import math
 from edgeql_qb.types import int32, int64
 
-
 A = EdgeDBModel('A')
 
 

@@ -2,7 +2,7 @@ from functools import reduce
 from types import MappingProxyType
 from typing import Callable, cast
 
-from edgeql_qb.expression import SubQueryExpression, Column
+from edgeql_qb.expression import Column, SubQueryExpression
 from edgeql_qb.operators import Node
 from edgeql_qb.render.types import RenderedQuery
 

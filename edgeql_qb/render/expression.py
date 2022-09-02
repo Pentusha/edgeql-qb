@@ -1,10 +1,19 @@
-from functools import singledispatch, reduce
+from functools import reduce, singledispatch
 
-from edgeql_qb.expression import AnyExpression, Expression, QueryLiteral, Column
+from edgeql_qb.expression import (
+    AnyExpression,
+    Column,
+    Expression,
+    QueryLiteral,
+)
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Alias, Node
 from edgeql_qb.render.query_literal import render_query_literal
-from edgeql_qb.render.tools import join_renderers, combine_many_renderers, render_binary_node
+from edgeql_qb.render.tools import (
+    combine_many_renderers,
+    join_renderers,
+    render_binary_node,
+)
 from edgeql_qb.render.types import RenderedQuery
 
 

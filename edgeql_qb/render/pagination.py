@@ -1,8 +1,8 @@
 from functools import reduce, singledispatch
-from types import NoneType, MappingProxyType
+from types import MappingProxyType, NoneType
 from typing import Any
 
-from edgeql_qb.expression import QueryLiteral, Expression
+from edgeql_qb.expression import Expression, QueryLiteral
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import combine_many_renderers, join_renderers

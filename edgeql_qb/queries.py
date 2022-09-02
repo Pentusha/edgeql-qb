@@ -1,13 +1,15 @@
 from dataclasses import dataclass, field, replace
 from typing import Any
 
-from edgeql_qb.expression import Expression, SelectExpressions, SubQuery, Column, Columns
-from edgeql_qb.func import FuncInvocation
-from edgeql_qb.operators import (
-    BinaryOp,
-    SortedExpression,
-    UnaryOp,
+from edgeql_qb.expression import (
+    Column,
+    Columns,
+    Expression,
+    SelectExpressions,
+    SubQuery,
 )
+from edgeql_qb.func import FuncInvocation
+from edgeql_qb.operators import BinaryOp, SortedExpression, UnaryOp
 from edgeql_qb.render.condition import render_conditions
 from edgeql_qb.render.delete import render_delete
 from edgeql_qb.render.group import (

@@ -3,7 +3,7 @@ from types import MappingProxyType
 from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
-from edgeql_qb.func import math, Function
+from edgeql_qb.func import Function, math
 from edgeql_qb.types import int16, unsafe_text
 
 A = EdgeDBModel('A')

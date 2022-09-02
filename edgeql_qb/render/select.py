@@ -1,6 +1,12 @@
 from functools import reduce, singledispatch
 
-from edgeql_qb.expression import AnyExpression, Expression, QueryLiteral, Shape, Column
+from edgeql_qb.expression import (
+    AnyExpression,
+    Column,
+    Expression,
+    QueryLiteral,
+    Shape,
+)
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Alias, Node
 from edgeql_qb.render.condition import render_conditions

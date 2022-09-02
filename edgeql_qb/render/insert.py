@@ -2,9 +2,10 @@ from functools import reduce, singledispatch
 
 from edgeql_qb.expression import (
     AnyExpression,
+    Column,
     Expression,
     QueryLiteral,
-    SubQueryExpression, Column,
+    SubQueryExpression,
 )
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Node

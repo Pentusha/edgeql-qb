@@ -1,4 +1,4 @@
-from datetime import timezone, timedelta, datetime
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from types import MappingProxyType
 from typing import Any
@@ -7,8 +7,14 @@ import pytest
 
 from edgeql_qb import EdgeDBModel
 from edgeql_qb.expression import Column
-from edgeql_qb.types import int32, int64, bigint, float32, float64, GenericHolder
-
+from edgeql_qb.types import (
+    GenericHolder,
+    bigint,
+    float32,
+    float64,
+    int32,
+    int64,
+)
 
 _dt = datetime(2022, 5, 26, 0, 0, 0)
 A = EdgeDBModel('A')

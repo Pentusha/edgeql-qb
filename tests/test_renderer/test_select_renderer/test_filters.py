@@ -5,10 +5,9 @@ import pytest
 from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
-from edgeql_qb.func import std, FuncInvocation
+from edgeql_qb.func import FuncInvocation, std
 from edgeql_qb.operators import BinaryOp
-from edgeql_qb.types import int64, int32, unsafe_text
-
+from edgeql_qb.types import int32, int64, unsafe_text
 
 A = EdgeDBModel('A')
 Nested1 = EdgeDBModel('Nested1')

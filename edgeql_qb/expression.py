@@ -3,7 +3,16 @@ from collections import deque
 from dataclasses import dataclass, field, replace
 from enum import Enum, auto
 from functools import singledispatch
-from typing import TYPE_CHECKING, Any, Generic, Iterator, TypeVar, cast, Union, Optional
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    Iterator,
+    Optional,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import (

@@ -4,7 +4,6 @@ from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
 
-
 Nested1 = EdgeDBModel('Nested1')
 Nested2 = EdgeDBModel('Nested2')
 Nested3 = EdgeDBModel('Nested3')

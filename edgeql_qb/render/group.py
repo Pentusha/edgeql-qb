@@ -1,14 +1,11 @@
 from functools import reduce, singledispatch
 from typing import Any
 
-from edgeql_qb.expression import Expression, Column
+from edgeql_qb.expression import Column, Expression
 from edgeql_qb.operators import Alias, BinaryOp
 from edgeql_qb.render.expression import render_expression
 from edgeql_qb.render.select import render_select_columns
-from edgeql_qb.render.tools import (
-    combine_renderers,
-    join_renderers,
-)
+from edgeql_qb.render.tools import combine_renderers, join_renderers
 from edgeql_qb.render.types import RenderedQuery
 
 
