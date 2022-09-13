@@ -111,8 +111,9 @@ def _(
 ) -> RenderedQuery:
     expressions = (
         render_select_expression(exp, generator, column_prefix)
-        for index, exp in enumerate(expression.columns)
+        for exp in expression.columns
     )
+
     conditions = render_conditions(expression.filters, generator=generator)
     return combine_many_renderers(
         RenderedQuery(f'{expression.parent.column_name}: {{ '),
