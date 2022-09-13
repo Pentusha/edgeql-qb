@@ -91,6 +91,9 @@ class SubQuery(ABC):
     def all(self, generator: Iterator[int] | None = None) -> 'RenderedQuery':
         raise NotImplementedError()  # pragma: no cover
 
+    def label(self, name: str) -> BinaryOp:
+        return BinaryOp(':=', Alias(name), self)
+
 
 AnyExpression = (
     Column

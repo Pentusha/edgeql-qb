@@ -43,10 +43,12 @@ class EdgeDBModel:
     schema: str = 'default'
     c: Columns = field(default_factory=Columns)
 
-    def select(self, *selectables: SelectExpressions) -> 'SelectQuery':
+    def select(self, *selectables: SelectExpressions, **kwargs: SubQuery) -> 'SelectQuery':
+        select_args = tuple(Expression(sel) for sel in selectables)
+        select_kwargs = tuple(Expression(v.label(k)) for k, v in kwargs.items())
         return SelectQuery(
             model=self,
-            select=tuple(Expression(sel) for sel in selectables),
+            select=(*select_args, *select_kwargs),
         )
 
     def group(self, *selectables: SelectExpressions) -> 'GroupQuery':

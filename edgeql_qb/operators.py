@@ -1,5 +1,11 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Any, Callable, Literal, Optional
+from typing import TYPE_CHECKING, Any, Callable, Literal, Optional
+
+if TYPE_CHECKING:
+    from edgeql_qb.expression import SubQuery  # pragma: no cover
+
 
 OpLiterals = Literal[
     '=', ':=', '!=', '>', '>=', '<', '<=', '*', '/', '//', '%', '^',
@@ -127,7 +133,7 @@ class OperationsMixin:
 class BinaryOp(OperationsMixin):
     operation: OpLiterals
     left: OperationsMixin
-    right: OperationsMixin
+    right: OperationsMixin | SubQuery
 
     def __eq__(self, other: Any) -> 'BinaryOp':  # type: ignore
         return BinaryOp('=', self, other)
