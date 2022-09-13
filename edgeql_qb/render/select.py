@@ -7,6 +7,7 @@ from edgeql_qb.expression import (
     Expression,
     QueryLiteral,
     Shape,
+    SubQuery,
 )
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Alias, Node
@@ -151,3 +152,8 @@ def _(
         right=render_select_expression(expression.right, generator, '.'),
         expression=expression,
     )
+
+
+@render_select_expression.register
+def _(expression: SubQuery, generator: Iterator[int], column_prefix: str = '') -> RenderedQuery:
+    return expression.all(generator)

@@ -24,7 +24,7 @@ Query builder for EdgeDB
     - [x] limit & offset
     - [x] order by
     - [ ] backlinks
-    - [ ] subqueries
+    - [x] subqueries
     - [ ] polymorphic fields
   - [x] group
     - [x] columns

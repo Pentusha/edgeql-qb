@@ -28,6 +28,20 @@ Will produce:
 select Movie { title, year, { first_name, last_name } }
 ```
 
+### Subqueries
+
+```python
+Post.select(
+    Post.c.title,
+    Post.c.description,
+    lastest_posts=Post.select().order_by(Post.c.created_at.desc()).limit(3),
+)
+```
+will produce:
+```
+select Post { title, description, latest_posts := (select Post order by created_at desc limit $limit_0) }
+```
+
 ### Expressions
 Shapes can contain computed fields. 
 These are EdgeQL expressions that are computed on the fly during the execution of the query. 
