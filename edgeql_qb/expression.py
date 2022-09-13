@@ -35,7 +35,6 @@ if TYPE_CHECKING:
 @dataclass(slots=True, frozen=True)
 class QueryLiteral:
     value: Any
-    expression_index: int
 
 
 class SymbolType(Enum):
@@ -206,7 +205,6 @@ def build_unary_op(op: OpLiterals, argument: Node) -> Node:
 def evaluate(
     stack: Stack[AnyExpression],
     symbol: Symbol,
-    expression_index: int,
     literal_index: int,
 ) -> None:
     match symbol.type:
@@ -225,7 +223,7 @@ def evaluate(
                 case _:  # pragma: no cover
                     assert False
         case SymbolType.literal:
-            stack.push(QueryLiteral(symbol.value, expression_index))
+            stack.push(QueryLiteral(symbol.value))
         case SymbolType.sort_direction:
             sorted_expression = stack.pop()
             stack.push(SortedExpression(cast(OperationsMixin, sorted_expression), symbol.value))
@@ -260,7 +258,7 @@ class Expression:
     def to_infix_notation(self, literal_index: int = 0) -> 'AnyExpression':
         stack = Stack[AnyExpression]()
         for expression_index, symbol in enumerate(reversed(self.serialized)):
-            evaluate(stack, symbol, expression_index, literal_index + expression_index)
+            evaluate(stack, symbol, literal_index + expression_index)
         return stack.pop()
 
     def _to_polish_notation(
