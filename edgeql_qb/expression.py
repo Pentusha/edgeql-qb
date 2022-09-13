@@ -1,21 +1,28 @@
 from abc import ABC, abstractmethod
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from enum import Enum, auto
 from functools import singledispatch
-from typing import TYPE_CHECKING, Any, Generic, Iterator, TypeVar, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    Iterator,
+    Optional,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import (
     Alias,
     BinaryOp,
-    Column,
     Node,
     OperationsMixin,
     OpLiterals,
     Ops,
     SortedExpression,
-    SubSelect,
     UnaryOp,
     sort_ops,
 )
@@ -28,13 +35,11 @@ if TYPE_CHECKING:
 @dataclass(slots=True, frozen=True)
 class QueryLiteral:
     value: Any
-    expression_index: int
-    query_index: int
 
 
 class SymbolType(Enum):
     column = auto()
-    subselect = auto()
+    shape = auto()
     sort_direction = auto()
     literal = auto()
     operator = auto()
@@ -44,9 +49,37 @@ class SymbolType(Enum):
     func_invocation = auto()
 
 
+@dataclass(slots=True, frozen=True)
+class Shape:
+    parent: 'Column'
+    columns: tuple[Union['Column', 'Shape'], ...]
+    filters: tuple['Expression', ...] = field(default_factory=tuple)
+
+    def where(self, compared: Union['BinaryOp', 'UnaryOp', 'FuncInvocation']) -> 'Shape':
+        return replace(self, filters=(*self.filters, Expression(compared)))
+
+
+@dataclass(slots=True, frozen=True)
+class Column(OperationsMixin):
+    column_name: str
+    parent: Optional['Column'] = None
+
+    def __call__(self, *columns: Union['Column', Shape]) -> Shape:
+        return Shape(self, columns)
+
+    def __getattr__(self, name: str) -> 'Column':
+        return Column(name, self)
+
+    def __eq__(self, other: Any) -> BinaryOp:  # type: ignore
+        return BinaryOp('=', self, other)
+
+    def __ne__(self, other: Any) -> BinaryOp:  # type: ignore
+        return BinaryOp('!=', self, other)
+
+
 SelectExpressions = (
     Column
-    | SubSelect
+    | Shape
     | BinaryOp
     | Node
     | QueryLiteral
@@ -55,26 +88,20 @@ SelectExpressions = (
 
 class SubQuery(ABC):
     @abstractmethod
-    def all(self, query_index: int = 0) -> 'RenderedQuery':
+    def all(self, generator: Iterator[int] | None = None) -> 'RenderedQuery':
         raise NotImplementedError()  # pragma: no cover
-
-
-@dataclass(slots=True, frozen=True)
-class SubQueryExpression:
-    subquery: SubQuery
-    index: int
 
 
 AnyExpression = (
     Column
-    | SubSelect
+    | Shape
     | BinaryOp
     | Node
     | QueryLiteral
     | UnaryOp
     | SortedExpression
     | OperationsMixin
-    | SubQueryExpression
+    | SubQuery
     | FuncInvocation
     | unsafe_text
 )
@@ -107,8 +134,8 @@ def _(value: Column) -> SymbolType:
 
 
 @_determine_type.register
-def _(value: SubSelect) -> SymbolType:
-    return SymbolType.subselect
+def _(value: Shape) -> SymbolType:
+    return SymbolType.shape
 
 
 @_determine_type.register
@@ -169,17 +196,12 @@ def build_unary_op(op: OpLiterals, argument: Node) -> Node:
     return Node(argument, op)
 
 
-def evaluate(
-    stack: Stack[AnyExpression],
-    symbol: Symbol,
-    query_index: int,
-    expression_index: int,
-) -> None:
+def evaluate(stack: Stack[AnyExpression], symbol: Symbol) -> None:
     match symbol.type:
-        case SymbolType.column | SymbolType.subselect | SymbolType.text | SymbolType.alias:
+        case SymbolType.column | SymbolType.shape | SymbolType.text | SymbolType.alias:
             stack.push(symbol.value)
         case SymbolType.subquery:
-            stack.push(SubQueryExpression(symbol.value, query_index))
+            stack.push(symbol.value)
         case SymbolType.operator:
             match symbol.arity:
                 case 1:
@@ -191,7 +213,7 @@ def evaluate(
                 case _:  # pragma: no cover
                     assert False
         case SymbolType.literal:
-            stack.push(QueryLiteral(symbol.value, expression_index, query_index))
+            stack.push(QueryLiteral(symbol.value))
         case SymbolType.sort_direction:
             sorted_expression = stack.pop()
             stack.push(SortedExpression(cast(OperationsMixin, sorted_expression), symbol.value))
@@ -223,10 +245,10 @@ class Expression:
     def __init__(self, expression: AnyExpression):
         self.serialized = tuple(self._to_polish_notation(expression))
 
-    def to_infix_notation(self, query_index: int = 0) -> 'AnyExpression':
+    def to_infix_notation(self) -> 'AnyExpression':
         stack = Stack[AnyExpression]()
-        for expression_index, symbol in enumerate(reversed(self.serialized)):
-            evaluate(stack, symbol, query_index, expression_index)
+        for symbol in reversed(self.serialized):
+            evaluate(stack, symbol)
         return stack.pop()
 
     def _to_polish_notation(
@@ -263,3 +285,8 @@ class Expression:
                     yield from self._to_polish_notation(arg, depth + 1)
             case _:
                 yield Symbol(expr, depth=depth)
+
+
+class Columns:
+    def __getattribute__(self, name: str) -> Column:
+        return Column(name)

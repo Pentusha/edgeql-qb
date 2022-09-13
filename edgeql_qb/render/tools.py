@@ -2,8 +2,8 @@ from functools import reduce
 from types import MappingProxyType
 from typing import Callable, cast
 
-from edgeql_qb.expression import SubQueryExpression
-from edgeql_qb.operators import Column, Node
+from edgeql_qb.expression import Column, SubQuery
+from edgeql_qb.operators import Node
 from edgeql_qb.render.types import RenderedQuery
 
 
@@ -43,7 +43,7 @@ def need_right_parentheses(right: Node, expression: Node) -> bool:
     return (
         isinstance(right, Node)
         and right < expression
-        or (isinstance(right, SubQueryExpression))
+        or (isinstance(right, SubQuery))
         or (isinstance(right, Node) and right == expression and expression.assocright)
         or (getattr(right, 'op', None) == '-' and expression.assocright)
     )

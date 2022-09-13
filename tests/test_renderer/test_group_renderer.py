@@ -41,10 +41,10 @@ def test_group_with_using(client: Client, bootstrap: NoneType) -> None:
     rendered = A.group(A.c.p_str).using(a, b, c).by(c).all()
     assert rendered.query == (
         'group A { p_str } '
-        'using a := .p_int16 + <int16>$using_0_0_0, b := a + <int16>$using_0_1_0, c := a + b '
+        'using a := .p_int16 + <int16>$using_0, b := a + <int16>$using_1, c := a + b '
         'by c'
     )
-    assert rendered.context == MappingProxyType({'using_0_0_0': 1, 'using_0_1_0': 2})
+    assert rendered.context == MappingProxyType({'using_0': 1, 'using_1': 2})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 

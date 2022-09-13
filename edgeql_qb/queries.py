@@ -1,15 +1,15 @@
 from dataclasses import dataclass, field, replace
-from typing import Any
+from typing import Any, Iterator
 
-from edgeql_qb.expression import Expression, SelectExpressions, SubQuery
-from edgeql_qb.func import FuncInvocation
-from edgeql_qb.operators import (
-    BinaryOp,
+from edgeql_qb.expression import (
     Column,
     Columns,
-    SortedExpression,
-    UnaryOp,
+    Expression,
+    SelectExpressions,
+    SubQuery,
 )
+from edgeql_qb.func import FuncInvocation
+from edgeql_qb.operators import BinaryOp, SortedExpression, UnaryOp
 from edgeql_qb.render.condition import render_conditions
 from edgeql_qb.render.delete import render_delete
 from edgeql_qb.render.group import (
@@ -29,6 +29,13 @@ from edgeql_qb.render.update import render_values as render_update_values
 from edgeql_qb.types import unsafe_text
 
 
+def literal_index_generator(start: int = 0) -> Iterator[int]:
+    index = start
+    while True:
+        yield index
+        index += 1
+
+
 @dataclass(slots=True, frozen=True)
 class EdgeDBModel:
     name: str
@@ -37,10 +44,16 @@ class EdgeDBModel:
     c: Columns = field(default_factory=Columns)
 
     def select(self, *selectables: SelectExpressions) -> 'SelectQuery':
-        return SelectQuery(self, select=tuple(Expression(sel) for sel in selectables))
+        return SelectQuery(
+            model=self,
+            select=tuple(Expression(sel) for sel in selectables),
+        )
 
     def group(self, *selectables: SelectExpressions) -> 'GroupQuery':
-        return GroupQuery(self, select=tuple(Expression(sel) for sel in selectables))
+        return GroupQuery(
+            model=self,
+            select=tuple(Expression(sel) for sel in selectables),
+        )
 
     @property
     def delete(self) -> 'DeleteQuery':
@@ -84,12 +97,18 @@ class SelectQuery(SubQuery):
     def offset(self, value: int | FuncInvocation | unsafe_text) -> 'SelectQuery':
         return replace(self, offset_val=value)
 
-    def all(self, query_index: int = 0) -> RenderedQuery:
-        rendered_select = render_select(self.model.name, self.select, self.model.module)
-        rendered_filters = render_conditions(self.filters, query_index)
-        rendered_order_by = render_order_by(self.ordered_by, query_index)
-        rendered_offset = render_offset(self.offset_val, query_index)
-        rendered_limit = render_limit(self.limit_val, query_index)
+    def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
+        gen = generator or literal_index_generator()
+        rendered_select = render_select(
+            self.model.name,
+            self.select,
+            gen,
+            self.model.module,
+        )
+        rendered_filters = render_conditions(self.filters, gen)
+        rendered_order_by = render_order_by(self.ordered_by, gen)
+        rendered_offset = render_offset(self.offset_val, gen)
+        rendered_limit = render_limit(self.limit_val, gen)
         return combine_many_renderers(
             rendered_select,
             rendered_filters,
@@ -113,9 +132,10 @@ class GroupQuery:
     def by(self, *group_by: Column | BinaryOp) -> 'GroupQuery':
         return replace(self, group_by=group_by)
 
-    def all(self, query_index: int = 0) -> RenderedQuery:
-        rendered_group = render_group(self.model.name, self.select)
-        rendered_using = render_using_expressions(self.using_expressions)
+    def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
+        gen = generator or literal_index_generator()
+        rendered_group = render_group(self.model.name, self.select, gen)
+        rendered_using = render_using_expressions(self.using_expressions, gen)
         rendered_group_by = render_group_by_expressions(self.group_by)
         return combine_many_renderers(
             rendered_group,
@@ -132,9 +152,10 @@ class DeleteQuery:
     def where(self, compared: BinaryOp | UnaryOp) -> 'DeleteQuery':
         return replace(self, filters=(*self.filters, Expression(compared)))
 
-    def all(self, query_index: int = 0) -> RenderedQuery:
+    def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
+        gen = generator or literal_index_generator()
         rendered_delete = render_delete(self.model.name)
-        rendered_filters = render_conditions(self.filters, query_index)
+        rendered_filters = render_conditions(self.filters, gen)
         return combine_many_renderers(rendered_delete, rendered_filters)
 
 
@@ -151,10 +172,11 @@ class InsertQuery(SubQuery):
         ]
         return replace(self, values_to_insert=values_to_insert)
 
-    def all(self, query_index: int = 0) -> RenderedQuery:
+    def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         assert self.values_to_insert
+        gen = generator or literal_index_generator()
         rendered_insert = render_insert(self.model.name)
-        rendered_values = render_insert_values(self.values_to_insert, query_index)
+        rendered_values = render_insert_values(self.values_to_insert, gen)
         return combine_many_renderers(rendered_insert, rendered_values)
 
 
@@ -175,9 +197,10 @@ class UpdateQuery:
         )
         return replace(self, values_to_update=values_to_update)
 
-    def all(self, query_index: int = 0) -> RenderedQuery:
+    def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         assert self.values_to_update
+        gen = generator or literal_index_generator()
         rendered_insert = render_update(self.model.name)
-        rendered_filters = render_conditions(self.filters, query_index)
-        rendered_values = render_update_values(self.values_to_update, query_index)
+        rendered_filters = render_conditions(self.filters, gen)
+        rendered_values = render_update_values(self.values_to_update, gen)
         return combine_many_renderers(rendered_insert, rendered_filters, rendered_values)

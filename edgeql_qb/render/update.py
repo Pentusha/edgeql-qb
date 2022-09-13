@@ -1,13 +1,15 @@
 from functools import reduce, singledispatch
+from typing import Iterator
 
 from edgeql_qb.expression import (
     AnyExpression,
+    Column,
     Expression,
     QueryLiteral,
-    SubQueryExpression,
+    SubQuery,
 )
 from edgeql_qb.func import FuncInvocation
-from edgeql_qb.operators import Column, Node
+from edgeql_qb.operators import Node
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
     combine_many_renderers,
@@ -21,11 +23,11 @@ def render_update(model_name: str) -> RenderedQuery:
     return RenderedQuery(f'update {model_name}')
 
 
-def render_values(values: tuple[Expression, ...], query_index: int) -> RenderedQuery:
+def render_values(values: tuple[Expression, ...], generator: Iterator[int]) -> RenderedQuery:
     assert values
     renderers = [
-        render_update_expression(value.to_infix_notation(query_index + 1), index, '.')
-        for index, value in enumerate(values)
+        render_update_expression(value.to_infix_notation(), generator, '.')
+        for value in values
     ]
     return combine_many_renderers(
         RenderedQuery(' set { '),
@@ -37,32 +39,40 @@ def render_values(values: tuple[Expression, ...], query_index: int) -> RenderedQ
 @singledispatch
 def render_update_expression(
         expression: AnyExpression,
-        index: int,
+        generator: Iterator[int],
         column_prefix: str = '',
 ) -> RenderedQuery:
-    raise NotImplementedError(f'{expression!r} {index=} is not supported')  # pragma: no cover
+    raise NotImplementedError(f'{expression!r} is not supported')  # pragma: no cover
 
 
 @render_update_expression.register
-def _(expression: Column, index: int, column_prefix: str = '') -> RenderedQuery:
+def _(expression: Column, generator: Iterator[int], column_prefix: str = '') -> RenderedQuery:
     return RenderedQuery(f'{column_prefix}{expression.column_name}')
 
 
 @render_update_expression.register
-def _(expression: Node, index: int, column_prefix: str = '') -> RenderedQuery:
+def _(expression: Node, generator: Iterator[int], column_prefix: str = '') -> RenderedQuery:
     assert expression.right is not None, 'Unary operations is not supported in update expressions'
     return render_binary_node(
-        left=render_update_expression(expression.left, index, expression.op != ':=' and '.' or ''),
-        right=render_update_expression(expression.right, index, '.'),
+        left=render_update_expression(
+            expression.left,
+            generator,
+            expression.op != ':=' and '.' or '',
+        ),
+        right=render_update_expression(expression.right, generator, '.'),
         expression=expression,
     )
 
 
 @render_update_expression.register
-def _(expression: FuncInvocation, index: int, column_prefix: str = '') -> RenderedQuery:
+def _(
+        expression: FuncInvocation,
+        generator: Iterator[int],
+        column_prefix: str = '',
+) -> RenderedQuery:
     func = expression.func
     arg_renderers = [
-        render_update_expression(arg, index, column_prefix)
+        render_update_expression(arg, generator, column_prefix)
         for arg in expression.args
     ]
     return combine_many_renderers(
@@ -74,11 +84,16 @@ def _(expression: FuncInvocation, index: int, column_prefix: str = '') -> Render
 
 
 @render_update_expression.register
-def _(expression: QueryLiteral, index: int, column_prefix: str = '') -> RenderedQuery:
-    name = f'update_{expression.query_index}_{index}_{expression.expression_index}'
+def _(
+        expression: QueryLiteral,
+        generator: Iterator[int],
+        column_prefix: str = '',
+) -> RenderedQuery:
+    index = next(generator)
+    name = f'update_{index}'
     return render_query_literal(expression.value, name)
 
 
 @render_update_expression.register
-def _(expression: SubQueryExpression, index: int, column_prefix: str = '') -> RenderedQuery:
-    return expression.subquery.all(expression.index)
+def _(expression: SubQuery, generator: Iterator[int], column_prefix: str = '') -> RenderedQuery:
+    return expression.all(generator)
