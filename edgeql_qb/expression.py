@@ -95,7 +95,6 @@ class SubQuery(ABC):
 @dataclass(slots=True, frozen=True)
 class SubQueryExpression:
     subquery: SubQuery
-    index: int
 
 
 AnyExpression = (
@@ -202,16 +201,12 @@ def build_unary_op(op: OpLiterals, argument: Node) -> Node:
     return Node(argument, op)
 
 
-def evaluate(
-    stack: Stack[AnyExpression],
-    symbol: Symbol,
-    literal_index: int,
-) -> None:
+def evaluate(stack: Stack[AnyExpression], symbol: Symbol) -> None:
     match symbol.type:
         case SymbolType.column | SymbolType.shape | SymbolType.text | SymbolType.alias:
             stack.push(symbol.value)
         case SymbolType.subquery:
-            stack.push(SubQueryExpression(symbol.value, literal_index))
+            stack.push(SubQueryExpression(symbol.value))
         case SymbolType.operator:
             match symbol.arity:
                 case 1:
@@ -255,10 +250,10 @@ class Expression:
     def __init__(self, expression: AnyExpression):
         self.serialized = tuple(self._to_polish_notation(expression))
 
-    def to_infix_notation(self, literal_index: int = 0) -> 'AnyExpression':
+    def to_infix_notation(self) -> 'AnyExpression':
         stack = Stack[AnyExpression]()
-        for expression_index, symbol in enumerate(reversed(self.serialized)):
-            evaluate(stack, symbol, literal_index + expression_index)
+        for symbol in reversed(self.serialized):
+            evaluate(stack, symbol)
         return stack.pop()
 
     def _to_polish_notation(

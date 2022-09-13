@@ -24,7 +24,7 @@ def render_order_by_expressions(
     generator: Iterator[int],
 ) -> RenderedQuery:
     renderers = (
-        render_order_by_expression(expression.to_infix_notation(1), generator)
+        render_order_by_expression(expression.to_infix_notation(), generator)
         for expression in ordered_by
     )
     return combine_renderers(

@@ -26,8 +26,8 @@ def render_insert(model_name: str) -> RenderedQuery:
 def render_values(values: list[Expression], generator: Iterator[int]) -> RenderedQuery:
     assert values
     renderers = [
-        render_insert_expression(value.to_infix_notation(index), generator)
-        for index, value in enumerate(values)
+        render_insert_expression(value.to_infix_notation(), generator)
+        for value in values
     ]
     return combine_many_renderers(
         RenderedQuery(' { '),

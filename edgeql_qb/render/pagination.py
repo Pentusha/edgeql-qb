@@ -31,7 +31,7 @@ def _(offset: QueryLiteral, generator: Iterator[int]) -> RenderedQuery:
 def _(offset: FuncInvocation, generator: Iterator[int]) -> RenderedQuery:
     func = offset.func
     arg_renderers = [
-        render_offset(Expression(arg).to_infix_notation(0), generator)
+        render_offset(Expression(arg).to_infix_notation(), generator)
         for arg in offset.args
     ]
     return combine_many_renderers(
@@ -88,7 +88,7 @@ def _(limit: QueryLiteral, generator: Iterator[int]) -> RenderedQuery:
 def _(limit: FuncInvocation, generator: Iterator[int]) -> RenderedQuery:
     func = limit.func
     arg_renderers = [
-        render_limit(Expression(arg).to_infix_notation(0), generator)
+        render_limit(Expression(arg).to_infix_notation(), generator)
         for arg in limit.args
     ]
     return combine_many_renderers(

@@ -26,11 +26,8 @@ def render_select_columns(
         generator: Iterator[int],
 ) -> RenderedQuery:
     renderers = (
-        render_select_expression(
-            selectable.to_infix_notation(literal_index=index),
-            generator,
-        )
-        for index, selectable in enumerate(select)
+        render_select_expression(selectable.to_infix_notation(), generator)
+        for selectable in select
     )
     return combine_many_renderers(
         RenderedQuery(' { '),

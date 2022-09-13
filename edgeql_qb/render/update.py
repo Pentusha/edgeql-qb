@@ -26,7 +26,7 @@ def render_update(model_name: str) -> RenderedQuery:
 def render_values(values: tuple[Expression, ...], generator: Iterator[int]) -> RenderedQuery:
     assert values
     renderers = [
-        render_update_expression(value.to_infix_notation(1), generator, '.')
+        render_update_expression(value.to_infix_notation(), generator, '.')
         for value in values
     ]
     return combine_many_renderers(

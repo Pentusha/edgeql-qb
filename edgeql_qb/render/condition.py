@@ -23,8 +23,8 @@ from edgeql_qb.types import unsafe_text
 
 def render_filters(filters: tuple[Expression, ...], generator: Iterator[int]) -> RenderedQuery:
     conditions = [
-        render_condition(filter_.to_infix_notation(index), generator)
-        for index, filter_ in enumerate(filters)
+        render_condition(filter_.to_infix_notation(), generator)
+        for filter_ in filters
     ]
     return combine_renderers(
         RenderedQuery(' filter '),
