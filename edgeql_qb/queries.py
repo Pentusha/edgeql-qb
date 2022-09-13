@@ -44,41 +44,33 @@ class EdgeDBModel:
     c: Columns = field(default_factory=Columns)
 
     def select(self, *selectables: SelectExpressions) -> 'SelectQuery':
-        generator = literal_index_generator()
         return SelectQuery(
             model=self,
             select=tuple(Expression(sel) for sel in selectables),
-            generator=generator,
         )
 
     def group(self, *selectables: SelectExpressions) -> 'GroupQuery':
-        generator = literal_index_generator()
         return GroupQuery(
             model=self,
-            generator=generator,
             select=tuple(Expression(sel) for sel in selectables),
         )
 
     @property
     def delete(self) -> 'DeleteQuery':
-        generator = literal_index_generator()
-        return DeleteQuery(self, generator)
+        return DeleteQuery(self)
 
     @property
     def insert(self) -> 'InsertQuery':
-        generator = literal_index_generator()
-        return InsertQuery(self, generator)
+        return InsertQuery(self)
 
     @property
     def update(self) -> 'UpdateQuery':
-        generator = literal_index_generator()
-        return UpdateQuery(self, generator)
+        return UpdateQuery(self)
 
 
 @dataclass(slots=True, frozen=True)
 class SelectQuery(SubQuery):
     model: EdgeDBModel
-    generator: Iterator[int]
     select: tuple[Expression, ...] = field(default_factory=tuple)
     filters: tuple[Expression, ...] = field(default_factory=tuple)
     ordered_by: tuple[Expression, ...] = field(default_factory=tuple)
@@ -106,13 +98,13 @@ class SelectQuery(SubQuery):
         return replace(self, offset_val=value)
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
+        gen = generator or literal_index_generator()
         rendered_select = render_select(
             self.model.name,
             self.select,
-            self.generator,
+            gen,
             self.model.module,
         )
-        gen = generator or self.generator
         rendered_filters = render_conditions(self.filters, gen)
         rendered_order_by = render_order_by(self.ordered_by, gen)
         rendered_offset = render_offset(self.offset_val, gen)
@@ -129,7 +121,6 @@ class SelectQuery(SubQuery):
 @dataclass(slots=True, frozen=True)
 class GroupQuery:
     model: EdgeDBModel
-    generator: Iterator[int]
     select: tuple[Expression, ...] = field(default_factory=tuple)
     group_by: tuple[Column, ...] = field(default_factory=tuple)
     using_expressions: tuple[Expression, ...] = field(default_factory=tuple)
@@ -142,7 +133,7 @@ class GroupQuery:
         return replace(self, group_by=group_by)
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
-        gen = generator or self.generator
+        gen = generator or literal_index_generator()
         rendered_group = render_group(self.model.name, self.select, gen)
         rendered_using = render_using_expressions(self.using_expressions, gen)
         rendered_group_by = render_group_by_expressions(self.group_by)
@@ -156,14 +147,13 @@ class GroupQuery:
 @dataclass(slots=True, frozen=True)
 class DeleteQuery:
     model: EdgeDBModel
-    generator: Iterator[int]
     filters: tuple[Expression, ...] = field(default_factory=tuple)
 
     def where(self, compared: BinaryOp | UnaryOp) -> 'DeleteQuery':
         return replace(self, filters=(*self.filters, Expression(compared)))
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
-        gen = generator or self.generator
+        gen = generator or literal_index_generator()
         rendered_delete = render_delete(self.model.name)
         rendered_filters = render_conditions(self.filters, gen)
         return combine_many_renderers(rendered_delete, rendered_filters)
@@ -172,7 +162,6 @@ class DeleteQuery:
 @dataclass(slots=True, frozen=True)
 class InsertQuery(SubQuery):
     model: EdgeDBModel
-    generator: Iterator[int]
     values_to_insert: list[Expression] = field(default_factory=list)
 
     def values(self, **to_insert: Any) -> 'InsertQuery':
@@ -185,7 +174,7 @@ class InsertQuery(SubQuery):
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         assert self.values_to_insert
-        gen = generator or self.generator
+        gen = generator or literal_index_generator()
         rendered_insert = render_insert(self.model.name)
         rendered_values = render_insert_values(self.values_to_insert, gen)
         return combine_many_renderers(rendered_insert, rendered_values)
@@ -194,7 +183,6 @@ class InsertQuery(SubQuery):
 @dataclass(slots=True, frozen=True)
 class UpdateQuery:
     model: EdgeDBModel
-    generator: Iterator[int]
     values_to_update: tuple[Expression, ...] = field(default_factory=tuple)
     filters: tuple[Expression, ...] = field(default_factory=tuple)
 
@@ -211,7 +199,7 @@ class UpdateQuery:
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         assert self.values_to_update
-        gen = generator or self.generator
+        gen = generator or literal_index_generator()
         rendered_insert = render_update(self.model.name)
         rendered_filters = render_conditions(self.filters, gen)
         rendered_values = render_update_values(self.values_to_update, gen)
