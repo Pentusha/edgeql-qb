@@ -45,8 +45,8 @@ def test_select_datatypes(
 ) -> None:
     rendered = A.select((column != value).label(label)).all()
     assert rendered.query == (
-        f'select A {{ {label} := .{column.column_name} != <{expected_type}>$select_0_0_0 }}'
+        f'select A {{ {label} := .{column.column_name} != <{expected_type}>$select_0 }}'
     )
     assert rendered.context == MappingProxyType({
-        'select_0_0_0': isinstance(value, GenericHolder) and value.value or value,
+        'select_0': isinstance(value, GenericHolder) and value.value or value,
     })

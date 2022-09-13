@@ -41,10 +41,10 @@ def test_nested_select_used(client: Client) -> None:
     assert rendered.query == (
         'select Nested1 {'
         ' name, nested2: {'
-        ' name, nested3: { name } filter .name = <str>$filter_1_0_0 '
+        ' name, nested3: { name } filter .name = <str>$filter_0 '
         '} }'
     )
-    assert rendered.context == MappingProxyType({'filter_1_0_0': 'n3'})
+    assert rendered.context == MappingProxyType({'filter_0': 'n3'})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     res = result[0]

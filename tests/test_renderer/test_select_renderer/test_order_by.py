@@ -46,10 +46,10 @@ def test_simple_select_with_complex_order_by(client: Client) -> None:
         'select A { p_str } '
         'order by '
         '.p_int64 asc '
-        'then (.p_int32 + <int32>$order_by_1_1) * .p_int16 desc '
+        'then (.p_int32 + <int32>$order_by_2) * .p_int16 desc '
         'then not .p_bool '
         'then math::floor(.p_int32)'
     )
-    assert rendered.context == MappingProxyType({'order_by_1_1': 2})
+    assert rendered.context == MappingProxyType({'order_by_2': 2})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 3

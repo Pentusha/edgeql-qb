@@ -24,19 +24,19 @@ def test_select_operators(client: Client) -> None:
     client.query(insert.query, **insert.context)
     assert rendered.query == (
         'select A { '
-        'and_result := .p_bool and <bool>$select_0_0_0, '
-        'or_result := .p_bool or <bool>$select_0_1_0, '
+        'and_result := .p_bool and <bool>$select_0, '
+        'or_result := .p_bool or <bool>$select_1, '
         'true_div_result := .p_int32 / .p_int64, '
         'floor_div_result := .p_int32 // .p_int64, '
         'mod_result := .p_int32 % .p_int64, '
-        'abs := math::abs(.p_int32 - <int32>$select_0_5_1) + <int32>$select_0_5_0 '
+        'abs := math::abs(.p_int32 - <int32>$select_2) + <int32>$select_3 '
         '}'
     )
     assert rendered.context == MappingProxyType({
-        'select_0_0_0': True,
-        'select_0_1_0': True,
-        'select_0_5_0': 1,
-        'select_0_5_1': 20,
+        'select_0': True,
+        'select_1': True,
+        'select_2': 20,
+        'select_3': 1,
     })
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
@@ -118,7 +118,7 @@ def test_select_expression_with_literal(client: Client) -> None:
     insert = A.insert.values(p_int64=int64(11)).all()
     client.query(insert.query, **insert.context)
     rendered = A.select((A.c.p_int64 + int64(1)).label('my_sum')).all()
-    assert rendered.query == 'select A { my_sum := .p_int64 + <int64>$select_0_0_0 }'
+    assert rendered.query == 'select A { my_sum := .p_int64 + <int64>$select_0 }'
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     assert result[0].my_sum == 12

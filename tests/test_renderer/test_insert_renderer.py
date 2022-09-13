@@ -15,9 +15,9 @@ Nested3 = EdgeDBModel('Nested3')
 def test_insert_literals(client: Client) -> None:
     rendered = A.insert.values(p_int16=int16(1), p_str='Hello').all()
     assert rendered.query == (
-        'insert A { p_int16 := <int16>$insert_1_0_0, p_str := <str>$insert_1_1_0 }'
+        'insert A { p_int16 := <int16>$insert_0, p_str := <str>$insert_1 }'
     )
-    assert rendered.context == MappingProxyType({'insert_1_0_0': 1, 'insert_1_1_0': 'Hello'})
+    assert rendered.context == MappingProxyType({'insert_0': 1, 'insert_1': 'Hello'})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 
@@ -32,13 +32,13 @@ def test_insert_from_function_from_literal(client: Client) -> None:
     ).all()
     assert rendered.query == (
         'insert A { '
-        'p_int16 := math::abs(<int16>$insert_1_0_0), '
-        'p_str := default::exclamation(<str>$insert_1_1_0) '
+        'p_int16 := math::abs(<int16>$insert_0), '
+        'p_str := default::exclamation(<str>$insert_1) '
         '}'
     )
     assert rendered.context == MappingProxyType({
-        'insert_1_0_0': -1,
-        'insert_1_1_0': 'test',
+        'insert_0': -1,
+        'insert_1': 'test',
     })
     client.query(rendered.query, **rendered.context)
     select = A.select(A.c.p_str, A.c.p_int16).all()
@@ -57,14 +57,14 @@ def test_nested_insert(client: Client) -> None:
         ),
     ).all()
     assert rendered.query == (
-        'insert Nested1 { name := <str>$insert_1_0_0, nested2 := (insert Nested2 { '
-        'name := <str>$insert_2_0_0, nested3 := (insert Nested3 { name := '
-        '<str>$insert_3_0_0 }) }) }'
+        'insert Nested1 { name := <str>$insert_0, nested2 := (insert Nested2 { '
+        'name := <str>$insert_1, nested3 := (insert Nested3 { name := '
+        '<str>$insert_2 }) }) }'
     )
     assert rendered.context == MappingProxyType({
-        'insert_1_0_0': 'n1',
-        'insert_2_0_0': 'n2',
-        'insert_3_0_0': 'n3',
+        'insert_0': 'n1',
+        'insert_1': 'n2',
+        'insert_2': 'n3',
     })
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1

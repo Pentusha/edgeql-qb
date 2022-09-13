@@ -1,5 +1,5 @@
 from functools import reduce, singledispatch
-from typing import Any
+from typing import Any, Iterator
 
 from edgeql_qb.expression import Column, Expression
 from edgeql_qb.operators import Alias, BinaryOp
@@ -9,16 +9,27 @@ from edgeql_qb.render.tools import combine_renderers, join_renderers
 from edgeql_qb.render.types import RenderedQuery
 
 
-def render_group(model_name: str, select: tuple[Expression, ...]) -> RenderedQuery:
+def render_group(
+        model_name: str,
+        select: tuple[Expression, ...],
+        literal_index: int,
+        generator: Iterator[int],
+) -> RenderedQuery:
     return (
         RenderedQuery(f'group {model_name}')
-        .map(lambda r: select and combine_renderers(r, render_select_columns(select)) or r)
+        .map(
+            lambda r: (
+                select
+                and combine_renderers(r, render_select_columns(select, literal_index, generator))
+                or r
+            )
+        )
     )
 
 
-def render_using(using: tuple[Expression, ...]) -> RenderedQuery:
+def render_using(using: tuple[Expression, ...], literal_index: int) -> RenderedQuery:
     using_expressions = [
-        render_expression(use.to_infix_notation(), index, 'using')
+        render_expression(use.to_infix_notation(), literal_index + index, 'using')
         for index, use in enumerate(using)
     ]
     return combine_renderers(
@@ -27,8 +38,8 @@ def render_using(using: tuple[Expression, ...]) -> RenderedQuery:
     )
 
 
-def render_using_expressions(using: tuple[Expression, ...]) -> RenderedQuery:
-    return using and render_using(using) or RenderedQuery()
+def render_using_expressions(using: tuple[Expression, ...], literal_index: int) -> RenderedQuery:
+    return using and render_using(using, literal_index) or RenderedQuery()
 
 
 @singledispatch

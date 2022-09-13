@@ -46,9 +46,9 @@ def test_limit_offset_function(client: Client) -> None:
     )
     assert rendered.query == (
         'select A { p_int16 } order by .p_int16 asc '
-        'offset math::abs(<int16>$offset_0_0) '
-        'limit math::abs(<int16>$limit_0_0)'
+        'offset math::abs(<int16>$offset_0) '
+        'limit math::abs(<int16>$limit_0)'
     )
-    assert rendered.context == MappingProxyType({'limit_0_0': -2, 'offset_0_0': -4})
+    assert rendered.context == MappingProxyType({'limit_0': -2, 'offset_0': -4})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
