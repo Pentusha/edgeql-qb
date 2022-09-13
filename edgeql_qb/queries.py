@@ -141,9 +141,10 @@ class GroupQuery:
     def by(self, *group_by: Column | BinaryOp) -> 'GroupQuery':
         return replace(self, group_by=group_by)
 
-    def all(self) -> RenderedQuery:
-        rendered_group = render_group(self.model.name, self.select, self.generator)
-        rendered_using = render_using_expressions(self.using_expressions, self.generator)
+    def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
+        gen = generator or self.generator
+        rendered_group = render_group(self.model.name, self.select, gen)
+        rendered_using = render_using_expressions(self.using_expressions, gen)
         rendered_group_by = render_group_by_expressions(self.group_by)
         return combine_many_renderers(
             rendered_group,
@@ -161,9 +162,10 @@ class DeleteQuery:
     def where(self, compared: BinaryOp | UnaryOp) -> 'DeleteQuery':
         return replace(self, filters=(*self.filters, Expression(compared)))
 
-    def all(self, literal_index: int = 0) -> RenderedQuery:
+    def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
+        gen = generator or self.generator
         rendered_delete = render_delete(self.model.name)
-        rendered_filters = render_conditions(self.filters, self.generator)
+        rendered_filters = render_conditions(self.filters, gen)
         return combine_many_renderers(rendered_delete, rendered_filters)
 
 
