@@ -1,4 +1,5 @@
 from functools import reduce, singledispatch
+from typing import Iterator
 
 from edgeql_qb.expression import (
     AnyExpression,
@@ -20,10 +21,10 @@ from edgeql_qb.render.types import RenderedQuery
 
 def render_order_by_expressions(
     ordered_by: tuple[Expression, ...],
-    literal_index: int,
+    generator: Iterator[int],
 ) -> RenderedQuery:
     renderers = (
-        render_order_by_expression(expression.to_infix_notation(literal_index + 1))
+        render_order_by_expression(expression.to_infix_notation(1), generator)
         for expression in ordered_by
     )
     return combine_renderers(
@@ -32,25 +33,28 @@ def render_order_by_expressions(
     )
 
 
-def render_order_by(ordered_by: tuple[Expression, ...], literal_index: int) -> RenderedQuery:
-    return ordered_by and render_order_by_expressions(ordered_by, literal_index) or RenderedQuery()
+def render_order_by(ordered_by: tuple[Expression, ...], generator: Iterator[int]) -> RenderedQuery:
+    return ordered_by and render_order_by_expressions(ordered_by, generator) or RenderedQuery()
 
 
 @singledispatch
-def render_order_by_expression(expression: AnyExpression) -> RenderedQuery:
+def render_order_by_expression(
+        expression: AnyExpression,
+        generator: Iterator[int],
+) -> RenderedQuery:
     raise NotImplementedError(f'{expression!r} is not supported')  # pragma: no cover
 
 
 @render_order_by_expression.register
-def _(expression: Column) -> RenderedQuery:
+def _(expression: Column, generator: Iterator[int]) -> RenderedQuery:
     return RenderedQuery(f'.{expression.column_name}')
 
 
 @render_order_by_expression.register
-def _(expression: FuncInvocation) -> RenderedQuery:
+def _(expression: FuncInvocation, generator: Iterator[int]) -> RenderedQuery:
     func = expression.func
     arg_renderers = [
-        render_order_by_expression(arg)
+        render_order_by_expression(arg, generator)
         for arg in expression.args
     ]
     return combine_many_renderers(
@@ -62,28 +66,29 @@ def _(expression: FuncInvocation) -> RenderedQuery:
 
 
 @render_order_by_expression.register
-def _(expression: Node) -> RenderedQuery:
+def _(expression: Node, generator: Iterator[int]) -> RenderedQuery:
     if expression.right is None:
         return combine_many_renderers(
             RenderedQuery(expression.op),
-            render_order_by_expression(expression.left),
+            render_order_by_expression(expression.left, generator),
         )
     return render_binary_node(
-        left=render_order_by_expression(expression.left),
-        right=render_order_by_expression(expression.right),
+        left=render_order_by_expression(expression.left, generator),
+        right=render_order_by_expression(expression.right, generator),
         expression=expression,
     )
 
 
 @render_order_by_expression.register
-def _(expression: SortedExpression) -> RenderedQuery:
+def _(expression: SortedExpression, generator: Iterator[int]) -> RenderedQuery:
     return combine_renderers(
-        render_order_by_expression(expression.expression),
+        render_order_by_expression(expression.expression, generator),
         RenderedQuery(f' {expression.order}'),
     )
 
 
 @render_order_by_expression.register
-def _(expression: QueryLiteral) -> RenderedQuery:
-    name = f'order_by_{expression.literal_index}'
+def _(expression: QueryLiteral, generator: Iterator[int]) -> RenderedQuery:
+    index = next(generator)
+    name = f'order_by_{index}'
     return render_query_literal(expression.value, name)

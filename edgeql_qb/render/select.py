@@ -23,13 +23,11 @@ from edgeql_qb.render.types import RenderedQuery
 
 def render_select_columns(
         select: tuple[Expression, ...],
-        literal_index: int,
         generator: Iterator[int],
 ) -> RenderedQuery:
     renderers = (
         render_select_expression(
             selectable.to_infix_notation(literal_index=index),
-            literal_index,
             generator,
         )
         for index, selectable in enumerate(select)
@@ -44,7 +42,6 @@ def render_select_columns(
 def render_select(
     model_name: str,
     select: tuple[Expression, ...],
-    literal_index: int,
     generator: Iterator[int],
     module: str | None = None,
 ) -> RenderedQuery:
@@ -54,7 +51,7 @@ def render_select(
     ).map(
         lambda r: (
             select
-            and combine_renderers(r, render_select_columns(select, literal_index, generator))
+            and combine_renderers(r, render_select_columns(select, generator))
             or r
         )
     )
@@ -63,7 +60,6 @@ def render_select(
 @singledispatch
 def render_select_expression(
         expression: AnyExpression,
-        literal_index: int,
         generator: Iterator[int],
         column_prefix: str = '',
 ) -> RenderedQuery:
@@ -73,7 +69,6 @@ def render_select_expression(
 @render_select_expression.register
 def _(
         expression: Column,
-        literal_index: int,
         generator: Iterator[int],
         column_prefix: str = '',
 ) -> RenderedQuery:
@@ -83,13 +78,12 @@ def _(
 @render_select_expression.register
 def _(
         expression: FuncInvocation,
-        literal_index: int,
         generator: Iterator[int],
         column_prefix: str = '',
 ) -> RenderedQuery:
     func = expression.func
     arg_renderers = [
-        render_select_expression(arg, literal_index, generator, column_prefix)
+        render_select_expression(arg, generator, column_prefix)
         for arg in expression.args
     ]
     return combine_many_renderers(
@@ -103,7 +97,6 @@ def _(
 @render_select_expression.register
 def _(
         expression: Alias,
-        literal_index: int,
         generator: Iterator[int],
         column_prefix: str = '',
 ) -> RenderedQuery:
@@ -113,18 +106,14 @@ def _(
 @render_select_expression.register
 def _(
         expression: Shape,
-        literal_index: int,
         generator: Iterator[int],
         column_prefix: str = '',
 ) -> RenderedQuery:
     expressions = (
-        render_select_expression(exp, literal_index + index, generator, column_prefix)
+        render_select_expression(exp, generator, column_prefix)
         for index, exp in enumerate(expression.columns)
     )
-    conditions = render_conditions(
-        expression.filters,
-        generator=generator,
-    )
+    conditions = render_conditions(expression.filters, generator=generator)
     return combine_many_renderers(
         RenderedQuery(f'{expression.parent.column_name}: {{ '),
         reduce(join_renderers(', '), expressions),
@@ -136,7 +125,6 @@ def _(
 @render_select_expression.register
 def _(
         expression: QueryLiteral,
-        literal_index: int,
         generator: Iterator[int],
         column_prefix: str = '',
 ) -> RenderedQuery:
@@ -148,22 +136,20 @@ def _(
 @render_select_expression.register
 def _(
         expression: Node,
-        literal_index: int,
         generator: Iterator[int],
         column_prefix: str = '',
 ) -> RenderedQuery:
     if expression.right is None:
         return combine_many_renderers(
             RenderedQuery(expression.op),
-            render_select_expression(expression.left, literal_index, generator, column_prefix),
+            render_select_expression(expression.left, generator, column_prefix),
         )
     return render_binary_node(
         left=render_select_expression(
             expression.left,
-            literal_index,
             generator,
             expression.op != ':=' and '.' or '',
         ),
-        right=render_select_expression(expression.right, literal_index, generator, '.'),
+        right=render_select_expression(expression.right, generator, '.'),
         expression=expression,
     )

@@ -109,14 +109,13 @@ class SelectQuery(SubQuery):
         rendered_select = render_select(
             self.model.name,
             self.select,
-            literal_index,
             self.generator,
             self.model.module,
         )
         rendered_filters = render_conditions(self.filters, self.generator)
-        rendered_order_by = render_order_by(self.ordered_by, literal_index)
-        rendered_offset = render_offset(self.offset_val, literal_index)
-        rendered_limit = render_limit(self.limit_val, literal_index)
+        rendered_order_by = render_order_by(self.ordered_by, self.generator)
+        rendered_offset = render_offset(self.offset_val, self.generator)
+        rendered_limit = render_limit(self.limit_val, self.generator)
         return combine_many_renderers(
             rendered_select,
             rendered_filters,
@@ -141,9 +140,9 @@ class GroupQuery:
     def by(self, *group_by: Column | BinaryOp) -> 'GroupQuery':
         return replace(self, group_by=group_by)
 
-    def all(self, literal_index: int = 0) -> RenderedQuery:
-        rendered_group = render_group(self.model.name, self.select, literal_index, self.generator)
-        rendered_using = render_using_expressions(self.using_expressions, literal_index)
+    def all(self) -> RenderedQuery:
+        rendered_group = render_group(self.model.name, self.select, self.generator)
+        rendered_using = render_using_expressions(self.using_expressions, self.generator)
         rendered_group_by = render_group_by_expressions(self.group_by)
         return combine_many_renderers(
             rendered_group,
@@ -210,5 +209,5 @@ class UpdateQuery:
         assert self.values_to_update
         rendered_insert = render_update(self.model.name)
         rendered_filters = render_conditions(self.filters, self.generator)
-        rendered_values = render_update_values(self.values_to_update, literal_index)
+        rendered_values = render_update_values(self.values_to_update, self.generator)
         return combine_many_renderers(rendered_insert, rendered_filters, rendered_values)

@@ -24,9 +24,9 @@ def test_limit_offset(client: Client) -> None:
         'select A { p_int16 } '
         'order by .p_int16 asc '
         'offset <int64>$offset_0 '
-        'limit <int64>$limit_0'
+        'limit <int64>$limit_1'
     )
-    assert rendered.context == MappingProxyType({'limit_0': 2, 'offset_0': 4})
+    assert rendered.context == MappingProxyType({'limit_1': 2, 'offset_0': 4})
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     assert result[0].p_int16 == 5

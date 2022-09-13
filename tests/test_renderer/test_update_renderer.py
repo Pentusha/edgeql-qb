@@ -84,8 +84,8 @@ def test_update_existing(client: Client) -> None:
     client.query(insert.query, **insert.context)
 
     rendered = A.update.values(p_int16=A.c.p_int16 + int16(1)).all()
-    assert rendered.query == 'update A set { p_int16 := .p_int16 + <int16>$update_1 }'
-    assert rendered.context == MappingProxyType({'update_1': 1})
+    assert rendered.query == 'update A set { p_int16 := .p_int16 + <int16>$update_0 }'
+    assert rendered.context == MappingProxyType({'update_0': 1})
     client.query(rendered.query, **rendered.context)
     select = A.select(A.c.p_int16).all()
     result = client.query(select.query, **select.context)

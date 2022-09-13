@@ -12,7 +12,6 @@ from edgeql_qb.render.types import RenderedQuery
 def render_group(
         model_name: str,
         select: tuple[Expression, ...],
-        literal_index: int,
         generator: Iterator[int],
 ) -> RenderedQuery:
     return (
@@ -20,17 +19,17 @@ def render_group(
         .map(
             lambda r: (
                 select
-                and combine_renderers(r, render_select_columns(select, literal_index, generator))
+                and combine_renderers(r, render_select_columns(select, generator))
                 or r
             )
         )
     )
 
 
-def render_using(using: tuple[Expression, ...], literal_index: int) -> RenderedQuery:
+def render_using(using: tuple[Expression, ...], generator: Iterator[int]) -> RenderedQuery:
     using_expressions = [
-        render_expression(use.to_infix_notation(), literal_index + index, 'using')
-        for index, use in enumerate(using)
+        render_expression(use.to_infix_notation(), 'using', generator)
+        for use in using
     ]
     return combine_renderers(
         RenderedQuery(' using '),
@@ -38,8 +37,11 @@ def render_using(using: tuple[Expression, ...], literal_index: int) -> RenderedQ
     )
 
 
-def render_using_expressions(using: tuple[Expression, ...], literal_index: int) -> RenderedQuery:
-    return using and render_using(using, literal_index) or RenderedQuery()
+def render_using_expressions(
+        using: tuple[Expression, ...],
+        generator: Iterator[int],
+) -> RenderedQuery:
+    return using and render_using(using, generator) or RenderedQuery()
 
 
 @singledispatch
