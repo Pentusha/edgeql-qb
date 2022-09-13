@@ -24,7 +24,7 @@ Query builder for EdgeDB
     - [x] limit & offset
     - [x] order by
     - [ ] backlinks
-    - [x] subqueries
+    - [ ] subqueries
     - [ ] polymorphic fields
   - [x] group
     - [x] columns
@@ -49,7 +49,8 @@ Query builder for EdgeDB
   - [ ] if statements
   - [ ] globals
   - [ ] for statements
-  - [ ] queries without models, like  select [1,2,3]
+    - [ ] union statements
+  - [ ] queries without models, like select [1,2,3]
 - Types:
   - [x] type casts
   - [ ] cal::date_duration

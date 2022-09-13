@@ -198,9 +198,13 @@ def build_unary_op(op: OpLiterals, argument: Node) -> Node:
 
 def evaluate(stack: Stack[AnyExpression], symbol: Symbol) -> None:
     match symbol.type:
-        case SymbolType.column | SymbolType.shape | SymbolType.text | SymbolType.alias:
-            stack.push(symbol.value)
-        case SymbolType.subquery:
+        case (
+            SymbolType.column
+            | SymbolType.shape
+            | SymbolType.text
+            | SymbolType.alias
+            | SymbolType.subquery
+        ):
             stack.push(symbol.value)
         case SymbolType.operator:
             match symbol.arity:
