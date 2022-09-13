@@ -92,11 +92,6 @@ class SubQuery(ABC):
         raise NotImplementedError()  # pragma: no cover
 
 
-@dataclass(slots=True, frozen=True)
-class SubQueryExpression:
-    subquery: SubQuery
-
-
 AnyExpression = (
     Column
     | Shape
@@ -106,7 +101,7 @@ AnyExpression = (
     | UnaryOp
     | SortedExpression
     | OperationsMixin
-    | SubQueryExpression
+    | SubQuery
     | FuncInvocation
     | unsafe_text
 )
@@ -206,7 +201,7 @@ def evaluate(stack: Stack[AnyExpression], symbol: Symbol) -> None:
         case SymbolType.column | SymbolType.shape | SymbolType.text | SymbolType.alias:
             stack.push(symbol.value)
         case SymbolType.subquery:
-            stack.push(SubQueryExpression(symbol.value))
+            stack.push(symbol.value)
         case SymbolType.operator:
             match symbol.arity:
                 case 1:

@@ -6,7 +6,7 @@ from edgeql_qb.expression import (
     Column,
     Expression,
     QueryLiteral,
-    SubQueryExpression,
+    SubQuery,
 )
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Node
@@ -95,9 +95,5 @@ def _(
 
 
 @render_update_expression.register
-def _(
-        expression: SubQueryExpression,
-        generator: Iterator[int],
-        column_prefix: str = '',
-) -> RenderedQuery:
-    return expression.subquery.all(generator)
+def _(expression: SubQuery, generator: Iterator[int], column_prefix: str = '') -> RenderedQuery:
+    return expression.all(generator)
