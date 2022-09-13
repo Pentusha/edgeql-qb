@@ -79,7 +79,8 @@ def _(limit: unsafe_text, generator: Iterator[int]) -> RenderedQuery:
 
 @render_limit.register
 def _(limit: QueryLiteral, generator: Iterator[int]) -> RenderedQuery:
-    name = f'limit_{limit.literal_index}'
+    index = next(generator)
+    name = f'limit_{index}'
     return render_query_literal(limit.value, name)
 
 

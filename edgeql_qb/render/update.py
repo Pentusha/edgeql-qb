@@ -100,4 +100,4 @@ def _(
         generator: Iterator[int],
         column_prefix: str = '',
 ) -> RenderedQuery:
-    return expression.subquery.all(expression.index)
+    return expression.subquery.all(generator)

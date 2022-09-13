@@ -105,17 +105,18 @@ class SelectQuery(SubQuery):
     def offset(self, value: int | FuncInvocation | unsafe_text) -> 'SelectQuery':
         return replace(self, offset_val=value)
 
-    def all(self, literal_index: int = 0) -> RenderedQuery:
+    def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         rendered_select = render_select(
             self.model.name,
             self.select,
             self.generator,
             self.model.module,
         )
-        rendered_filters = render_conditions(self.filters, self.generator)
-        rendered_order_by = render_order_by(self.ordered_by, self.generator)
-        rendered_offset = render_offset(self.offset_val, self.generator)
-        rendered_limit = render_limit(self.limit_val, self.generator)
+        gen = generator or self.generator
+        rendered_filters = render_conditions(self.filters, gen)
+        rendered_order_by = render_order_by(self.ordered_by, gen)
+        rendered_offset = render_offset(self.offset_val, gen)
+        rendered_limit = render_limit(self.limit_val, gen)
         return combine_many_renderers(
             rendered_select,
             rendered_filters,
@@ -180,10 +181,11 @@ class InsertQuery(SubQuery):
         ]
         return replace(self, values_to_insert=values_to_insert)
 
-    def all(self, literal_index: int = 0) -> RenderedQuery:
+    def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         assert self.values_to_insert
+        gen = generator or self.generator
         rendered_insert = render_insert(self.model.name)
-        rendered_values = render_insert_values(self.values_to_insert, literal_index)
+        rendered_values = render_insert_values(self.values_to_insert, gen)
         return combine_many_renderers(rendered_insert, rendered_values)
 
 
@@ -205,9 +207,10 @@ class UpdateQuery:
         )
         return replace(self, values_to_update=values_to_update)
 
-    def all(self, literal_index: int = 0) -> RenderedQuery:
+    def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         assert self.values_to_update
+        gen = generator or self.generator
         rendered_insert = render_update(self.model.name)
-        rendered_filters = render_conditions(self.filters, self.generator)
-        rendered_values = render_update_values(self.values_to_update, self.generator)
+        rendered_filters = render_conditions(self.filters, gen)
+        rendered_values = render_update_values(self.values_to_update, gen)
         return combine_many_renderers(rendered_insert, rendered_filters, rendered_values)

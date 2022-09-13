@@ -36,7 +36,6 @@ if TYPE_CHECKING:
 class QueryLiteral:
     value: Any
     expression_index: int
-    literal_index: int
 
 
 class SymbolType(Enum):
@@ -90,7 +89,7 @@ SelectExpressions = (
 
 class SubQuery(ABC):
     @abstractmethod
-    def all(self, literal_index: int = 0) -> 'RenderedQuery':
+    def all(self, generator: Iterator[int] | None = None) -> 'RenderedQuery':
         raise NotImplementedError()  # pragma: no cover
 
 
@@ -226,7 +225,7 @@ def evaluate(
                 case _:  # pragma: no cover
                     assert False
         case SymbolType.literal:
-            stack.push(QueryLiteral(symbol.value, expression_index, literal_index))
+            stack.push(QueryLiteral(symbol.value, expression_index))
         case SymbolType.sort_direction:
             sorted_expression = stack.pop()
             stack.push(SortedExpression(cast(OperationsMixin, sorted_expression), symbol.value))

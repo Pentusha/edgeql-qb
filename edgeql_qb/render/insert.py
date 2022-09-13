@@ -1,4 +1,5 @@
 from functools import reduce, singledispatch
+from typing import Iterator
 
 from edgeql_qb.expression import (
     AnyExpression,
@@ -22,10 +23,10 @@ def render_insert(model_name: str) -> RenderedQuery:
     return RenderedQuery(f'insert {model_name}')
 
 
-def render_values(values: list[Expression], literal_index: int) -> RenderedQuery:
+def render_values(values: list[Expression], generator: Iterator[int]) -> RenderedQuery:
     assert values
     renderers = [
-        render_insert_expression(value.to_infix_notation(literal_index + index), literal_index)
+        render_insert_expression(value.to_infix_notation(index), generator)
         for index, value in enumerate(values)
     ]
     return combine_many_renderers(
@@ -36,15 +37,15 @@ def render_values(values: list[Expression], literal_index: int) -> RenderedQuery
 
 
 @singledispatch
-def render_insert_expression(expression: AnyExpression, literal_index: int) -> RenderedQuery:
+def render_insert_expression(expression: AnyExpression, generator: Iterator[int]) -> RenderedQuery:
     raise NotImplementedError(f'{expression!r} is not supported')  # pragma: no cover
 
 
 @render_insert_expression.register
-def _(expression: FuncInvocation, literal_index: int) -> RenderedQuery:
+def _(expression: FuncInvocation, generator: Iterator[int]) -> RenderedQuery:
     func = expression.func
     arg_renderers = [
-        render_insert_expression(arg, literal_index)
+        render_insert_expression(arg, generator)
         for arg in expression.args
     ]
     return combine_many_renderers(
@@ -56,26 +57,27 @@ def _(expression: FuncInvocation, literal_index: int) -> RenderedQuery:
 
 
 @render_insert_expression.register
-def _(expression: Column, literal_index: int) -> RenderedQuery:
+def _(expression: Column, generator: Iterator[int]) -> RenderedQuery:
     return RenderedQuery(expression.column_name)
 
 
 @render_insert_expression.register
-def _(expression: Node, literal_index: int) -> RenderedQuery:
+def _(expression: Node, generator: Iterator[int]) -> RenderedQuery:
     assert expression.right is not None, 'Unary operations is not supported in insert expressions'
     return render_binary_node(
-        left=render_insert_expression(expression.left, literal_index),
-        right=render_insert_expression(expression.right, literal_index),
+        left=render_insert_expression(expression.left, generator),
+        right=render_insert_expression(expression.right, generator),
         expression=expression,
     )
 
 
 @render_insert_expression.register
-def _(expression: QueryLiteral, literal_index: int) -> RenderedQuery:
-    name = f'insert_{expression.literal_index}'
+def _(expression: QueryLiteral, generator: Iterator[int]) -> RenderedQuery:
+    index = next(generator)
+    name = f'insert_{index}'
     return render_query_literal(expression.value, name)
 
 
 @render_insert_expression.register
-def _(expression: SubQueryExpression, literal_index: int) -> RenderedQuery:
-    return expression.subquery.all(literal_index=literal_index + 1)
+def _(expression: SubQueryExpression, generator: Iterator[int]) -> RenderedQuery:
+    return expression.subquery.all(generator)
