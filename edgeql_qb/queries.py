@@ -113,7 +113,7 @@ class SelectQuery(SubQuery):
             self.generator,
             self.model.module,
         )
-        rendered_filters = render_conditions(self.filters, literal_index, self.generator)
+        rendered_filters = render_conditions(self.filters, self.generator)
         rendered_order_by = render_order_by(self.ordered_by, literal_index)
         rendered_offset = render_offset(self.offset_val, literal_index)
         rendered_limit = render_limit(self.limit_val, literal_index)
@@ -163,7 +163,7 @@ class DeleteQuery:
 
     def all(self, literal_index: int = 0) -> RenderedQuery:
         rendered_delete = render_delete(self.model.name)
-        rendered_filters = render_conditions(self.filters, literal_index, self.generator)
+        rendered_filters = render_conditions(self.filters, self.generator)
         return combine_many_renderers(rendered_delete, rendered_filters)
 
 
@@ -209,6 +209,6 @@ class UpdateQuery:
     def all(self, literal_index: int = 0) -> RenderedQuery:
         assert self.values_to_update
         rendered_insert = render_update(self.model.name)
-        rendered_filters = render_conditions(self.filters, literal_index, self.generator)
+        rendered_filters = render_conditions(self.filters, self.generator)
         rendered_values = render_update_values(self.values_to_update, literal_index)
         return combine_many_renderers(rendered_insert, rendered_filters, rendered_values)

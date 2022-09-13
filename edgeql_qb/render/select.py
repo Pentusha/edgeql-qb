@@ -123,7 +123,6 @@ def _(
     )
     conditions = render_conditions(
         expression.filters,
-        literal_index=literal_index,
         generator=generator,
     )
     return combine_many_renderers(
