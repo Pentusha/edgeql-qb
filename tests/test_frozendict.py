@@ -12,4 +12,3 @@ def test_frozendict_hash() -> None:
 
     # test cached hash
     frozendict = FrozenDict(a=1)
-    assert hash(frozendict) == hash(frozendict)
