@@ -1,5 +1,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10-green.svg)](https://www.python.org/downloads/release/python-3100/)
 [![Tests](https://github.com/Pentusha/edgeql-qb/actions/workflows/tests.yml/badge.svg)](https://github.com/Pentusha/edgeql-qb/actions/workflows/tests.yml)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=Pentusha_edgeql-qb&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=Pentusha_edgeql-qb)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Pentusha_edgeql-qb&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Pentusha_edgeql-qb)
 
 # EdgeQL Query Builder
 
