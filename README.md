@@ -14,7 +14,7 @@ Query builder for EdgeDB
 ## Status
 - Queries:
   - [x] select
-    - [x] nested shapes
+    - [x] [nested shapes](https://www.edgedb.com/tutorial/nested-structures/shapes)
       - [x] filters for nested shapes
       - [x] aggregations for nested shapes
     - [x] function calls
@@ -23,9 +23,10 @@ Query builder for EdgeDB
       - [x] filter by nested objects
     - [x] limit & offset
     - [x] order by
-    - [ ] backlinks
-    - [ ] subqueries
-    - [ ] polymorphic fields
+    - [ ] [backlinks](https://www.edgedb.com/docs/edgeql/paths#backlinks)
+    - [x] [subqueries](https://www.edgedb.com/tutorial/nested-structures/shapes/subqueries)
+    - [ ] [polymorphic fields](https://www.edgedb.com/tutorial/nested-structures/polymorphism)
+    - [ ] [link properties](https://www.edgedb.com/docs/edgeql/paths#link-properties) (@notation)
   - [x] group
     - [x] columns
     - [x] using
@@ -38,17 +39,17 @@ Query builder for EdgeDB
     - [x] delete without filters
     - [x] function calls
   - [x] insert
-    - [x] nested inserts
-    - [ ] conditional inserts
-    - [ ] idempotent insert
-    - [ ] select-or-insert
+    - [x] [nested inserts](https://www.edgedb.com/docs/edgeql/insert#nested-inserts)
+    - [ ] [conditional inserts](https://www.edgedb.com/tutorial/data-mutations/upsert/conditional-inserts)
+    - [ ] [idempotent insert](https://www.edgedb.com/tutorial/data-mutations/upsert/idempotent-insert)
+    - [ ] [select-or-insert](https://www.edgedb.com/tutorial/data-mutations/upsert/select-or-insert)
   - [x] function calls
     - [x] positional arguments 
     - [ ] keyword arguments
-  - [ ] with clause
+  - [ ] [with block](https://www.edgedb.com/tutorial/nested-structures/shapes/with-block)
   - [ ] if statements
-  - [ ] globals
-  - [ ] for statements
+  - [ ] [globals](https://www.edgedb.com/docs/datamodel/globals#globals)
+  - [ ] [for statements](https://www.edgedb.com/docs/edgeql/paths#link-properties)
     - [ ] union statements
   - [ ] queries without models, like select [1,2,3]
 - Types:

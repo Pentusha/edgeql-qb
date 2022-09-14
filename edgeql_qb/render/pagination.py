@@ -1,5 +1,5 @@
 from functools import reduce, singledispatch
-from types import MappingProxyType, NoneType
+from types import NoneType
 from typing import Any, Iterator
 
 from edgeql_qb.expression import Expression, QueryLiteral
@@ -7,7 +7,7 @@ from edgeql_qb.func import FuncInvocation
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import combine_many_renderers, join_renderers
 from edgeql_qb.render.types import RenderedQuery
-from edgeql_qb.types import unsafe_text
+from edgeql_qb.types import unsafe_text, int64
 
 
 @singledispatch
@@ -47,7 +47,10 @@ def _(offset: FuncInvocation, generator: Iterator[int]) -> RenderedQuery:
 def _(offset: int, generator: Iterator[int]) -> RenderedQuery:
     index = next(generator)
     name = f'offset_{index}'
-    return RenderedQuery(f' offset <int64>${name}', MappingProxyType({name: offset}))
+    return combine_many_renderers(
+        RenderedQuery(' offset '),
+        render_query_literal(int64(offset), name)
+    )
 
 
 @render_offset.register
@@ -69,7 +72,10 @@ def _(limit: NoneType, generator: Iterator[int]) -> RenderedQuery:
 def _(limit: int, generator: Iterator[int]) -> RenderedQuery:
     index = next(generator)
     name = f'limit_{index}'
-    return RenderedQuery(f' limit <int64>${name}', MappingProxyType({name: limit}))
+    return combine_many_renderers(
+        RenderedQuery(' limit '),
+        render_query_literal(int64(limit), name),
+    )
 
 
 @render_limit.register
