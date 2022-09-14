@@ -7,7 +7,7 @@ from edgeql_qb.func import FuncInvocation
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import combine_many_renderers, join_renderers
 from edgeql_qb.render.types import RenderedQuery
-from edgeql_qb.types import int64, unsafe_text
+from edgeql_qb.types import unsafe_text, int64
 
 
 @singledispatch
