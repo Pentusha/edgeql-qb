@@ -11,7 +11,6 @@ class FrozenDict(Mapping[str, Any]):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self._d = dict(*args, **kwargs)
-        self._hash: int | None = None
 
     def __iter__(self) -> Iterator[str]:
         return iter(self._d)
@@ -28,9 +27,7 @@ class FrozenDict(Mapping[str, Any]):
         return FrozenDict(new)
 
     def __hash__(self) -> int:
-        if self._hash is None:
-            hash_ = 0
-            for pair in self.items():
-                hash_ ^= hash(pair)
-            self._hash = hash_
-        return self._hash
+        hash_ = 0
+        for pair in self.items():
+            hash_ ^= hash(pair)
+        return hash_
