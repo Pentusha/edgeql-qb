@@ -1,8 +1,7 @@
-from types import MappingProxyType
-
 from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
+from edgeql_qb.frozendict import FrozenDict
 from edgeql_qb.func import math
 from edgeql_qb.types import int16
 
@@ -26,7 +25,7 @@ def test_limit_offset(client: Client) -> None:
         'offset <int64>$offset_0 '
         'limit <int64>$limit_1'
     )
-    assert rendered.context == MappingProxyType({'limit_1': 2, 'offset_0': 4})
+    assert rendered.context == FrozenDict(limit_1=2, offset_0=4)
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     assert result[0].p_int16 == 5
@@ -49,6 +48,6 @@ def test_limit_offset_function(client: Client) -> None:
         'offset math::abs(<int16>$offset_0) '
         'limit math::abs(<int16>$limit_1)'
     )
-    assert rendered.context == MappingProxyType({'limit_1': -2, 'offset_0': -4})
+    assert rendered.context == FrozenDict(limit_1=-2, offset_0=-4)
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1

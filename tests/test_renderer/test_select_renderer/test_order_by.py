@@ -1,8 +1,7 @@
-from types import MappingProxyType
-
 from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
+from edgeql_qb.frozendict import FrozenDict
 from edgeql_qb.func import math
 from edgeql_qb.types import int32, int64
 
@@ -18,7 +17,7 @@ def test_simple_select_with_simple_order_by(client: Client) -> None:
     client.query(insert2.query, **insert2.context)
     client.query(insert3.query, **insert3.context)
     assert rendered.query == 'select A { p_str } order by .p_str'
-    assert rendered.context == MappingProxyType({})
+    assert rendered.context == FrozenDict()
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 3
     assert [row.p_str for row in result] == ['1', '2', '3']
@@ -50,6 +49,6 @@ def test_simple_select_with_complex_order_by(client: Client) -> None:
         'then not .p_bool '
         'then math::floor(.p_int32)'
     )
-    assert rendered.context == MappingProxyType({'order_by_0': 2})
+    assert rendered.context == FrozenDict(order_by_0=2)
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 3

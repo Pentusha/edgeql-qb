@@ -1,5 +1,4 @@
 from functools import reduce
-from types import MappingProxyType
 from typing import Callable, cast
 
 from edgeql_qb.expression import Column, SubQuery
@@ -15,7 +14,7 @@ def join_renderers(separator: str = '') -> Callable[[RenderedQuery, RenderedQuer
     def inner(r1: RenderedQuery, r2: RenderedQuery) -> RenderedQuery:
         return RenderedQuery(
             query=f'{r1.query}{separator}{r2.query}',
-            context=MappingProxyType(dict(r1.context) | r2.context),
+            context=r1.context | r2.context,
         )
     return inner
 

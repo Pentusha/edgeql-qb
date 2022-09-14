@@ -1,8 +1,7 @@
-from types import MappingProxyType
-
 from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
+from edgeql_qb.frozendict import FrozenDict
 
 A = EdgeDBModel('A')
 Nested1 = EdgeDBModel('Nested1')
@@ -15,7 +14,7 @@ def test_select_column(client: Client) -> None:
     insert = A.insert.values(p_str='Hello').all()
     client.query(insert.query, **insert.context)
     assert rendered.query == 'select A { p_str }'
-    assert rendered.context == MappingProxyType({})
+    assert rendered.context == FrozenDict()
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 
@@ -44,7 +43,7 @@ def test_nested_shape_used(client: Client) -> None:
         ' name, nested3: { name } filter .name = <str>$filter_0 '
         '} }'
     )
-    assert rendered.context == MappingProxyType({'filter_0': 'n3'})
+    assert rendered.context == FrozenDict(filter_0='n3')
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     res = result[0]
@@ -61,6 +60,6 @@ def test_nested_query(client: Client) -> None:
     assert rendered.query == (
         'select Nested1 { name, nested_a := (select A filter .p_str = <str>$filter_0 limit 1) }'
     )
-    assert rendered.context == MappingProxyType({'filter_0': 'test'})
+    assert rendered.context == FrozenDict(filter_0='test')
     result = client.query(rendered.query, **rendered.context)
     assert not result

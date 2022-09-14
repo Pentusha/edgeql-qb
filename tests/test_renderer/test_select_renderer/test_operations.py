@@ -1,9 +1,8 @@
-from types import MappingProxyType
-
 import pytest
 from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
+from edgeql_qb.frozendict import FrozenDict
 from edgeql_qb.func import math
 from edgeql_qb.operators import BinaryOp
 from edgeql_qb.types import int16, int32, int64
@@ -32,12 +31,12 @@ def test_select_operators(client: Client) -> None:
         'abs := math::abs(.p_int32 - <int32>$select_2) + <int32>$select_3 '
         '}'
     )
-    assert rendered.context == MappingProxyType({
-        'select_0': True,
-        'select_1': True,
-        'select_2': 20,
-        'select_3': 1,
-    })
+    assert rendered.context == FrozenDict(
+        select_0=True,
+        select_1=True,
+        select_2=20,
+        select_3=1,
+    )
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 
@@ -47,7 +46,7 @@ def test_select_concatenation(client: Client) -> None:
     insert = A.insert.values(p_str='Hello').all()
     client.query(insert.query, **insert.context)
     assert rendered.query == 'select A { result := .p_str ++ .p_str }'
-    assert rendered.context == MappingProxyType({})
+    assert rendered.context == FrozenDict()
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     assert result[0].result == 'HelloHello'

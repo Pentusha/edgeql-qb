@@ -1,8 +1,7 @@
-from types import MappingProxyType
-
 from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
+from edgeql_qb.frozendict import FrozenDict
 
 Nested1 = EdgeDBModel('Nested1')
 Nested2 = EdgeDBModel('Nested2')
@@ -23,7 +22,7 @@ def test_select_exists(client: Client) -> None:
     ).all()
     client.query(insert.query, **insert.context)
     assert rendered.query == 'select Nested1 { name, nested2_exists := exists .nested2 }'
-    assert rendered.context == MappingProxyType({})
+    assert rendered.context == FrozenDict()
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     res = result[0]
@@ -43,6 +42,6 @@ def test_select_not_exists(client: Client) -> None:
     insert = Nested1.insert.values(name='p1').all()
     client.query(insert.query, **insert.context)
     assert rendered.query == 'select Nested1 { name, nested2_not_exists := not exists .nested2 }'
-    assert rendered.context == MappingProxyType({})
+    assert rendered.context == FrozenDict()
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 2

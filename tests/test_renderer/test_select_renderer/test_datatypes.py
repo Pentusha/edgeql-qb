@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
-from types import MappingProxyType
 from typing import Any
 
 import pytest
 
 from edgeql_qb import EdgeDBModel
 from edgeql_qb.expression import Column
+from edgeql_qb.frozendict import FrozenDict
 from edgeql_qb.types import (
     GenericHolder,
     bigint,
@@ -47,6 +47,6 @@ def test_select_datatypes(
     assert rendered.query == (
         f'select A {{ {label} := .{column.column_name} != <{expected_type}>$select_0 }}'
     )
-    assert rendered.context == MappingProxyType({
-        'select_0': isinstance(value, GenericHolder) and value.value or value,
-    })
+    assert rendered.context == FrozenDict(
+        select_0=isinstance(value, GenericHolder) and value.value or value,
+    )
