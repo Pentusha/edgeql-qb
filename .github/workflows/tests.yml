@@ -53,6 +53,12 @@ jobs:
           PYTHONPATH: ..
         working-directory: tests
 
+      - name: Run tests
+        run: poetry run coverage xml -o artefacts/coverage_sonarcloud.xml
+        env:
+          PYTHONPATH: ..
+        working-directory: tests
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
