@@ -60,6 +60,6 @@ def test_nested_query(client: Client) -> None:
     assert rendered.query == (
         'select Nested1 { name, nested_a := (select A filter .p_str = <str>$filter_0 limit 1) }'
     )
-    assert rendered.context == MappingProxyType({'filter_0': 'test'})
+    assert rendered.context == FrozenDict(filter_0='test')
     result = client.query(rendered.query, **rendered.context)
     assert not result

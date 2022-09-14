@@ -9,7 +9,3 @@ def test_frozendict_len() -> None:
 def test_frozendict_hash() -> None:
     assert hash(FrozenDict()) == hash(FrozenDict())
     assert hash(FrozenDict(a=1)) == hash(FrozenDict(a=1))
-
-    # test cached hash
-    frozendict = FrozenDict(a=1)
-    assert hash(frozendict) == hash(frozendict)
