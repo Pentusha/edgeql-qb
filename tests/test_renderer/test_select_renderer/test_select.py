@@ -19,7 +19,7 @@ def test_select_column(client: Client) -> None:
     assert len(result) == 1
 
 
-def test_nested_select_used(client: Client) -> None:
+def test_nested_shape_used(client: Client) -> None:
     rendered = Nested1.select(
         Nested1.c.name,
         Nested1.c.nested2(
@@ -50,3 +50,16 @@ def test_nested_select_used(client: Client) -> None:
     assert res.name == 'n1'
     assert res.nested2.name == 'n2'
     assert res.nested2.nested3.name == 'n3'
+
+
+def test_nested_query(client: Client) -> None:
+    rendered = Nested1.select(
+        Nested1.c.name,
+        nested_a=A.select().where(A.c.p_str == 'test').limit1,
+    ).all()
+    assert rendered.query == (
+        'select Nested1 { name, nested_a := (select A filter .p_str = <str>$filter_0 limit 1) }'
+    )
+    assert rendered.context == MappingProxyType({'filter_0': 'test'})
+    result = client.query(rendered.query, **rendered.context)
+    assert not result
