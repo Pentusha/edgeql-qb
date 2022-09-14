@@ -53,11 +53,13 @@ jobs:
           PYTHONPATH: ..
         working-directory: tests
 
-      - name: Run tests
-        run: poetry run coverage xml -o artefacts/coverage_sonarcloud.xml
-        env:
-          PYTHONPATH: ..
-        working-directory: tests
+      - name: fix code coverage paths
+        run: |
+          sed -i 's/\/home\/runner\/work\/edgeql-qb\/edgeql-qb\//\/github\/workspace\//g' tests/artefacts/coverage.xml
+
+      - name: Show coverage report
+        run: |
+          cat tests/artefacts/coverage.xml
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
