@@ -1,4 +1,5 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10-green.svg)](https://www.python.org/downloads/release/python-3100/)
+[![Tests](https://github.com/Pentusha/edgeql-qb/actions/workflows/tests.yml/badge.svg)](https://github.com/Pentusha/edgeql-qb/actions/workflows/tests.yml)
 
 # EdgeQL Query Builder
 
