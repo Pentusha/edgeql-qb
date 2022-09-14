@@ -1,8 +1,7 @@
-from types import MappingProxyType
-
 from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
+from edgeql_qb.frozendict import FrozenDict
 from edgeql_qb.func import Function, math
 from edgeql_qb.types import int16, unsafe_text
 
@@ -17,7 +16,7 @@ def test_insert_literals(client: Client) -> None:
     assert rendered.query == (
         'insert A { p_int16 := <int16>$insert_0, p_str := <str>$insert_1 }'
     )
-    assert rendered.context == MappingProxyType({'insert_0': 1, 'insert_1': 'Hello'})
+    assert rendered.context == FrozenDict(insert_0=1, insert_1='Hello')
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 
@@ -36,10 +35,7 @@ def test_insert_from_function_from_literal(client: Client) -> None:
         'p_str := default::exclamation(<str>$insert_1) '
         '}'
     )
-    assert rendered.context == MappingProxyType({
-        'insert_0': -1,
-        'insert_1': 'test',
-    })
+    assert rendered.context == FrozenDict(insert_0=-1, insert_1='test')
     client.query(rendered.query, **rendered.context)
     select = A.select(A.c.p_str, A.c.p_int16).all()
     inserted = client.query(select.query, **select.context)
@@ -61,11 +57,11 @@ def test_nested_insert(client: Client) -> None:
         'name := <str>$insert_1, nested3 := (insert Nested3 { name := '
         '<str>$insert_2 }) }) }'
     )
-    assert rendered.context == MappingProxyType({
-        'insert_0': 'n1',
-        'insert_1': 'n2',
-        'insert_2': 'n3',
-    })
+    assert rendered.context == FrozenDict(
+        insert_0='n1',
+        insert_1='n2',
+        insert_2='n3',
+    )
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 

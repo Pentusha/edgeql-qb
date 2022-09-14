@@ -1,8 +1,7 @@
-from types import MappingProxyType
-
 from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
+from edgeql_qb.frozendict import FrozenDict
 from edgeql_qb.func import std
 from edgeql_qb.types import int16
 
@@ -21,7 +20,7 @@ def test_simple_update(client: Client) -> None:
         'update A filter .p_int16 = <int16>$filter_0 set { p_str := '
         '<str>$update_1 }'
     )
-    assert rendered.context == MappingProxyType({'update_1': 'New hello', 'filter_0': 1})
+    assert rendered.context == FrozenDict(update_1='New hello', filter_0=1)
 
     client.query(rendered.query, **rendered.context)
     select = A.select(A.c.p_str).all()
@@ -43,7 +42,7 @@ def test_update_with_functions(client: Client) -> None:
         'update A filter .p_str = <str>$filter_0 '
         'set { p_int16 := len(.p_str) }'
     )
-    assert rendered.context == MappingProxyType({'filter_0': 'Hello'})
+    assert rendered.context == FrozenDict(filter_0='Hello')
     result = client.query(insert.query, **insert.context)
     assert len(result) == 1
 
@@ -69,7 +68,7 @@ def test_update_subquery(client: Client) -> None:
         'update Nested1 set { nested2 := '
         '(select Nested2 filter .name = <str>$filter_0 limit 1) }'
     )
-    assert rendered.context == MappingProxyType({'filter_0': 'new n2'})
+    assert rendered.context == FrozenDict(filter_0='new n2')
 
     client.query(rendered.query, **rendered.context)
 
@@ -85,7 +84,7 @@ def test_update_existing(client: Client) -> None:
 
     rendered = A.update.values(p_int16=A.c.p_int16 + int16(1)).all()
     assert rendered.query == 'update A set { p_int16 := .p_int16 + <int16>$update_0 }'
-    assert rendered.context == MappingProxyType({'update_0': 1})
+    assert rendered.context == FrozenDict(update_0=1)
     client.query(rendered.query, **rendered.context)
     select = A.select(A.c.p_int16).all()
     result = client.query(select.query, **select.context)

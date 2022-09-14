@@ -1,12 +1,13 @@
 from dataclasses import dataclass
-from types import MappingProxyType
-from typing import Any, Callable
+from typing import Callable
+
+from edgeql_qb.frozendict import FrozenDict
 
 
 @dataclass(slots=True, frozen=True)
 class RenderedQuery:
     query: str = ''
-    context: MappingProxyType[str, Any] = MappingProxyType({})
+    context: FrozenDict = FrozenDict()
 
     def map(self, f: Callable[['RenderedQuery'], 'RenderedQuery']) -> 'RenderedQuery':
         return f(self)

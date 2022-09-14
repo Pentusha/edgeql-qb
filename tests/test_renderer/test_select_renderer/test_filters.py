@@ -1,10 +1,10 @@
-from types import MappingProxyType
 from typing import Any
 
 import pytest
 from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
+from edgeql_qb.frozendict import FrozenDict
 from edgeql_qb.func import FuncInvocation, std
 from edgeql_qb.operators import BinaryOp
 from edgeql_qb.types import int32, int64, unsafe_text
@@ -50,7 +50,7 @@ def test_complex_filter_with_literal(
     client.query(insert.query, **insert.context)
     rendered = A.select(A.c.p_int64).where(condition).all()
     assert rendered.query == f'select A {{ p_int64 }} filter {expected_condition}'
-    assert rendered.context == MappingProxyType(expected_context)
+    assert rendered.context == FrozenDict(expected_context)
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 
@@ -64,7 +64,7 @@ def test_filter_with_unary_op(client: Client) -> None:
         .all()
     )
     assert rendered.query == 'select A { p_int64 } filter not .p_bool'
-    assert rendered.context == MappingProxyType({})
+    assert rendered.context == FrozenDict()
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     assert result[0].p_int64 == 11
@@ -80,7 +80,7 @@ def test_nested_filter(client: Client) -> None:
     ).all()
     client.query(insert.query, **insert.context)
     assert rendered.query == 'select Nested1 { name } filter .nested2.name = <str>$filter_0'
-    assert rendered.context == MappingProxyType({'filter_0': 'n2'})
+    assert rendered.context == FrozenDict(filter_0='n2')
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 
@@ -101,8 +101,8 @@ def test_shape_filter_enumeration(client: Client) -> None:
         'filter .name = <str>$filter_0 } '
         'filter .name = <str>$filter_2'
     )
-    assert rendered.context == MappingProxyType({
-        'filter_0': 'n2',
-        'filter_1': 'n3',
-        'filter_2': 'n1',
-    })
+    assert rendered.context == FrozenDict(
+        filter_0='n2',
+        filter_1='n3',
+        filter_2='n1',
+    )

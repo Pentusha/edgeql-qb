@@ -1,9 +1,10 @@
-from types import MappingProxyType, NoneType
+from types import NoneType
 
 import pytest
 from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
+from edgeql_qb.frozendict import FrozenDict
 from edgeql_qb.func import std
 from edgeql_qb.types import int16, int32
 
@@ -21,13 +22,13 @@ def bootstrap(client: Client) -> None:
 def test_group_statement_wo_columns(bootstrap: NoneType) -> None:
     rendered = A.group().by(A.c.p_int16).all()
     assert rendered.query == 'group A by .p_int16'
-    assert rendered.context == MappingProxyType({})
+    assert rendered.context == FrozenDict()
 
 
 def test_simple_group_statement(client: Client, bootstrap: NoneType) -> None:
     rendered = A.group(A.c.p_str).by(A.c.p_int16).all()
     assert rendered.query == 'group A { p_str } by .p_int16'
-    assert rendered.context == MappingProxyType({})
+    assert rendered.context == FrozenDict()
 
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
@@ -44,7 +45,7 @@ def test_group_with_using(client: Client, bootstrap: NoneType) -> None:
         'using a := .p_int16 + <int16>$using_0, b := a + <int16>$using_1, c := a + b '
         'by c'
     )
-    assert rendered.context == MappingProxyType({'using_0': 1, 'using_1': 2})
+    assert rendered.context == FrozenDict(using_0=1, using_1=2)
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
 
@@ -53,7 +54,7 @@ def test_group_with_unary_using(bootstrap: NoneType) -> None:
     condition = (~A.c.p_bool).label('condition')
     rendered = A.group().using(condition).by(condition).all()
     assert rendered.query == 'group A using condition := not .p_bool by condition'
-    assert rendered.context == MappingProxyType({})
+    assert rendered.context == FrozenDict()
 
 
 def test_group_with_function_in_select(client: Client, bootstrap: NoneType) -> None:
@@ -89,6 +90,6 @@ def test_group_with_function_in_using(client: Client, bootstrap: NoneType) -> No
         'using str_int16 := to_str(.p_int16), str_len := len(str_int16) '
         'by str_len'
     )
-    assert rendered.context == MappingProxyType({})
+    assert rendered.context == FrozenDict()
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
