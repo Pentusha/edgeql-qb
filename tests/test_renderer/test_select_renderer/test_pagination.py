@@ -6,6 +6,8 @@ from edgeql_qb.func import math
 from edgeql_qb.types import int16
 
 A = EdgeDBModel('A')
+Nested1 = EdgeDBModel('Nested1')
+Nested2 = EdgeDBModel('Nested2')
 
 
 def test_limit_offset(client: Client) -> None:
@@ -51,3 +53,22 @@ def test_limit_offset_function(client: Client) -> None:
     assert rendered.context == FrozenDict(limit_1=-2, offset_0=-4)
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
+
+
+def test_pagination_for_nested_shape(client: Client) -> None:
+    rendered = (
+        Nested1
+        .select(
+            Nested1.c.name,
+            Nested1.c.nested2(
+                Nested1.c.nested2.name,
+            ).limit(10).offset(20)
+        )
+        .all()
+    )
+    assert rendered.query == (
+        'select Nested1 { name, nested2: { name } offset <int64>$offset_0 limit <int64>$limit_1 }'
+    )
+    assert rendered.context == FrozenDict(offset_0=20, limit_1=10)
+    result = client.query(rendered.query, **rendered.context)
+    assert not result

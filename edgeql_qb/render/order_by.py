@@ -23,10 +23,10 @@ def render_order_by_expressions(
     ordered_by: tuple[Expression, ...],
     generator: Iterator[int],
 ) -> RenderedQuery:
-    renderers = (
+    renderers = [
         render_order_by_expression(expression.to_infix_notation(), generator)
         for expression in ordered_by
-    )
+    ]
     return combine_renderers(
         RenderedQuery(' order by '),
         reduce(join_renderers(' then '), renderers)

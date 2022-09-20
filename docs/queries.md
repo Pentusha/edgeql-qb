@@ -20,12 +20,30 @@ Movie.select(
         Movie.c.director.first_name,
         Movie.c.director.last_name,
     ),
+    Movie.c.actors(
+        Movie.c.actors.first_name,
+        Movie.c.actors.last_name,
+    ).order_by(Movie.c.actors.first_name, Movie.c.actors.last_name).limit(5)
 ).all()
 ```
 Will produce:
 
 ```
-select Movie { title, year, { first_name, last_name } }
+select Movie { 
+    title, 
+    year, 
+    director: { 
+        first_name, 
+        last_name 
+    },
+    actors: {
+        first_name,
+        last_name,
+    }
+    order by .first_name then .last_name 
+    limit <int64>$limit_0 
+}
+{'limit_0': 5}
 ```
 
 ### Subqueries

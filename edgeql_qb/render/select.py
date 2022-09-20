@@ -12,6 +12,8 @@ from edgeql_qb.expression import (
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Alias, Node
 from edgeql_qb.render.condition import render_conditions
+from edgeql_qb.render.order_by import render_order_by
+from edgeql_qb.render.pagination import render_offset, render_limit
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
     combine_many_renderers,
@@ -111,13 +113,18 @@ def _(
         render_select_expression(exp, generator, column_prefix)
         for exp in expression.columns
     )
-
     conditions = render_conditions(expression.filters, generator=generator)
+    order_by = render_order_by(expression.ordered_by, generator=generator)
+    rendered_offset = render_offset(expression.offset_val, generator=generator)
+    rendered_limit = render_limit(expression.limit_val, generator=generator)
     return combine_many_renderers(
         RenderedQuery(f'{expression.parent.column_name}: {{ '),
         reduce(join_renderers(', '), expressions),
         RenderedQuery(' }'),
         conditions,
+        order_by,
+        rendered_offset,
+        rendered_limit,
     )
 
 

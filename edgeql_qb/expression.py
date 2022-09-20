@@ -54,9 +54,25 @@ class Shape:
     parent: 'Column'
     columns: tuple[Union['Column', 'Shape'], ...]
     filters: tuple['Expression', ...] = field(default_factory=tuple)
+    ordered_by: tuple['Expression', ...] = field(default_factory=tuple)
+    limit_val: int | unsafe_text | None = None
+    offset_val: int | unsafe_text | None = None
 
     def where(self, compared: Union['BinaryOp', 'UnaryOp', 'FuncInvocation']) -> 'Shape':
         return replace(self, filters=(*self.filters, Expression(compared)))
+
+    def order_by(
+        self,
+        *columns: Union[SortedExpression, 'Column', UnaryOp, FuncInvocation],
+    ) -> 'Shape':
+        new_expressions = [Expression(exp) for exp in columns]
+        return replace(self, ordered_by=(*self.ordered_by, *new_expressions))
+
+    def limit(self, value: int | FuncInvocation | unsafe_text) -> 'Shape':
+        return replace(self, limit_val=value)
+
+    def offset(self, value: int | FuncInvocation | unsafe_text) -> 'Shape':
+        return replace(self, offset_val=value)
 
 
 @dataclass(slots=True, frozen=True)

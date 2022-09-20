@@ -31,3 +31,6 @@ class FrozenDict(Mapping[str, Any]):
         for pair in self.items():
             hash_ ^= hash(pair)
         return hash_
+
+    def __repr__(self) -> str:
+        return repr(self._d)
