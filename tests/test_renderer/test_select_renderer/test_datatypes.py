@@ -19,20 +19,20 @@ from edgeql_qb.types import (
 _dt = datetime(2022, 5, 26, 0, 0, 0)
 A = EdgeDBModel('A')
 _TYPES = (
-    ('bool_exp', A.c.p.p_bool, False, 'bool'),
-    ('str_exp', A.c.p.p_str, 'Hello', 'str'),
-    ('datetime_exp', A.c.p.p_local_datetime, _dt.replace(tzinfo=timezone.utc), 'datetime'),
-    ('local_datetime_exp', A.c.p.p_local_dattime, _dt, 'cal::local_datetime'),
-    ('local_date_exp', A.c.p.p_local_date, _dt.date(), 'cal::local_date'),
-    ('local_time_exp', A.c.p.p_local_time, _dt.time(), 'cal::local_time'),
-    ('duration_exp', A.c.p.p_duration, timedelta(), 'duration'),
-    ('int32_exp', A.c.p.p_int32, int32(1), 'int32'),
-    ('int64_exp', A.c.p.p_int64, int64(1), 'int64'),
-    ('bigint_exp', A.c.p.p_bigint, bigint(1), 'bigint'),
-    ('float32_exp', A.c.p.p_float32, float32(1), 'float32'),
-    ('float64_exp', A.c.p.p_float64, float64(1), 'float64'),
-    ('decimal_exp', A.c.p.p_decimal, Decimal(1), 'decimal'),
-    ('bytes_exp', A.c.p.p_bytes, b'Hello', 'bytes'),
+    ('bool_exp', A.c.p_bool, False, 'bool'),
+    ('str_exp', A.c.p_str, 'Hello', 'str'),
+    ('datetime_exp', A.c.p_local_datetime, _dt.replace(tzinfo=timezone.utc), 'datetime'),
+    ('local_datetime_exp', A.c.p_local_dattime, _dt, 'cal::local_datetime'),
+    ('local_date_exp', A.c.p_local_date, _dt.date(), 'cal::local_date'),
+    ('local_time_exp', A.c.p_local_time, _dt.time(), 'cal::local_time'),
+    ('duration_exp', A.c.p_duration, timedelta(), 'duration'),
+    ('int32_exp', A.c.p_int32, int32(1), 'int32'),
+    ('int64_exp', A.c.p_int64, int64(1), 'int64'),
+    ('bigint_exp', A.c.p_bigint, bigint(1), 'bigint'),
+    ('float32_exp', A.c.p_float32, float32(1), 'float32'),
+    ('float64_exp', A.c.p_float64, float64(1), 'float64'),
+    ('decimal_exp', A.c.p_decimal, Decimal(1), 'decimal'),
+    ('bytes_exp', A.c.p_bytes, b'Hello', 'bytes'),
 )
 
 
