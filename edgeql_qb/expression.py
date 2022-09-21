@@ -29,6 +29,7 @@ from edgeql_qb.operators import (
 from edgeql_qb.types import unsafe_text
 
 if TYPE_CHECKING:
+    from edgeql_qb.queries import EdgeDBModel  # pragma: no cover
     from edgeql_qb.render.types import RenderedQuery  # pragma: no cover
 
 
@@ -102,6 +103,13 @@ SelectExpressions = (
 )
 
 
+@dataclass(slots=True, frozen=True)
+class BaseModel:
+    name: str
+    module: str | None = None
+    schema: str = 'default'
+
+
 class SubQuery(ABC):
     @abstractmethod
     def all(self, generator: Iterator[int] | None = None) -> 'RenderedQuery':
@@ -111,9 +119,14 @@ class SubQuery(ABC):
         return BinaryOp(':=', Alias(name), self)
 
 
+class UpdateSubQuery(SubQuery):
+    pass
+
+
 @dataclass(slots=True, frozen=True)
 class UnlessConflict:
     on: tuple[Column, ...] | Column | None
+    else_: Union[UpdateSubQuery, 'EdgeDBModel', None] = None
 
 
 AnyExpression = (

@@ -4,11 +4,13 @@ from typing import Any, Iterator
 
 from edgeql_qb.expression import (
     AnyExpression,
+    BaseModel,
     Column,
     Expression,
     QueryLiteral,
     SubQuery,
     UnlessConflict,
+    UpdateSubQuery,
 )
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Node
@@ -129,8 +131,35 @@ def _(conflict: UnlessConflict, generator: Iterator[int]) -> RenderedQuery:
             conflict.on
             and combine_many_renderers(
                 RenderedQuery(' on '),
-                render_unless_conflict_on(conflict.on, generator)
+                render_unless_conflict_on(conflict.on, generator),
             )
             or RenderedQuery()
         ),
+        (
+            conflict.else_
+            and combine_many_renderers(
+                RenderedQuery(' else '),
+                render_unless_conflict_else(conflict.else_, generator),
+            )
+            or RenderedQuery()
+        )
+    )
+
+
+@singledispatch
+def render_unless_conflict_else(else_: Any, generator: Iterator[int]) -> RenderedQuery:
+    raise NotImplementedError(f'{else_!r} is not supported')  # pragma: no cover
+
+
+@render_unless_conflict_else.register
+def _(else_: BaseModel, generator: Iterator[int]) -> RenderedQuery:
+    return RenderedQuery(else_.name)
+
+
+@render_unless_conflict_else.register
+def _(expression: UpdateSubQuery, generator: Iterator[int]) -> RenderedQuery:
+    return combine_many_renderers(
+        RenderedQuery('('),
+        expression.all(generator),
+        RenderedQuery(')'),
     )

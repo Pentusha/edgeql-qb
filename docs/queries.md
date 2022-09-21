@@ -159,6 +159,31 @@ Movie.insert.values(
 
 For convenience, the `.limit1` property has been added, which is a shorthand for `limit(unsafe_text('1'))`.
 
+### Conditional Insert (Upsert)
+```python
+(
+    Movie
+    .insert
+    .values(
+        slug='blade_runner_2049',
+        title='Blade Runner 2049'. 
+        usd_raised=int16(1000),
+    )
+    .unless_conflict(on=Movie.c.slug, else_=Movie.update.values(usd_raised=int16(1000))
+    .all()
+)
+```
+will produce
+```
+insert Movie {
+  title := <str>$insert_0,
+  slug := <str>$insert_1,
+  usd_raised := <int16>$insert_2,
+} 
+unless conflict on .slug
+else (update Movie set { usd_raised := <int16>$update_3 })
+```
+
 ### Idempotent Insert
 ```python
 Account.insert.values(username='System').unless_conflict().all()

@@ -137,3 +137,52 @@ def test_idempotent_insert_on_composite_constraint(client: Client) -> None:
     assert rendered.context == FrozenDict(insert_0='test', insert_1='test', insert_2='test')
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
+
+
+def test_conditional_insert_with_type(client: Client) -> None:
+    else_ = WithConstraints
+    rendered = (
+        WithConstraints
+        .insert
+        .values(name='test', composite1='old')
+        .unless_conflict(on=WithConstraints.c.name, else_=else_)
+        .all()
+    )
+    assert rendered.query == (
+        'insert WithConstraints { '
+        'name := <str>$insert_0, '
+        'composite1 := <str>$insert_1 '
+        '} unless conflict on .name '
+        'else WithConstraints'
+    )
+    assert rendered.context == FrozenDict(
+        insert_0='test',
+        insert_1='old',
+    )
+    result = client.query(rendered.query, **rendered.context)
+    assert len(result) == 1
+
+
+def test_conditional_insert_with_query(client: Client) -> None:
+    else_ = WithConstraints.update.values(composite1='new')
+    rendered = (
+        WithConstraints
+        .insert
+        .values(name='test', composite1='old')
+        .unless_conflict(on=WithConstraints.c.name, else_=else_)
+        .all()
+    )
+    assert rendered.query == (
+        'insert WithConstraints { '
+        'name := <str>$insert_0, '
+        'composite1 := <str>$insert_1 '
+        '} unless conflict on .name '
+        'else (update WithConstraints set { composite1 := <str>$update_2 })'
+    )
+    assert rendered.context == FrozenDict(
+        insert_0='test',
+        insert_1='old',
+        update_2='new',
+    )
+    result = client.query(rendered.query, **rendered.context)
+    assert len(result) == 1

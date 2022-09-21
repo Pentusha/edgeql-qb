@@ -1,13 +1,15 @@
 from dataclasses import dataclass, field, replace
-from typing import Any, Iterator
+from typing import Any, Iterator, Union
 
 from edgeql_qb.expression import (
+    BaseModel,
     Column,
     Columns,
     Expression,
     SelectExpressions,
     SubQuery,
     UnlessConflict,
+    UpdateSubQuery,
 )
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import BinaryOp, SortedExpression, UnaryOp
@@ -38,10 +40,7 @@ def literal_index_generator(start: int = 0) -> Iterator[int]:
 
 
 @dataclass(slots=True, frozen=True)
-class EdgeDBModel:
-    name: str
-    module: str | None = None
-    schema: str = 'default'
+class EdgeDBModel(BaseModel):
     c: Columns = field(default_factory=Columns)
 
     def select(self, *selectables: SelectExpressions, **kwargs: SubQuery) -> 'SelectQuery':
@@ -176,8 +175,12 @@ class InsertQuery(SubQuery):
         ]
         return replace(self, values_to_insert=values_to_insert)
 
-    def unless_conflict(self, on: tuple[Column, ...] | Column | None = None) -> 'InsertQuery':
-        return replace(self, unless_conflict_value=UnlessConflict(on=on))
+    def unless_conflict(
+        self,
+        on: tuple[Column, ...] | Column | None = None,
+        else_: Union[UpdateSubQuery, EdgeDBModel, None] = None,
+    ) -> 'InsertQuery':
+        return replace(self, unless_conflict_value=UnlessConflict(on=on, else_=else_))
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         assert self.values_to_insert
@@ -193,7 +196,7 @@ class InsertQuery(SubQuery):
 
 
 @dataclass(slots=True, frozen=True)
-class UpdateQuery:
+class UpdateQuery(UpdateSubQuery):
     model: EdgeDBModel
     values_to_update: tuple[Expression, ...] = field(default_factory=tuple)
     filters: tuple[Expression, ...] = field(default_factory=tuple)
