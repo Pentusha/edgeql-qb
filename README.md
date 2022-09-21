@@ -45,8 +45,8 @@ Query builder for EdgeDB
   - [x] delete
     - [x] delete without filters
     - [x] function calls
-    - [ ] limit & offset
-    - [ ] order by
+    - [x] limit & offset
+    - [x] order by
   - [x] insert
     - [x] [nested inserts](https://www.edgedb.com/docs/edgeql/insert#nested-inserts)
     - [X] [conditional inserts](https://www.edgedb.com/tutorial/data-mutations/upsert/conditional-inserts)

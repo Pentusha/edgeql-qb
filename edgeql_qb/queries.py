@@ -150,15 +150,40 @@ class GroupQuery:
 class DeleteQuery:
     model: EdgeDBModel
     filters: tuple[Expression, ...] = field(default_factory=tuple)
+    ordered_by: tuple[Expression, ...] = field(default_factory=tuple)
+    limit_val: int | unsafe_text | None = None
+    offset_val: int | unsafe_text | None = None
 
     def where(self, compared: BinaryOp | UnaryOp) -> 'DeleteQuery':
         return replace(self, filters=(*self.filters, Expression(compared)))
+
+    def order_by(
+        self,
+        *columns: SortedExpression | Column | UnaryOp | FuncInvocation,
+    ) -> 'DeleteQuery':
+        new_expressions = [Expression(exp) for exp in columns]
+        return replace(self, ordered_by=(*self.ordered_by, *new_expressions))
+
+    def limit(self, value: int | FuncInvocation | unsafe_text) -> 'DeleteQuery':
+        return replace(self, limit_val=value)
+
+    def offset(self, value: int | FuncInvocation | unsafe_text) -> 'DeleteQuery':
+        return replace(self, offset_val=value)
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         gen = generator or literal_index_generator()
         rendered_delete = render_delete(self.model.name)
         rendered_filters = render_conditions(self.filters, gen)
-        return combine_many_renderers(rendered_delete, rendered_filters)
+        rendered_order_by = render_order_by(self.ordered_by, gen)
+        rendered_offset = render_offset(self.offset_val, gen)
+        rendered_limit = render_limit(self.limit_val, gen)
+        return combine_many_renderers(
+            rendered_delete,
+            rendered_filters,
+            rendered_order_by,
+            rendered_offset,
+            rendered_limit,
+        )
 
 
 @dataclass(slots=True, frozen=True)

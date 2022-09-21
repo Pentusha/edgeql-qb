@@ -217,6 +217,13 @@ delete Movie filter .title = <str>$filter_0
 {'filter_0': 'Blade Runner 2049'}
 ```
 
+The `limit`, `offset` and `order_by` methods are supported as well.
+
+This query will delete latest log entry:
+```python
+Log.delete.order_by(Log.c.created_at.desc()).limit(1).all()
+```
+
 ## Group
 ```python
 Movie.group(Movie.c.title).by(Movie.c.year).all()
