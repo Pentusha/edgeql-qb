@@ -7,6 +7,7 @@ from edgeql_qb.expression import (
     Expression,
     SelectExpressions,
     SubQuery,
+    UnlessConflict,
 )
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import BinaryOp, SortedExpression, UnaryOp
@@ -17,7 +18,7 @@ from edgeql_qb.render.group import (
     render_group_by_expressions,
     render_using_expressions,
 )
-from edgeql_qb.render.insert import render_insert
+from edgeql_qb.render.insert import render_insert, render_unless_conflict
 from edgeql_qb.render.insert import render_values as render_insert_values
 from edgeql_qb.render.order_by import render_order_by
 from edgeql_qb.render.pagination import render_limit, render_offset
@@ -165,6 +166,7 @@ class DeleteQuery:
 class InsertQuery(SubQuery):
     model: EdgeDBModel
     values_to_insert: list[Expression] = field(default_factory=list)
+    unless_conflict_value: UnlessConflict | None = None
 
     def values(self, **to_insert: Any) -> 'InsertQuery':
         assert to_insert
@@ -174,12 +176,20 @@ class InsertQuery(SubQuery):
         ]
         return replace(self, values_to_insert=values_to_insert)
 
+    def unless_conflict(self, on: tuple[Column, ...] | Column | None = None) -> 'InsertQuery':
+        return replace(self, unless_conflict_value=UnlessConflict(on=on))
+
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         assert self.values_to_insert
         gen = generator or literal_index_generator()
         rendered_insert = render_insert(self.model.name)
         rendered_values = render_insert_values(self.values_to_insert, gen)
-        return combine_many_renderers(rendered_insert, rendered_values)
+        rendered_conflicts = render_unless_conflict(self.unless_conflict_value, gen)
+        return combine_many_renderers(
+            rendered_insert,
+            rendered_values,
+            rendered_conflicts,
+        )
 
 
 @dataclass(slots=True, frozen=True)

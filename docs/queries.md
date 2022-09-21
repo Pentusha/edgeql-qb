@@ -71,8 +71,8 @@ Person.select(
 ```
 Will produce
 ```
-select Person { name, bmi := .weight / .height ^ $select_1_0_0 }
-{'select_1_0_0': 2}
+select Person { name, bmi := .weight / .height ^ $select_0 }
+{'select_0': 2}
 ```
 
 ### Filtering
@@ -83,8 +83,8 @@ Villain.select(Villain.c.id, Villain.c.name).where(Villain.c.name == 'Doc Ock').
 ```
 Will produce
 ```python
-select Villain { id, name } filter .name = <str>$filter_1_0_0
-{'filter_1_0_0': 'Doc Ock'}
+select Villain { id, name } filter .name = <str>$filter_0
+{'filter_0': 'Doc Ock'}
 ```
 
 You also may filter nested objects:
@@ -123,8 +123,8 @@ top_250 = (
 ```
 yield:
 ```
-select Movie order by .rating desc limit $limit_1 offset $offset_1
-{'limit_1': 250, 'offset_1': 0}
+select Movie order by .rating desc offset $offset_0 limit $limit_1
+{'limit_1': 250, 'offset_0': 0}
 ```
 
 In case you are using select or insert subquery for singular relationship then you need to know:
@@ -139,7 +139,7 @@ Please note that `offset` by design producing not optional execution plan
 and you have to avoid to use this keyword and method as far as you can.
 
 
-# Insert
+## Insert
 
 ```python
 Movie.insert.values(
@@ -159,7 +159,16 @@ Movie.insert.values(
 
 For convenience, the `.limit1` property has been added, which is a shorthand for `limit(unsafe_text('1'))`.
 
-# Update
+### Idempotent Insert
+```python
+Account.insert.values(username='System').unless_conflict().all()
+```
+is equivalent to
+```
+insert Account { username := <str>$insert_0 } unless conflict
+```
+
+## Update
 
 ```python
 Movie.update.values(
@@ -168,22 +177,22 @@ Movie.update.values(
 ```
 will produce:
 ```
-update Movie filter .title = <str>$filter_1_0_0 set { budget_usd := <int16>$update_1_0_0 }
-{'filter_1_0_0': 'Blade Runner 2049', 'update_1_0_0': 185000000}
+update Movie filter .title = <str>$filter_0 set { budget_usd := <int16>$update_1 }
+{'filter_0': 'Blade Runner 2049', 'update_1': 185000000}
 ```
 
-# Delete
+## Delete
 
 ```python
 Movie.delete.where(Movie.c.title == 'Blade Runner 2049').all()
 ```
 will produce:
 ```
-delete Movie filter .title = <str>$filter_1_0_0
-{'filter_1_0_0': 'Blade Runner 2049'}
+delete Movie filter .title = <str>$filter_0
+{'filter_0': 'Blade Runner 2049'}
 ```
 
-# Group
+## Group
 ```python
 Movie.group(Movie.c.title).by(Movie.c.year).all()
 ```
@@ -199,8 +208,8 @@ Movie.group().using(decade).by(decade).all()
 ```
 will produce:
 ```
-group Movie using decade := .year // $using_0_0_0 by decade
-{'using_0_0_0': 10}
+group Movie using decade := .year // $using_0 by decade
+{'using_0': 10}
 ```
 
 Using syntax also supports nested expressions.

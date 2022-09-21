@@ -13,7 +13,7 @@ from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Alias, Node
 from edgeql_qb.render.condition import render_conditions
 from edgeql_qb.render.order_by import render_order_by
-from edgeql_qb.render.pagination import render_offset, render_limit
+from edgeql_qb.render.pagination import render_limit, render_offset
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
     combine_many_renderers,

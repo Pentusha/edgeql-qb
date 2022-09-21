@@ -21,11 +21,13 @@ Query builder for EdgeDB
   - [x] select
     - [x] [nested shapes](https://www.edgedb.com/tutorial/nested-structures/shapes)
       - [x] filters for nested shapes
+      - [x] order by for nested shapes
+      - [x] limit/offset for nested shapes
       - [x] aggregations for nested shapes
     - [x] function calls
     - [x] computed fields
     - [x] filters
-      - [x] filter by nested objects
+      - [x] filter by nested paths
     - [x] limit & offset
     - [x] order by
     - [ ] [backlinks](https://www.edgedb.com/docs/edgeql/paths#backlinks)
@@ -46,7 +48,7 @@ Query builder for EdgeDB
   - [x] insert
     - [x] [nested inserts](https://www.edgedb.com/docs/edgeql/insert#nested-inserts)
     - [ ] [conditional inserts](https://www.edgedb.com/tutorial/data-mutations/upsert/conditional-inserts)
-    - [ ] [idempotent insert](https://www.edgedb.com/tutorial/data-mutations/upsert/idempotent-insert)
+    - [x] [idempotent insert](https://www.edgedb.com/tutorial/data-mutations/upsert/idempotent-insert)
     - [ ] [select-or-insert](https://www.edgedb.com/tutorial/data-mutations/upsert/select-or-insert)
   - [x] function calls
     - [x] positional arguments 

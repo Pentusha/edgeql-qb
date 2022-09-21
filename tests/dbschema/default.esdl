@@ -32,6 +32,17 @@ type Nested2 {
     link nested3 -> Nested3;
 }
 
+type WithConstraints {
+    required property name -> str {
+        constraint exclusive;
+    };
+
+    property composite1 -> str;
+    property composite2 -> str;
+
+    constraint exclusive on ((.composite1, .composite2))
+}
+
 type Nested1 {
     property name -> str;
     link nested2 -> Nested2;

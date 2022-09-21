@@ -111,6 +111,11 @@ class SubQuery(ABC):
         return BinaryOp(':=', Alias(name), self)
 
 
+@dataclass(slots=True, frozen=True)
+class UnlessConflict:
+    on: tuple[Column, ...] | Column | None
+
+
 AnyExpression = (
     Column
     | Shape

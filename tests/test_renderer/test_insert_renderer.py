@@ -9,6 +9,7 @@ A = EdgeDBModel('A')
 Nested1 = EdgeDBModel('Nested1')
 Nested2 = EdgeDBModel('Nested2')
 Nested3 = EdgeDBModel('Nested3')
+WithConstraints = EdgeDBModel('WithConstraints')
 
 
 def test_insert_literals(client: Client) -> None:
@@ -90,3 +91,49 @@ def test_insert_from_select(client: Client) -> None:
     assert len(result) == 1
     assert result[0].name == 'n1'
     assert result[0].nested2.name == 'n2'
+
+
+def test_idempotent_insert(client: Client) -> None:
+    rendered = A.insert.values(p_str='test').unless_conflict().all()
+    assert rendered.query == 'insert A { p_str := <str>$insert_0 } unless conflict'
+    assert rendered.context == FrozenDict(insert_0='test')
+
+    result = client.query(rendered.query, **rendered.context)
+    assert len(result) == 1
+
+
+def test_idempotent_insert_on_column(client: Client) -> None:
+    rendered = (
+        WithConstraints
+        .insert
+        .values(name='test')
+        .unless_conflict(on=WithConstraints.c.name)
+        .all()
+    )
+    assert rendered.query == (
+        'insert WithConstraints { name := <str>$insert_0 } unless conflict on .name'
+    )
+    assert rendered.context == FrozenDict(insert_0='test')
+
+    result = client.query(rendered.query, **rendered.context)
+    assert len(result) == 1
+
+
+def test_idempotent_insert_on_composite_constraint(client: Client) -> None:
+    rendered = (
+        WithConstraints
+        .insert
+        .values(name='test', composite1='test', composite2='test')
+        .unless_conflict(on=(WithConstraints.c.composite1, WithConstraints.c.composite2))
+        .all()
+    )
+    assert rendered.query == (
+        'insert WithConstraints { '
+        'name := <str>$insert_0, '
+        'composite1 := <str>$insert_1, '
+        'composite2 := <str>$insert_2 } '
+        'unless conflict on (.composite1, .composite2)'
+    )
+    assert rendered.context == FrozenDict(insert_0='test', insert_1='test', insert_2='test')
+    result = client.query(rendered.query, **rendered.context)
+    assert len(result) == 1

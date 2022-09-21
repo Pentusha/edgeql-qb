@@ -1,5 +1,6 @@
 from functools import reduce, singledispatch
-from typing import Iterator
+from types import NoneType
+from typing import Any, Iterator
 
 from edgeql_qb.expression import (
     AnyExpression,
@@ -7,6 +8,7 @@ from edgeql_qb.expression import (
     Expression,
     QueryLiteral,
     SubQuery,
+    UnlessConflict,
 )
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Node
@@ -81,3 +83,54 @@ def _(expression: QueryLiteral, generator: Iterator[int]) -> RenderedQuery:
 @render_insert_expression.register
 def _(expression: SubQuery, generator: Iterator[int]) -> RenderedQuery:
     return expression.all(generator)
+
+
+@singledispatch
+def render_unless_conflict_on(on: Any, generator: Iterator[int]) -> RenderedQuery:
+    raise NotImplementedError(f'{on!r} is not supported')  # pragma: no cover
+
+
+@render_unless_conflict_on.register
+def _(on: Column, generator: Iterator[int]) -> RenderedQuery:
+    return RenderedQuery(f'.{on.column_name}')
+
+
+@render_unless_conflict_on.register
+def _(
+    on: tuple,  # type: ignore
+    generator: Iterator[int],
+) -> RenderedQuery:
+    renderers = [
+        render_unless_conflict_on(value, generator)
+        for value in on
+    ]
+    return combine_many_renderers(
+        RenderedQuery('('),
+        reduce(join_renderers(', '), renderers),
+        RenderedQuery(')'),
+    )
+
+
+@singledispatch
+def render_unless_conflict(conflict: Any, generator: Iterator[int]) -> RenderedQuery:
+    raise NotImplementedError(f'{conflict!r} is not supported')  # pragma: no cover
+
+
+@render_unless_conflict.register
+def _(conflict: NoneType, generator: Iterator[int]) -> RenderedQuery:
+    return RenderedQuery()
+
+
+@render_unless_conflict.register
+def _(conflict: UnlessConflict, generator: Iterator[int]) -> RenderedQuery:
+    return combine_many_renderers(
+        RenderedQuery(' unless conflict'),
+        (
+            conflict.on
+            and combine_many_renderers(
+                RenderedQuery(' on '),
+                render_unless_conflict_on(conflict.on, generator)
+            )
+            or RenderedQuery()
+        ),
+    )
