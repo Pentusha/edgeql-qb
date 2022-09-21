@@ -12,7 +12,7 @@ You also can ask database for exact set of properties:
 Nested shapes can be used to fetch linked objects and their properties. 
 Here we fetch all Movie objects and their directors.
 
-```
+```python
 Movie.select(
     Movie.c.title,
     Movie.c.year,
@@ -100,7 +100,7 @@ Post.select(
 
 ### Ordering
 You could pass any number of binary or unary expressions or even columns to `order_by` method:
-```
+```python
 Movie.select().order_by(
     Movie.c.rating.desc(),
     Movie.c.year.desc(),
