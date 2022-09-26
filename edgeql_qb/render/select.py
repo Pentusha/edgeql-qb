@@ -43,11 +43,22 @@ def render_select(
     model_name: str,
     select: tuple[Expression, ...],
     generator: Iterator[int],
+    select_from_query: SubQuery | None = None,
     module: str | None = None,
 ) -> RenderedQuery:
-    return combine_renderers(
+    rendered_select = (
+        select_from_query
+        and combine_many_renderers(
+            RenderedQuery('('),
+            select_from_query.all(generator),
+            RenderedQuery(')'),
+        )
+        or RenderedQuery(model_name)
+    )
+    return combine_many_renderers(
         RenderedQuery(module and f'with module {module} ' or ''),
-        RenderedQuery(f'select {model_name}'),
+        RenderedQuery('select '),
+        rendered_select,
     ).map(
         lambda r: (
             select

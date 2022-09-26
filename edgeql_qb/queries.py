@@ -75,11 +75,15 @@ class EdgeDBModel(BaseModel):
 class SelectQuery(SubQuery):
     model: EdgeDBModel
     select: tuple[Expression, ...] = field(default_factory=tuple)
+    select_from_query: SubQuery | None = None
     with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
     filters: tuple[Expression, ...] = field(default_factory=tuple)
     ordered_by: tuple[Expression, ...] = field(default_factory=tuple)
     limit_val: int | unsafe_text | None = None
     offset_val: int | unsafe_text | None = None
+
+    def select_from(self, query: SubQuery) -> 'SelectQuery':
+        return replace(self, select_from_query=query)
 
     def where(self, compared: BinaryOp | UnaryOp | FuncInvocation) -> 'SelectQuery':
         return replace(self, filters=(*self.filters, Expression(compared)))
@@ -112,6 +116,7 @@ class SelectQuery(SubQuery):
             self.model.name,
             self.select,
             gen,
+            self.select_from_query,
             self.model.module,
         )
         rendered_filters = render_conditions(self.filters, gen)
