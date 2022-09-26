@@ -26,7 +26,7 @@ from edgeql_qb.operators import (
     UnaryOp,
     sort_ops,
 )
-from edgeql_qb.types import unsafe_text
+from edgeql_qb.types import GenericHolder, unsafe_text
 
 if TYPE_CHECKING:
     from edgeql_qb.queries import EdgeDBModel  # pragma: no cover
@@ -140,6 +140,7 @@ AnyExpression = (
     | OperationsMixin
     | SubQuery
     | FuncInvocation
+    | GenericHolder[Any]
     | unsafe_text
 )
 FilterExpressions = BinaryOp | UnaryOp
@@ -308,13 +309,14 @@ class Expression:
             case BinaryOp(operation, left, right):
                 yield Symbol(operation, arity=2, depth=depth)
 
+                new_depth = depth + 1
                 # a := (b := value) + 1 -> a := b + 1
-                left = _replace_alias_with_label(left, depth)
+                left = _replace_alias_with_label(left, new_depth)
                 # a := 1 + (b := value) -> a := 1 + b
-                right = _replace_alias_with_label(right, depth)
+                right = _replace_alias_with_label(right, new_depth)
 
-                yield from self._to_polish_notation(left, depth + 1)
-                yield from self._to_polish_notation(right, depth + 1)
+                yield from self._to_polish_notation(left, new_depth)
+                yield from self._to_polish_notation(right, new_depth)
             case SortedExpression(expression, direction):
                 yield Symbol(direction, depth=depth)
                 yield from self._to_polish_notation(expression, depth + 1)

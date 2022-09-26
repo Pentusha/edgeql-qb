@@ -9,7 +9,7 @@ from edgeql_qb.expression import (
     SubQuery,
 )
 from edgeql_qb.func import FuncInvocation
-from edgeql_qb.operators import Node
+from edgeql_qb.operators import Alias, Node
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
     combine_many_renderers,
@@ -48,6 +48,11 @@ def render_update_expression(
 @render_update_expression.register
 def _(expression: Column, generator: Iterator[int], column_prefix: str = '') -> RenderedQuery:
     return RenderedQuery(f'{column_prefix}{expression.column_name}')
+
+
+@render_update_expression.register
+def _(expression: Alias, generator: Iterator[int], column_prefix: str = '') -> RenderedQuery:
+    return RenderedQuery(expression.name)
 
 
 @render_update_expression.register

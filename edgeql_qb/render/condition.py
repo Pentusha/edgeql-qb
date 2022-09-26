@@ -8,7 +8,7 @@ from edgeql_qb.expression import (
     QueryLiteral,
 )
 from edgeql_qb.func import FuncInvocation
-from edgeql_qb.operators import Node
+from edgeql_qb.operators import Alias, Node
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
     combine_many_renderers,
@@ -39,6 +39,11 @@ def render_conditions(filters: tuple[Expression, ...], generator: Iterator[int])
 @singledispatch
 def render_condition(expression: AnyExpression, generator: Iterator[int]) -> RenderedQuery:
     raise NotImplementedError(f'{expression!r} is not supported')  # pragma: no cover
+
+
+@render_condition.register
+def _(expression: Alias, generator: Iterator[int]) -> RenderedQuery:
+    return RenderedQuery(expression.name)
 
 
 @render_condition.register
