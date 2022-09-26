@@ -7,6 +7,7 @@ A = EdgeDBModel('A')
 Nested1 = EdgeDBModel('Nested1')
 Nested2 = EdgeDBModel('Nested2')
 Nested3 = EdgeDBModel('Nested3')
+WithConstraints = EdgeDBModel('WithConstraints')
 
 
 def test_select_column(client: Client) -> None:
@@ -63,3 +64,27 @@ def test_nested_query(client: Client) -> None:
     assert rendered.context == FrozenDict(filter_0='test')
     result = client.query(rendered.query, **rendered.context)
     assert not result
+
+
+def test_select_from_insert(client: Client) -> None:
+    rendered = (
+        WithConstraints
+        .select(WithConstraints.c.name)
+        .select_from(
+            WithConstraints
+            .insert
+            .values(name='test')
+            .unless_conflict(WithConstraints.c.name, WithConstraints)
+        )
+        .all()
+    )
+    assert rendered.query == (
+        'select ('
+        'insert WithConstraints { name := <str>$insert_0 } '
+        'unless conflict on .name else WithConstraints'
+        ') { name }'
+    )
+    assert rendered.context == FrozenDict(insert_0='test')
+    result = client.query(rendered.query, **rendered.context)
+    assert len(result) == 1
+    assert result[0].name == 'test'

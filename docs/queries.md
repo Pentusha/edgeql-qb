@@ -3,13 +3,13 @@
 
 ## Select
 
-You can query whole objects `Movie.select().all()` that gives you 
+You can query whole objects `Movie.select().all()` that gives you
 the following EdgeQL query: `select Movie`
-You also can ask database for exact set of properties: 
+You also can ask database for exact set of properties:
 `Movie.select(Movie.c.title, Movie.c.year).all()` that would be rendered to `select Movie { title, year }`.
 
 ### Shapes
-Nested shapes can be used to fetch linked objects and their properties. 
+Nested shapes can be used to fetch linked objects and their properties.
 Here we fetch all Movie objects and their directors.
 
 ```python
@@ -29,19 +29,19 @@ Movie.select(
 Will produce:
 
 ```
-select Movie { 
-    title, 
-    year, 
-    director: { 
-        first_name, 
-        last_name 
+select Movie {
+    title,
+    year,
+    director: {
+        first_name,
+        last_name
     },
     actors: {
         first_name,
         last_name,
     }
-    order by .first_name then .last_name 
-    limit <int64>$limit_0 
+    order by .first_name then .last_name
+    limit <int64>$limit_0
 }
 {'limit_0': 5}
 ```
@@ -61,8 +61,8 @@ select Post { title, description, latest_posts := (select Post order by created_
 ```
 
 ### Expressions
-Shapes can contain computed fields. 
-These are EdgeQL expressions that are computed on the fly during the execution of the query. 
+Shapes can contain computed fields.
+These are EdgeQL expressions that are computed on the fly during the execution of the query.
 ```python
 Person.select(
     Person.c.name,
@@ -76,7 +76,7 @@ select Person { name, bmi := .weight / .height ^ $select_0 }
 ```
 
 ### Filtering
-To filter the set of selected objects, use a `where` chained method, 
+To filter the set of selected objects, use a `where` chained method,
 which accepts either binary or unary expressions.
 ```python
 Villain.select(Villain.c.id, Villain.c.name).where(Villain.c.name == 'Doc Ock').all()
@@ -132,7 +132,7 @@ In case you are using select or insert subquery for singular relationship then y
 EdgeDB requires you to specify `limit 1` until you have not create unique constraint covering this condition.
 When you pass python value without wrapper `unsafe_text(limit)` it will be rendered
 as context's variable `limit_N` and will pass to EdgeDB dynamically, which will cause an error on EdgeDB side.
-Similar to how it works in SQLAlchemy's `unsafe_text` wrapper make this expression hardcoded into final query as is, 
+Similar to how it works in SQLAlchemy's `unsafe_text` wrapper make this expression hardcoded into final query as is,
 without dynamic contexts.
 
 Please note that `offset` by design producing not optional execution plan
@@ -151,7 +151,7 @@ Movie.insert.values(
         .limit1
     ),
     actors=Person.insert.values(
-        first_name='Harrison', 
+        first_name='Harrison',
         last_name='Ford',
     ),
 ).all()
@@ -166,7 +166,7 @@ For convenience, the `.limit1` property has been added, which is a shorthand for
     .insert
     .values(
         slug='blade_runner_2049',
-        title='Blade Runner 2049'. 
+        title='Blade Runner 2049'.
         usd_raised=int16(1000),
     )
     .unless_conflict(on=Movie.c.slug, else_=Movie.update.values(usd_raised=int16(1000))
@@ -179,7 +179,7 @@ insert Movie {
   title := <str>$insert_0,
   slug := <str>$insert_1,
   usd_raised := <int16>$insert_2,
-} 
+}
 unless conflict on .slug
 else (update Movie set { usd_raised := <int16>$update_3 })
 ```
@@ -191,6 +191,44 @@ Account.insert.values(username='System').unless_conflict().all()
 is equivalent to
 ```
 insert Account { username := <str>$insert_0 } unless conflict
+```
+
+### Select or insert
+There are times when rather than an "upsert" you need to select an object or insert it, if it wasn't there.
+Consider, for example, the functionality to create a new account or retrieve an existing one:
+```python
+(
+    Account
+    .select(
+        Account.c.id,
+        Account.c.username,
+        Account.c.watchlist(
+            Account.c.watchlist.title,
+        ),
+    )
+    .select_from(
+        Account
+        .insert
+        .values(username='Alice')
+        .unless_conflict(Account.c.username, Account)
+    )
+    .all()
+)
+```
+will produce:
+```
+select (
+  insert Account {
+    username := <str>$insert_0,
+  } unless conflict on .username else Account
+) {
+  id,
+  username,
+  watchlist: {
+    title,
+  }
+}
+{'insert_0': 'Alice'}
 ```
 
 ## Update

@@ -51,9 +51,9 @@ Query builder for EdgeDB
     - [x] [nested inserts](https://www.edgedb.com/docs/edgeql/insert#nested-inserts)
     - [X] [conditional inserts](https://www.edgedb.com/tutorial/data-mutations/upsert/conditional-inserts)
     - [x] [idempotent insert](https://www.edgedb.com/tutorial/data-mutations/upsert/idempotent-insert)
-    - [ ] [select-or-insert](https://www.edgedb.com/tutorial/data-mutations/upsert/select-or-insert)
+    - [x] [select-or-insert](https://www.edgedb.com/tutorial/data-mutations/upsert/select-or-insert)
   - [x] function calls
-    - [x] positional arguments 
+    - [x] positional arguments
     - [ ] keyword arguments
   - [ ] [with block](https://www.edgedb.com/tutorial/nested-structures/shapes/with-block)
   - [ ] if statements
