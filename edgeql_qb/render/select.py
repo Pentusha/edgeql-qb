@@ -12,7 +12,7 @@ from edgeql_qb.expression import (
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Alias, Node
 from edgeql_qb.render.condition import render_conditions
-from edgeql_qb.render.func import render_function_args
+from edgeql_qb.render.func import render_function
 from edgeql_qb.render.order_by import render_order_by
 from edgeql_qb.render.pagination import render_limit, render_offset
 from edgeql_qb.render.query_literal import render_query_literal
@@ -89,11 +89,7 @@ def _(
         render_select_expression(arg, generator, column_prefix)
         for arg in expression.args
     ]
-    return combine_many_renderers(
-        RenderedQuery(f'{func.module}::' if func.module != 'std' else ''),
-        RenderedQuery(func.name),
-        render_function_args(arg_renderers),
-    )
+    return render_function(func, arg_renderers)
 
 
 @render_select_expression.register

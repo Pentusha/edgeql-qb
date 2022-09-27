@@ -4,7 +4,7 @@ from typing import Any, Iterator
 
 from edgeql_qb.expression import Expression, QueryLiteral
 from edgeql_qb.func import FuncInvocation
-from edgeql_qb.render.func import render_function_args
+from edgeql_qb.render.func import render_function
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import combine_many_renderers
 from edgeql_qb.render.types import RenderedQuery
@@ -37,9 +37,7 @@ def _(offset: FuncInvocation, generator: Iterator[int]) -> RenderedQuery:
     ]
     return combine_many_renderers(
         RenderedQuery(' offset '),
-        RenderedQuery(f'{func.module}::' if func.module != 'std' else ''),
-        RenderedQuery(func.name),
-        render_function_args(arg_renderers),
+        render_function(func, arg_renderers),
     )
 
 
@@ -99,7 +97,5 @@ def _(limit: FuncInvocation, generator: Iterator[int]) -> RenderedQuery:
     ]
     return combine_many_renderers(
         RenderedQuery(' limit '),
-        RenderedQuery(f'{func.module}::' if func.module != 'std' else ''),
-        RenderedQuery(func.name),
-        render_function_args(arg_renderers),
+        render_function(func, arg_renderers),
     )
