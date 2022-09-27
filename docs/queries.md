@@ -219,13 +219,13 @@ will produce:
 ```
 select (
   insert Account {
-    username := <str>$insert_0,
+    username := <str>$insert_0
   } unless conflict on .username else Account
 ) {
   id,
   username,
   watchlist: {
-    title,
+    title
   }
 }
 {'insert_0': 'Alice'}
