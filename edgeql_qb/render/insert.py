@@ -19,6 +19,7 @@ from edgeql_qb.render.tools import (
     combine_many_renderers,
     join_renderers,
     render_binary_node,
+    render_parentheses,
 )
 from edgeql_qb.render.types import RenderedQuery
 
@@ -54,9 +55,8 @@ def _(expression: FuncInvocation, generator: Iterator[int]) -> RenderedQuery:
     ]
     return combine_many_renderers(
         RenderedQuery(f'{func.module}::' if func.module != 'std' else ''),
-        RenderedQuery(f'{func.name}('),
-        reduce(join_renderers(', '), arg_renderers),
-        RenderedQuery(')'),
+        RenderedQuery(func.name),
+        render_parentheses(reduce(join_renderers(', '), arg_renderers)),
     )
 
 
@@ -111,11 +111,7 @@ def _(
         render_unless_conflict_on(value, generator)
         for value in on
     ]
-    return combine_many_renderers(
-        RenderedQuery('('),
-        reduce(join_renderers(', '), renderers),
-        RenderedQuery(')'),
-    )
+    return render_parentheses(reduce(join_renderers(', '), renderers))
 
 
 @singledispatch
@@ -130,24 +126,26 @@ def _(conflict: NoneType, generator: Iterator[int]) -> RenderedQuery:
 
 @render_unless_conflict.register
 def _(conflict: UnlessConflict, generator: Iterator[int]) -> RenderedQuery:
+    rendered_on = (
+        conflict.on
+        and combine_many_renderers(
+            RenderedQuery(' on '),
+            render_unless_conflict_on(conflict.on, generator),
+        )
+        or RenderedQuery()
+    )
+    rendered_else = (
+        conflict.else_
+        and combine_many_renderers(
+            RenderedQuery(' else '),
+            render_unless_conflict_else(conflict.else_, generator),
+        )
+        or RenderedQuery()
+    )
     return combine_many_renderers(
         RenderedQuery(' unless conflict'),
-        (
-            conflict.on
-            and combine_many_renderers(
-                RenderedQuery(' on '),
-                render_unless_conflict_on(conflict.on, generator),
-            )
-            or RenderedQuery()
-        ),
-        (
-            conflict.else_
-            and combine_many_renderers(
-                RenderedQuery(' else '),
-                render_unless_conflict_else(conflict.else_, generator),
-            )
-            or RenderedQuery()
-        )
+        rendered_on,
+        rendered_else,
     )
 
 
@@ -163,8 +161,4 @@ def _(else_: BaseModel, generator: Iterator[int]) -> RenderedQuery:
 
 @render_unless_conflict_else.register
 def _(expression: UpdateSubQuery, generator: Iterator[int]) -> RenderedQuery:
-    return combine_many_renderers(
-        RenderedQuery('('),
-        expression.all(generator),
-        RenderedQuery(')'),
-    )
+    return render_parentheses(expression.all(generator))

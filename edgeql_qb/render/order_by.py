@@ -14,7 +14,7 @@ from edgeql_qb.render.tools import (
     combine_many_renderers,
     combine_renderers,
     join_renderers,
-    render_binary_node,
+    render_binary_node, render_parentheses,
 )
 from edgeql_qb.render.types import RenderedQuery
 
@@ -59,9 +59,8 @@ def _(expression: FuncInvocation, generator: Iterator[int]) -> RenderedQuery:
     ]
     return combine_many_renderers(
         RenderedQuery(f'{func.module}::' if func.module != 'std' else ''),
-        RenderedQuery(f'{func.name}('),
-        reduce(join_renderers(', '), arg_renderers),
-        RenderedQuery(')'),
+        RenderedQuery(func.name),
+        render_parentheses(reduce(join_renderers(', '), arg_renderers)),
     )
 
 

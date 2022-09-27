@@ -15,7 +15,7 @@ from edgeql_qb.render.tools import (
     combine_renderers,
     join_renderers,
     linearize_filter_left,
-    render_binary_node,
+    render_binary_node, render_parentheses,
 )
 from edgeql_qb.render.types import RenderedQuery
 from edgeql_qb.types import unsafe_text
@@ -55,9 +55,8 @@ def _(expression: FuncInvocation, generator: Iterator[int]) -> RenderedQuery:
     ]
     return combine_many_renderers(
         RenderedQuery(f'{func.module}::' if func.module != 'std' else ''),
-        RenderedQuery(f'{func.name}('),
-        reduce(join_renderers(', '), arg_renderers),
-        RenderedQuery(')'),
+        RenderedQuery(func.name),
+        render_parentheses(reduce(join_renderers(', '), arg_renderers)),
     )
 
 
