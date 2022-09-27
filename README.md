@@ -34,6 +34,7 @@ Query builder for EdgeDB
     - [x] [subqueries](https://www.edgedb.com/tutorial/nested-structures/shapes/subqueries)
     - [ ] [polymorphic fields](https://www.edgedb.com/tutorial/nested-structures/polymorphism)
     - [ ] [link properties](https://www.edgedb.com/docs/edgeql/paths#link-properties) (@notation)
+    - [ ] [detached](https://github.com/edgedb/edgedb/blob/master/docs/reference/edgeql/with.rst)
   - [x] group
     - [x] columns
     - [x] using

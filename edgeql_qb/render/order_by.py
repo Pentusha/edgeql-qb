@@ -14,7 +14,8 @@ from edgeql_qb.render.tools import (
     combine_many_renderers,
     combine_renderers,
     join_renderers,
-    render_binary_node, render_parentheses,
+    render_binary_node,
+    render_parentheses,
 )
 from edgeql_qb.render.types import RenderedQuery
 

@@ -111,13 +111,12 @@ class SelectQuery(SubQuery):
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         gen = generator or literal_index_generator()
-        rendered_with = render_with_expression(self.with_aliases, gen)
+        rendered_with = render_with_expression(self.with_aliases, gen, self.model.module)
         rendered_select = render_select(
             self.model.name,
             self.select,
             gen,
             self.select_from_query,
-            self.model.module,
         )
         rendered_filters = render_conditions(self.filters, gen)
         rendered_order_by = render_order_by(self.ordered_by, gen)
@@ -154,7 +153,7 @@ class GroupQuery:
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         gen = generator or literal_index_generator()
-        rendered_with = render_with_expression(self.with_aliases, gen)
+        rendered_with = render_with_expression(self.with_aliases, gen, self.model.module)
         rendered_group = render_group(self.model.name, self.select, gen)
         rendered_using = render_using_expressions(self.using_expressions, gen)
         rendered_group_by = render_group_by_expressions(self.group_by)
@@ -197,7 +196,7 @@ class DeleteQuery:
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         gen = generator or literal_index_generator()
-        rendered_with = render_with_expression(self.with_aliases, gen)
+        rendered_with = render_with_expression(self.with_aliases, gen, self.model.module)
         rendered_delete = render_delete(self.model.name)
         rendered_filters = render_conditions(self.filters, gen)
         rendered_order_by = render_order_by(self.ordered_by, gen)
@@ -242,7 +241,7 @@ class InsertQuery(SubQuery):
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         assert self.values_to_insert
         gen = generator or literal_index_generator()
-        rendered_with = render_with_expression(self.with_aliases, gen)
+        rendered_with = render_with_expression(self.with_aliases, gen, self.model.module)
         rendered_insert = render_insert(self.model.name)
         rendered_values = render_insert_values(self.values_to_insert, gen)
         rendered_conflicts = render_unless_conflict(self.unless_conflict_value, gen)
@@ -279,7 +278,7 @@ class UpdateQuery(UpdateSubQuery):
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         assert self.values_to_update
         gen = generator or literal_index_generator()
-        rendered_with = render_with_expression(self.with_aliases, gen)
+        rendered_with = render_with_expression(self.with_aliases, gen, self.model.module)
         rendered_insert = render_update(self.model.name)
         rendered_filters = render_conditions(self.filters, gen)
         rendered_values = render_update_values(self.values_to_update, gen)

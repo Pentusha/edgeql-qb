@@ -15,7 +15,8 @@ from edgeql_qb.render.tools import (
     combine_renderers,
     join_renderers,
     linearize_filter_left,
-    render_binary_node, render_parentheses,
+    render_binary_node,
+    render_parentheses,
 )
 from edgeql_qb.render.types import RenderedQuery
 from edgeql_qb.types import unsafe_text

@@ -45,7 +45,6 @@ def render_select(
     select: tuple[Expression, ...],
     generator: Iterator[int],
     select_from_query: SubQuery | None = None,
-    module: str | None = None,
 ) -> RenderedQuery:
     rendered_select = (
         select_from_query
@@ -53,7 +52,6 @@ def render_select(
         or RenderedQuery(model_name)
     )
     return combine_many_renderers(
-        RenderedQuery(module and f'with module {module} ' or ''),
         RenderedQuery('select '),
         rendered_select,
     ).map(
@@ -75,11 +73,7 @@ def render_select_expression(
 
 
 @render_select_expression.register
-def _(
-        expression: Column,
-        generator: Iterator[int],
-        column_prefix: str = '',
-) -> RenderedQuery:
+def _(expression: Column, generator: Iterator[int], column_prefix: str = '') -> RenderedQuery:
     return RenderedQuery(f'{column_prefix}{expression.column_name}')
 
 
