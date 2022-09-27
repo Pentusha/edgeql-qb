@@ -17,7 +17,10 @@ def test_select_operators(client: Client) -> None:
         (A.c.p_int32 / A.c.p_int64).label('true_div_result'),
         (A.c.p_int32 // A.c.p_int64).label('floor_div_result'),
         (A.c.p_int32 % A.c.p_int64).label('mod_result'),
-        (math.abs(A.c.p_int32 - int32(20)) + int32(1)).label('abs')
+        (A.c.p_int32.coalesce(A.c.p_int64).label('coalesce_result')),
+        (A.c.p_int32.in_(A.c.p_int32).label('in_result')),
+        (A.c.p_int32.not_in(A.c.p_int16).label('not_in_result')),
+        (math.abs(A.c.p_int32 - int32(20)) + int32(1)).label('abs'),
     ).all()
     insert = A.insert.values(p_bool=True, p_int32=int32(10)).all()
     client.query(insert.query, **insert.context)
@@ -28,6 +31,9 @@ def test_select_operators(client: Client) -> None:
         'true_div_result := .p_int32 / .p_int64, '
         'floor_div_result := .p_int32 // .p_int64, '
         'mod_result := .p_int32 % .p_int64, '
+        'coalesce_result := .p_int32 ?? .p_int64, '
+        'in_result := .p_int32 in .p_int32, '
+        'not_in_result := .p_int32 not in .p_int16, '
         'abs := math::abs(.p_int32 - <int32>$select_2) + <int32>$select_3 '
         '}'
     )
@@ -42,11 +48,15 @@ def test_select_operators(client: Client) -> None:
 
 
 def test_select_concatenation(client: Client) -> None:
-    rendered = A.select(A.c.p_str.op('++')(A.c.p_str).label('result')).all()
+    rendered = A.select(A.c.p_str.concat(A.c.p_str).label('result')).all()
+    rendered2 = A.select(A.c.p_str.op('++')(A.c.p_str).label('result')).all()
     insert = A.insert.values(p_str='Hello').all()
     client.query(insert.query, **insert.context)
     assert rendered.query == 'select A { result := .p_str ++ .p_str }'
     assert rendered.context == FrozenDict()
+
+    assert rendered == rendered2
+
     result = client.query(rendered.query, **rendered.context)
     assert len(result) == 1
     assert result[0].result == 'HelloHello'

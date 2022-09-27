@@ -69,7 +69,7 @@ Query builder for EdgeDB
   - [ ] std::array
   - [ ] std::json
   - [ ] std::range
-  - [ ] std::set
+  - [x] std::set
   - [ ] std::tuple
   - [x] cal::local_date
   - [x] cal::local_date
@@ -100,8 +100,8 @@ Many examples of queries are given in the [tests](https://github.com/Pentusha/ed
 
 ```python
 from edgeql_qb import EdgeDBModel
-from edgeql_qb.types import int16, unsafe_text
-from edgedb.blocking_client import Client, create_client
+from edgeql_qb.types import int16
+from edgedb.blocking_client import create_client
 
 
 client = create_client()
