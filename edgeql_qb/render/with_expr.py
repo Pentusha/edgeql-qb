@@ -23,9 +23,7 @@ def render_with_expressions(
     return inner
 
 
-def render_with_module(
-        module: str | None = None
-) -> Callable[[RenderedQuery], RenderedQuery]:
+def render_with_module(module: str | None = None) -> Callable[[RenderedQuery], RenderedQuery]:
     def inner(rendered_with: RenderedQuery) -> RenderedQuery:
         return (
             module

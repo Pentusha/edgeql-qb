@@ -1,4 +1,4 @@
-from functools import reduce, singledispatch
+from functools import singledispatch
 from typing import Iterator
 
 from edgeql_qb.expression import (
@@ -9,13 +9,9 @@ from edgeql_qb.expression import (
 )
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Alias, Node
+from edgeql_qb.render.func import render_function_args
 from edgeql_qb.render.query_literal import render_query_literal
-from edgeql_qb.render.tools import (
-    combine_many_renderers,
-    join_renderers,
-    render_binary_node,
-    render_parentheses,
-)
+from edgeql_qb.render.tools import combine_many_renderers, render_binary_node
 from edgeql_qb.render.types import RenderedQuery
 
 
@@ -49,7 +45,7 @@ def _(
     return combine_many_renderers(
         RenderedQuery(f'{func.module}::' if func.module != 'std' else ''),
         RenderedQuery(func.name),
-        render_parentheses(reduce(join_renderers(', '), arg_renderers)),
+        render_function_args(arg_renderers),
     )
 
 
