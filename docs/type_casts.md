@@ -1,5 +1,5 @@
 # Type Casts
-Python is blind regarding the difference between int16 and int64 so you need to 
+Python is blind regarding the difference between int16 and int64 so you need to
 specify type to your literals with explicit casts:
 
 ```python
@@ -10,7 +10,7 @@ Movie.update.value(year=int16(2022)).where(Movie.c.id == movie_id).all()
 
 ## Implicit
 
-Query builder helps you to omit explicit type casts for several 
+Query builder helps you to omit explicit type casts for several
 types which match between python and edgedb. interpreter allows to detect automatically.
 
 | Python type        | EdgeQL Type         |
@@ -24,16 +24,14 @@ types which match between python and edgedb. interpreter allows to detect automa
  | time               | cal::local_time     |
  | timedelta          | duration            |
  | Decimal            | Decimal             |
- | date               | cal::local_date     |
 
 
 ## Explicit
 
-One type in Python can correspond to several types in EdgeDB. 
+One type in Python can correspond to several types in EdgeDB.
 In that case you need to use explicit type cast `A.c.som_int64_column == int64(value)`
 
 | Python type | EdgeQL Types        |
 |-------------|---------------------|
  | int         | int16, int32, int64 |
 | float       | float32, float64    |
-
