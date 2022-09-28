@@ -1,13 +1,13 @@
 # Functions
 
-Query builder supports function calls. You can use functions calls in any part of the query. 
+Query builder supports function calls. You can use functions calls in any part of the query.
 Functions may be nested and composed with other parts of the query.
 
 ```python
 from edgeql_qb.func import math
 
 
-Movie.select(std.math.len(Movie.c.title).label('title_len')).all()
+Movie.select(math.len(Movie.c.title).label('title_len')).all()
 ```
 
 ## User-defined functions
@@ -25,6 +25,7 @@ Movie.select(exclamation(Movie.c.title).label('title_exclamation')).all()
 ```
 
 ## Standard functions
+Most of the functions from the standard library have already been added to the query builder.
 
 ### Math
 

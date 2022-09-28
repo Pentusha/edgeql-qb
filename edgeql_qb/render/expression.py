@@ -6,6 +6,7 @@ from edgeql_qb.expression import (
     Column,
     Expression,
     QueryLiteral,
+    SubQuery,
 )
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Alias, Node
@@ -23,6 +24,16 @@ def render_expression(
     column_prefix: str = '',
 ) -> RenderedQuery:
     raise NotImplementedError(f'{expression!r} is not supported')  # pragma: no cover
+
+
+@render_expression.register
+def _(
+    expression: SubQuery,
+    literal_prefix: str,
+    generator: Iterator[int],
+    column_prefix: str = '',
+) -> RenderedQuery:
+    return expression.all(generator)
 
 
 @render_expression.register

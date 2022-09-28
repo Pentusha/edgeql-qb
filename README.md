@@ -69,7 +69,7 @@ Query builder for EdgeDB
   - [ ] std::array
   - [ ] std::json
   - [ ] std::range
-  - [x] std::set
+  - [ ] std::set
   - [ ] std::tuple
   - [x] cal::local_date
   - [x] cal::local_date
