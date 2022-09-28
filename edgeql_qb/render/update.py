@@ -9,7 +9,8 @@ from edgeql_qb.expression import (
     SubQuery,
 )
 from edgeql_qb.func import FuncInvocation
-from edgeql_qb.operators import Node
+from edgeql_qb.operators import Alias, Node
+from edgeql_qb.render.func import render_function
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
     combine_many_renderers,
@@ -51,6 +52,11 @@ def _(expression: Column, generator: Iterator[int], column_prefix: str = '') -> 
 
 
 @render_update_expression.register
+def _(expression: Alias, generator: Iterator[int], column_prefix: str = '') -> RenderedQuery:
+    return RenderedQuery(expression.name)
+
+
+@render_update_expression.register
 def _(expression: Node, generator: Iterator[int], column_prefix: str = '') -> RenderedQuery:
     assert expression.right is not None, 'Unary operations is not supported in update expressions'
     return render_binary_node(
@@ -75,12 +81,7 @@ def _(
         render_update_expression(arg, generator, column_prefix)
         for arg in expression.args
     ]
-    return combine_many_renderers(
-        RenderedQuery(f'{func.module}::' if func.module != 'std' else ''),
-        RenderedQuery(f'{func.name}('),
-        reduce(join_renderers(', '), arg_renderers),
-        RenderedQuery(')'),
-    )
+    return render_function(func, arg_renderers)
 
 
 @render_update_expression.register

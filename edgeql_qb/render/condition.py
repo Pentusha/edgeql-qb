@@ -8,7 +8,8 @@ from edgeql_qb.expression import (
     QueryLiteral,
 )
 from edgeql_qb.func import FuncInvocation
-from edgeql_qb.operators import Node
+from edgeql_qb.operators import Alias, Node
+from edgeql_qb.render.func import render_function
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
     combine_many_renderers,
@@ -42,18 +43,18 @@ def render_condition(expression: AnyExpression, generator: Iterator[int]) -> Ren
 
 
 @render_condition.register
+def _(expression: Alias, generator: Iterator[int]) -> RenderedQuery:
+    return RenderedQuery(expression.name)
+
+
+@render_condition.register
 def _(expression: FuncInvocation, generator: Iterator[int]) -> RenderedQuery:
     func = expression.func
     arg_renderers = [
         render_condition(arg, generator)
         for arg in expression.args
     ]
-    return combine_many_renderers(
-        RenderedQuery(f'{func.module}::' if func.module != 'std' else ''),
-        RenderedQuery(f'{func.name}('),
-        reduce(join_renderers(', '), arg_renderers),
-        RenderedQuery(')'),
-    )
+    return render_function(func, arg_renderers)
 
 
 @render_condition.register

@@ -9,6 +9,7 @@ from edgeql_qb.expression import (
 )
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Node, SortedExpression
+from edgeql_qb.render.func import render_function
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
     combine_many_renderers,
@@ -57,12 +58,7 @@ def _(expression: FuncInvocation, generator: Iterator[int]) -> RenderedQuery:
         render_order_by_expression(arg, generator)
         for arg in expression.args
     ]
-    return combine_many_renderers(
-        RenderedQuery(f'{func.module}::' if func.module != 'std' else ''),
-        RenderedQuery(f'{func.name}('),
-        reduce(join_renderers(', '), arg_renderers),
-        RenderedQuery(')'),
-    )
+    return render_function(func, arg_renderers)
 
 
 @render_order_by_expression.register

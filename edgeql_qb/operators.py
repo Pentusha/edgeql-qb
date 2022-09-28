@@ -3,44 +3,53 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable, Literal, Optional
 
+from edgeql_qb.types import GenericHolder
+
 if TYPE_CHECKING:
     from edgeql_qb.expression import SubQuery  # pragma: no cover
 
 
 OpLiterals = Literal[
     '=', ':=', '!=', '>', '>=', '<', '<=', '*', '/', '//', '%', '^',
-    'and', 'or', '+', '++', '-', 'like', 'ilike',
+    'and', 'or', '+', '++', '-', 'like', 'ilike', 'in', 'not in', '??', '?=', '?!=',
     'not ', 'exists ', 'not exists ',
 ]
 SortOpLiterals = Literal['asc', 'desc']
 Ops: set[OpLiterals] = {
     '=', ':=', '!=', '>', '>=', '<', '<=',
     '*', '/', '//', '%', '^', 'and', 'or', '+', '++', '-',
-    'like', 'ilike',
+    'like', 'ilike', 'in', 'not in', '??', '?=', '?!=',
     'not ', 'exists ', 'not exists ',
 }
 prec_dict: dict[OpLiterals, int] = {
-    '^': 9,
+    '^': 11,
 
-    '/': 8,
-    '*': 8,
-    '//': 8,
-    '%': 8,
+    '??': 10,
 
-    '+': 7,
-    '-': 7,
-    '++': 7,
+    '/': 9,
+    '*': 9,
+    '//': 9,
+    '%': 9,
 
-    '>': 6,
-    '<': 6,
-    '>=': 6,
-    '<=': 6,
+    '+': 8,
+    '-': 8,
+    '++': 8,
 
-    'like': 5,
-    'ilike': 5,
+    'in': 7,
+    'not in': 7,
+
+    'like': 6,
+    'ilike': 6,
+
+    '>': 5,
+    '<': 5,
+    '>=': 5,
+    '<=': 5,
 
     '=': 4,
     '!=': 4,
+    '?=': 4,
+    '?!=': 4,
 
     'not ': 3,
     'exists ': 3,
@@ -76,6 +85,18 @@ class OperationsMixin:
 
     def ilike(self, other: Any) -> 'BinaryOp':
         return BinaryOp('ilike', self, other)
+
+    def in_(self, other: Any) -> 'BinaryOp':
+        return BinaryOp('in', self, other)
+
+    def not_in(self, other: Any) -> 'BinaryOp':
+        return BinaryOp('not in', self, other)
+
+    def coalesce(self, other: Any) -> 'BinaryOp':
+        return BinaryOp('??', self, other)
+
+    def concat(self, other: Any) -> 'BinaryOp':
+        return BinaryOp('++', self, other)
 
     def exists(self) -> 'UnaryOp':
         return UnaryOp('exists ', self)
@@ -133,7 +154,7 @@ class OperationsMixin:
 class BinaryOp(OperationsMixin):
     operation: OpLiterals
     left: OperationsMixin
-    right: OperationsMixin | SubQuery
+    right: OperationsMixin | SubQuery | GenericHolder[Any]
 
     def __eq__(self, other: Any) -> 'BinaryOp':  # type: ignore
         return BinaryOp('=', self, other)
@@ -148,6 +169,9 @@ class UnaryOp(OperationsMixin):
 @dataclass(slots=True, frozen=True)
 class Alias(OperationsMixin):
     name: str
+
+    def assign(self, value: OperationsMixin | SubQuery | GenericHolder[Any]) -> BinaryOp:
+        return BinaryOp(':=', self, value)
 
 
 @dataclass(slots=True, frozen=True)

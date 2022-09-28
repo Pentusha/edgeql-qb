@@ -29,6 +29,7 @@ from edgeql_qb.render.tools import combine_many_renderers
 from edgeql_qb.render.types import RenderedQuery
 from edgeql_qb.render.update import render_update
 from edgeql_qb.render.update import render_values as render_update_values
+from edgeql_qb.render.with_expr import render_with_expression
 from edgeql_qb.types import unsafe_text
 
 
@@ -75,6 +76,7 @@ class SelectQuery(SubQuery):
     model: EdgeDBModel
     select: tuple[Expression, ...] = field(default_factory=tuple)
     select_from_query: SubQuery | None = None
+    with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
     filters: tuple[Expression, ...] = field(default_factory=tuple)
     ordered_by: tuple[Expression, ...] = field(default_factory=tuple)
     limit_val: int | unsafe_text | None = None
@@ -85,6 +87,10 @@ class SelectQuery(SubQuery):
 
     def where(self, compared: BinaryOp | UnaryOp | FuncInvocation) -> 'SelectQuery':
         return replace(self, filters=(*self.filters, Expression(compared)))
+
+    def with_(self, *with_aliases: BinaryOp) -> 'SelectQuery':
+        expressions = tuple(Expression(exp) for exp in with_aliases)
+        return replace(self, with_aliases=expressions)
 
     def order_by(
         self,
@@ -105,18 +111,19 @@ class SelectQuery(SubQuery):
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         gen = generator or literal_index_generator()
+        rendered_with = render_with_expression(self.with_aliases, gen, self.model.module)
         rendered_select = render_select(
             self.model.name,
             self.select,
             gen,
             self.select_from_query,
-            self.model.module,
         )
         rendered_filters = render_conditions(self.filters, gen)
         rendered_order_by = render_order_by(self.ordered_by, gen)
         rendered_offset = render_offset(self.offset_val, gen)
         rendered_limit = render_limit(self.limit_val, gen)
         return combine_many_renderers(
+            rendered_with,
             rendered_select,
             rendered_filters,
             rendered_order_by,
@@ -129,8 +136,13 @@ class SelectQuery(SubQuery):
 class GroupQuery:
     model: EdgeDBModel
     select: tuple[Expression, ...] = field(default_factory=tuple)
+    with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
     group_by: tuple[Column, ...] = field(default_factory=tuple)
     using_expressions: tuple[Expression, ...] = field(default_factory=tuple)
+
+    def with_(self, *with_aliases: BinaryOp) -> 'GroupQuery':
+        expressions = tuple(Expression(exp) for exp in with_aliases)
+        return replace(self, with_aliases=expressions)
 
     def using(self, *using_expressions: BinaryOp) -> 'GroupQuery':
         expressions = tuple(Expression(exp) for exp in using_expressions)
@@ -141,10 +153,12 @@ class GroupQuery:
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         gen = generator or literal_index_generator()
+        rendered_with = render_with_expression(self.with_aliases, gen, self.model.module)
         rendered_group = render_group(self.model.name, self.select, gen)
         rendered_using = render_using_expressions(self.using_expressions, gen)
         rendered_group_by = render_group_by_expressions(self.group_by)
         return combine_many_renderers(
+            rendered_with,
             rendered_group,
             rendered_using,
             rendered_group_by,
@@ -154,6 +168,7 @@ class GroupQuery:
 @dataclass(slots=True, frozen=True)
 class DeleteQuery:
     model: EdgeDBModel
+    with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
     filters: tuple[Expression, ...] = field(default_factory=tuple)
     ordered_by: tuple[Expression, ...] = field(default_factory=tuple)
     limit_val: int | unsafe_text | None = None
@@ -161,6 +176,10 @@ class DeleteQuery:
 
     def where(self, compared: BinaryOp | UnaryOp) -> 'DeleteQuery':
         return replace(self, filters=(*self.filters, Expression(compared)))
+
+    def with_(self, *with_aliases: BinaryOp) -> 'DeleteQuery':
+        expressions = tuple(Expression(exp) for exp in with_aliases)
+        return replace(self, with_aliases=expressions)
 
     def order_by(
         self,
@@ -177,12 +196,14 @@ class DeleteQuery:
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         gen = generator or literal_index_generator()
+        rendered_with = render_with_expression(self.with_aliases, gen, self.model.module)
         rendered_delete = render_delete(self.model.name)
         rendered_filters = render_conditions(self.filters, gen)
         rendered_order_by = render_order_by(self.ordered_by, gen)
         rendered_offset = render_offset(self.offset_val, gen)
         rendered_limit = render_limit(self.limit_val, gen)
         return combine_many_renderers(
+            rendered_with,
             rendered_delete,
             rendered_filters,
             rendered_order_by,
@@ -194,6 +215,7 @@ class DeleteQuery:
 @dataclass(slots=True, frozen=True)
 class InsertQuery(SubQuery):
     model: EdgeDBModel
+    with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
     values_to_insert: list[Expression] = field(default_factory=list)
     unless_conflict_value: UnlessConflict | None = None
 
@@ -205,6 +227,10 @@ class InsertQuery(SubQuery):
         ]
         return replace(self, values_to_insert=values_to_insert)
 
+    def with_(self, *with_aliases: BinaryOp) -> 'InsertQuery':
+        expressions = tuple(Expression(exp) for exp in with_aliases)
+        return replace(self, with_aliases=expressions)
+
     def unless_conflict(
         self,
         on: tuple[Column, ...] | Column | None = None,
@@ -215,10 +241,12 @@ class InsertQuery(SubQuery):
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         assert self.values_to_insert
         gen = generator or literal_index_generator()
+        rendered_with = render_with_expression(self.with_aliases, gen, self.model.module)
         rendered_insert = render_insert(self.model.name)
         rendered_values = render_insert_values(self.values_to_insert, gen)
         rendered_conflicts = render_unless_conflict(self.unless_conflict_value, gen)
         return combine_many_renderers(
+            rendered_with,
             rendered_insert,
             rendered_values,
             rendered_conflicts,
@@ -228,11 +256,16 @@ class InsertQuery(SubQuery):
 @dataclass(slots=True, frozen=True)
 class UpdateQuery(UpdateSubQuery):
     model: EdgeDBModel
+    with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
     values_to_update: tuple[Expression, ...] = field(default_factory=tuple)
     filters: tuple[Expression, ...] = field(default_factory=tuple)
 
     def where(self, compared: BinaryOp | UnaryOp) -> 'UpdateQuery':
         return replace(self, filters=(*self.filters, Expression(compared)))
+
+    def with_(self, *with_aliases: BinaryOp) -> 'UpdateQuery':
+        expressions = tuple(Expression(exp) for exp in with_aliases)
+        return replace(self, with_aliases=expressions)
 
     def values(self, **to_update: Any) -> 'UpdateQuery':
         assert to_update
@@ -245,7 +278,13 @@ class UpdateQuery(UpdateSubQuery):
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         assert self.values_to_update
         gen = generator or literal_index_generator()
+        rendered_with = render_with_expression(self.with_aliases, gen, self.model.module)
         rendered_insert = render_update(self.model.name)
         rendered_filters = render_conditions(self.filters, gen)
         rendered_values = render_update_values(self.values_to_update, gen)
-        return combine_many_renderers(rendered_insert, rendered_filters, rendered_values)
+        return combine_many_renderers(
+            rendered_with,
+            rendered_insert,
+            rendered_filters,
+            rendered_values,
+        )

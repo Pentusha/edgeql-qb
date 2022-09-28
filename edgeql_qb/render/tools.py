@@ -48,8 +48,8 @@ def need_right_parentheses(right: Node, expression: Node) -> bool:
     )
 
 
-def render_parentheses(column: RenderedQuery) -> RenderedQuery:
-    return combine_many_renderers(RenderedQuery('('), column, RenderedQuery(')'))
+def render_parentheses(inner: RenderedQuery) -> RenderedQuery:
+    return combine_many_renderers(RenderedQuery('('), inner, RenderedQuery(')'))
 
 
 def render_assoc_parentheses(is_need: bool) -> Callable[[RenderedQuery], RenderedQuery]:

@@ -16,91 +16,13 @@ Query builder for EdgeDB
 * Minimal required version of python is 3.10. Not sure if I'll ever do a backport.
 * There is no external dependencies, even on EdgeDB itself.
 
-## Status
-- Queries:
-  - [x] select
-    - [x] [nested shapes](https://www.edgedb.com/tutorial/nested-structures/shapes)
-      - [x] filters for nested shapes
-      - [x] order by for nested shapes
-      - [x] limit/offset for nested shapes
-      - [x] aggregations for nested shapes
-    - [x] function calls
-    - [x] computed fields
-    - [x] filters
-      - [x] filter by nested paths
-    - [x] limit & offset
-    - [x] order by
-    - [ ] [backlinks](https://www.edgedb.com/docs/edgeql/paths#backlinks)
-    - [x] [subqueries](https://www.edgedb.com/tutorial/nested-structures/shapes/subqueries)
-    - [ ] [polymorphic fields](https://www.edgedb.com/tutorial/nested-structures/polymorphism)
-    - [ ] [link properties](https://www.edgedb.com/docs/edgeql/paths#link-properties) (@notation)
-  - [x] group
-    - [x] columns
-    - [x] using
-    - [x] by
-    - [x] function calls
-  - [x] update
-    - [x] function calls
-    - [x] nested queries
-  - [x] delete
-    - [x] delete without filters
-    - [x] function calls
-    - [x] limit & offset
-    - [x] order by
-  - [x] insert
-    - [x] [nested inserts](https://www.edgedb.com/docs/edgeql/insert#nested-inserts)
-    - [X] [conditional inserts](https://www.edgedb.com/tutorial/data-mutations/upsert/conditional-inserts)
-    - [x] [idempotent insert](https://www.edgedb.com/tutorial/data-mutations/upsert/idempotent-insert)
-    - [x] [select-or-insert](https://www.edgedb.com/tutorial/data-mutations/upsert/select-or-insert)
-  - [x] function calls
-    - [x] positional arguments
-    - [ ] keyword arguments
-  - [ ] [with block](https://www.edgedb.com/tutorial/nested-structures/shapes/with-block)
-  - [ ] if statements
-  - [ ] [globals](https://www.edgedb.com/docs/datamodel/globals#globals)
-  - [ ] [for statements](https://www.edgedb.com/docs/edgeql/paths#link-properties)
-    - [ ] union statements
-  - [ ] queries without models, like select [1,2,3]
-- Types:
-  - [x] type casts
-  - [ ] cal::date_duration
-  - [ ] cal::relative_duration
-  - [ ] std::array
-  - [ ] std::json
-  - [ ] std::range
-  - [ ] std::set
-  - [ ] std::tuple
-  - [x] cal::local_date
-  - [x] cal::local_date
-  - [x] cal::local_datetime
-  - [x] cal::local_time
-  - [x] std::bigint
-  - [x] std::bool
-  - [x] std::bytes
-  - [x] std::datetime
-  - [x] std::decimal
-  - [x] std::duration
-  - [x] std::float32
-  - [x] std::float64
-  - [x] std::int16
-  - [x] std::int32
-  - [x] std::int64
-  - [x] std::str
-  - [x] std::uuid
-
-- Functions
-  - [x] cal
-  - [x] math
-  - [x] std
-  - [x] sys
-
 # Usage examples
-Many examples of queries are given in the [tests](https://github.com/Pentusha/edgeql-qb/tree/master/tests/test_renderer) directory.
+Many examples of queries are given in the [documentation](https://pentusha.github.io/edgeql-qb/queries) directory.
 
 ```python
 from edgeql_qb import EdgeDBModel
-from edgeql_qb.types import int16, unsafe_text
-from edgedb.blocking_client import Client, create_client
+from edgeql_qb.types import int16
+from edgedb.blocking_client import create_client
 
 
 client = create_client()
@@ -151,3 +73,89 @@ movies_by_decade = client.query(group.query, **group.context)
 
 client.query(delete.query, **delete.context)
 ```
+
+## Status
+- Queries:
+  - [x] select
+    - [x] [nested shapes](https://www.edgedb.com/tutorial/nested-structures/shapes)
+      - [x] filters for nested shapes
+      - [x] order by for nested shapes
+      - [x] limit/offset for nested shapes
+      - [x] aggregations for nested shapes
+    - [x] function calls
+    - [x] computed fields
+    - [x] filters
+      - [x] filter by nested paths
+    - [x] limit & offset
+    - [x] order by
+    - [ ] [backlinks](https://www.edgedb.com/docs/edgeql/paths#backlinks)
+    - [x] [subqueries](https://www.edgedb.com/tutorial/nested-structures/shapes/subqueries)
+    - [ ] [polymorphic fields](https://www.edgedb.com/tutorial/nested-structures/polymorphism)
+    - [ ] [link properties](https://www.edgedb.com/docs/edgeql/paths#link-properties) (@notation)
+    - [ ] [detached](https://github.com/edgedb/edgedb/blob/master/docs/reference/edgeql/with.rst)
+  - [x] group
+    - [x] columns
+    - [x] using
+    - [x] by
+    - [x] function calls
+  - [x] update
+    - [x] function calls
+    - [x] nested queries
+  - [x] delete
+    - [x] delete without filters
+    - [x] function calls
+    - [x] limit & offset
+    - [x] order by
+  - [x] insert
+    - [x] [nested inserts](https://www.edgedb.com/docs/edgeql/insert#nested-inserts)
+    - [X] [conditional inserts](https://www.edgedb.com/tutorial/data-mutations/upsert/conditional-inserts)
+    - [x] [idempotent insert](https://www.edgedb.com/tutorial/data-mutations/upsert/idempotent-insert)
+    - [x] [select-or-insert](https://www.edgedb.com/tutorial/data-mutations/upsert/select-or-insert)
+  - [x] function calls
+    - [x] positional arguments
+    - [ ] keyword arguments
+  - [x] [with block](https://www.edgedb.com/tutorial/nested-structures/shapes/with-block)
+    - [x] with literal
+    - [x] with subquery
+    - [x] with module + closure
+    - [ ] with x := subquery select x
+    - [ ] with x := subquery group x
+    - [ ] with x := subquery update x
+    - [ ] with x := Type.column
+  - [ ] if statements
+  - [ ] [globals](https://www.edgedb.com/docs/datamodel/globals#globals)
+  - [ ] [for statements](https://www.edgedb.com/docs/edgeql/paths#link-properties)
+    - [ ] union statements
+  - [ ] queries without models, like select [1,2,3]
+- Types:
+  - [x] type casts
+  - [ ] cal::date_duration
+  - [ ] cal::relative_duration
+  - [ ] std::array
+  - [ ] std::json
+  - [ ] std::range
+  - [ ] std::set
+  - [ ] std::tuple
+  - [x] cal::local_date
+  - [x] cal::local_date
+  - [x] cal::local_datetime
+  - [x] cal::local_time
+  - [x] std::bigint
+  - [x] std::bool
+  - [x] std::bytes
+  - [x] std::datetime
+  - [x] std::decimal
+  - [x] std::duration
+  - [x] std::float32
+  - [x] std::float64
+  - [x] std::int16
+  - [x] std::int32
+  - [x] std::int64
+  - [x] std::str
+  - [x] std::uuid
+
+- Functions
+  - [x] cal
+  - [x] math
+  - [x] std
+  - [x] sys

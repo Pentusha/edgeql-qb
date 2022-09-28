@@ -1,9 +1,9 @@
 # EdgeQL Query Builder
 
 `edgeql-qb` is a query builder for `EdgeQL` (EdgeDB Query Language) for python.
-Query syntax should be familiar to `SQLAlchemy Core` users. 
-On that point library not contains any dependencies, event on EdgeDB itself. 
-It's a just renderer that knows nothing about your schema. 
+Query syntax should be familiar to `SQLAlchemy Core` users.
+On that point library not contains any dependencies, event on EdgeDB itself.
+It's a just renderer that knows nothing about your schema.
 
 ## Installation
 
@@ -18,13 +18,13 @@ poetry add edgeql-qb
 Some useful imports that you may need to know:
 ```python
 from edgedb import create_client  # or any other client that you want to use
-from edgeql_qb import EdgeDBModel  # to declare EdgeDB type in python code 
+from edgeql_qb import EdgeDBModel  # to declare EdgeDB type in python code
 from edgeql_qb import types  # use this for explicit type casts
 ```
 
 Initialize client:
 ```python
-client = create_client()  # it may asks you additional args depending on you configuration
+client = create_client()  # it may ask you additional args depending on you configuration
 ```
 
 Declare model that depends on EdgeDB Type:
@@ -60,23 +60,26 @@ print(result.title)
 ```
 
 ### Insert query
-Subqueries are supported as well, but pay attention about limit argument for singular relationships. 
+Subqueries are supported as well, but pay attention about limit argument for singular relationships.
 EdgeDB requires you to specify `limit 1` until you have not create unique constraint covering this condition.
-When you pass python value without wrapper `limit(limit)` it will be rendered 
+When you pass python value without wrapper `limit(limit)` it will be rendered
 as context's variable and will pass to EdgeDB dynamically, which will cause an error on EdgeDB side.
-Similar to how it works in SQLAlchemy's `unsafe_text` wrapper make this expression hardcoded into final query as is, 
+Similar to how it works in SQLAlchemy's `unsafe_text` wrapper make this expression hardcoded into final query as is,
 without dynamic context.
 ```python
+Person = EdgeDBModel('Person', module='imdb')
+Movie = EdgeDBModel('Movie', module='imdb')
+
 insert = Movie.insert.values(
     title='Blade Runner 2049',
     year=types.int16(2017),
     director=(
         Person.select()
         .where(Person.c.id == director_id)
-        .limit1 
+        .limit1
     ),
     actors=Person.insert.values(
-        first_name='Harrison', 
+        first_name='Harrison',
         last_name='Ford',
     ),
 ).all()

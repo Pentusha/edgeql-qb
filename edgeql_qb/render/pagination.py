@@ -1,11 +1,12 @@
-from functools import reduce, singledispatch
+from functools import singledispatch
 from types import NoneType
 from typing import Any, Iterator
 
 from edgeql_qb.expression import Expression, QueryLiteral
 from edgeql_qb.func import FuncInvocation
+from edgeql_qb.render.func import render_function
 from edgeql_qb.render.query_literal import render_query_literal
-from edgeql_qb.render.tools import combine_many_renderers, join_renderers
+from edgeql_qb.render.tools import combine_many_renderers
 from edgeql_qb.render.types import RenderedQuery
 from edgeql_qb.types import int64, unsafe_text
 
@@ -36,10 +37,7 @@ def _(offset: FuncInvocation, generator: Iterator[int]) -> RenderedQuery:
     ]
     return combine_many_renderers(
         RenderedQuery(' offset '),
-        RenderedQuery(f'{func.module}::' if func.module != 'std' else ''),
-        RenderedQuery(f'{func.name}('),
-        reduce(join_renderers(', '), arg_renderers),
-        RenderedQuery(')'),
+        render_function(func, arg_renderers),
     )
 
 
@@ -99,8 +97,5 @@ def _(limit: FuncInvocation, generator: Iterator[int]) -> RenderedQuery:
     ]
     return combine_many_renderers(
         RenderedQuery(' limit '),
-        RenderedQuery(f'{func.module}::' if func.module != 'std' else ''),
-        RenderedQuery(f'{func.name}('),
-        reduce(join_renderers(', '), arg_renderers),
-        RenderedQuery(')'),
+        render_function(func, arg_renderers),
     )

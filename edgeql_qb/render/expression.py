@@ -1,4 +1,4 @@
-from functools import reduce, singledispatch
+from functools import singledispatch
 from typing import Iterator
 
 from edgeql_qb.expression import (
@@ -6,15 +6,13 @@ from edgeql_qb.expression import (
     Column,
     Expression,
     QueryLiteral,
+    SubQuery,
 )
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Alias, Node
+from edgeql_qb.render.func import render_function
 from edgeql_qb.render.query_literal import render_query_literal
-from edgeql_qb.render.tools import (
-    combine_many_renderers,
-    join_renderers,
-    render_binary_node,
-)
+from edgeql_qb.render.tools import combine_many_renderers, render_binary_node
 from edgeql_qb.render.types import RenderedQuery
 
 
@@ -26,6 +24,16 @@ def render_expression(
     column_prefix: str = '',
 ) -> RenderedQuery:
     raise NotImplementedError(f'{expression!r} is not supported')  # pragma: no cover
+
+
+@render_expression.register
+def _(
+    expression: SubQuery,
+    literal_prefix: str,
+    generator: Iterator[int],
+    column_prefix: str = '',
+) -> RenderedQuery:
+    return expression.all(generator)
 
 
 @render_expression.register
@@ -45,12 +53,7 @@ def _(
         )
         for arg in expression.args
     ]
-    return combine_many_renderers(
-        RenderedQuery(f'{func.module}::' if func.module != 'std' else ''),
-        RenderedQuery(f'{func.name}('),
-        reduce(join_renderers(', '), arg_renderers),
-        RenderedQuery(')'),
-    )
+    return render_function(func, arg_renderers)
 
 
 @render_expression.register
