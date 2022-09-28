@@ -327,6 +327,7 @@ Log.delete.order_by(Log.c.created_at.desc()).limit1.all()
 
 
 ## Group
+
 ```python
 Movie.group(Movie.c.title).by(Movie.c.year).all()
 ```
