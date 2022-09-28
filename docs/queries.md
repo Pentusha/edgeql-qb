@@ -104,7 +104,7 @@ Post.select(
     Post.c.text,
     Post.c.comments(
         Comment.c.text,
-    ).where(Comment.c.craated_at >= created_after),
+    ).where(Comment.c.created_at >= created_after),
 )
 ```
 

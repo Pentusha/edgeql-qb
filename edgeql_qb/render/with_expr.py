@@ -16,7 +16,6 @@ def render_with_expressions(
             and combine_many_renderers(
                 rendered_with,
                 reduce(join_renderers(', '), expressions),
-                RenderedQuery(''),
             )
             or rendered_with
         )
