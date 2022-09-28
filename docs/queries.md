@@ -359,3 +359,54 @@ weight_kg = (Person.c.weight_grams / 1000).label('weight_kg')
 height_cm = (Person.c.height_m * 100).label('height_cm')
 bmi = (weight_kg / height_cm ** 2).label('bmi')
 ```
+
+## With
+All top-level EdgeQL statements (`select`, `insert`, `update`, and `delete`)
+can be prefixed with a `with` block.
+These blocks contain declarations of standalone expressions that can be used in your query.
+Query builder provides a special method `with_` that allows you to set the values of these declarations.
+
+```python
+from edgeql_qb import EdgeDBModel
+from edgeql_qb.operators import Alias
+from edgeql_qb.types import int16
+
+# please note that you may specify module for model,
+# which would be used in every generated `with` statements.
+Person = EdgeDBModel('Person', module='imdb')
+Movie = EdgeDBModel('Movie', module='imdb')
+
+actors = Person.insert.values(
+    first_name='Harrison',
+    last_name='Ford',
+).label('actors')
+director = Person.select().where(Person.c.id == director_id).limit1.label('director')
+title = Alias('title').assign('Blade Runner 2049')
+year = Alias('year').assign(int16(2017))
+query = Movie.insert.with_(actors, director, title, year).values(
+    title=title,
+    year=year,
+    director=director,
+    actors=actors,
+).all()
+```
+
+<details>
+  <summary>generated query</summary>
+
+```
+with
+    imdb,
+    actors := (with imdb insert Person { first_name := <str>$insert_0, last_name := <str>$insert_1 }),
+    director := (with imdb select Person filter .id = $filter_2 limit 1),
+    title := <str>$with_3,
+    year := <int16>$with_4
+insert Movie {
+    title := title,
+    year := year,
+    director := director,
+    actors := actors
+}
+{'insert_0': 'Harrison', 'insert_1': 'Ford', 'filter_2': director_id, 'with_3': 'Blade Runner 2049', 'with_4': 2017}
+```
+</details>
