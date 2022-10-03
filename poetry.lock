@@ -129,11 +129,11 @@ flake8 = "*"
 
 [[package]]
 name = "flake8-broken-line"
-version = "0.5.0"
+version = "0.6.0"
 description = "Flake8 plugin to forbid backslashes for line breaks"
 category = "dev"
 optional = false
-python-versions = ">=3.6,<4.0"
+python-versions = ">=3.7,<4.0"
 
 [package.dependencies]
 flake8 = ">=3.5,<6"
@@ -446,7 +446,7 @@ testing = ["coverage (>=6.2)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "228325b211f8233db02b854992436939f3d101d0444254e942b6c1c8e6567383"
+content-hash = "0588a55da99f33fcffb1f4071fa8e28b4551c3eff0d5d819a5e71cd7af894ffb"
 
 [metadata.files]
 astor = [
