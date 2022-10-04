@@ -1,5 +1,3 @@
-from types import NoneType
-
 import pytest
 from edgedb.blocking_client import Client
 
@@ -19,13 +17,13 @@ def bootstrap(client: Client) -> None:
     client.query(insert2.query, **insert2.context)
 
 
-def test_group_statement_wo_columns(bootstrap: NoneType) -> None:
+def test_group_statement_wo_columns(bootstrap: None) -> None:
     rendered = A.group().by(A.c.p_int16).all()
     assert rendered.query == 'group A by .p_int16'
     assert rendered.context == FrozenDict()
 
 
-def test_simple_group_statement(client: Client, bootstrap: NoneType) -> None:
+def test_simple_group_statement(client: Client, bootstrap: None) -> None:
     rendered = A.group(A.c.p_str).by(A.c.p_int16).all()
     assert rendered.query == 'group A { p_str } by .p_int16'
     assert rendered.context == FrozenDict()
@@ -34,7 +32,7 @@ def test_simple_group_statement(client: Client, bootstrap: NoneType) -> None:
     assert len(result) == 1
 
 
-def test_group_with_using(client: Client, bootstrap: NoneType) -> None:
+def test_group_with_using(client: Client, bootstrap: None) -> None:
     a = (A.c.p_int16 + int16(1)).label('a')
     b = (a + int16(2)).label('b')
     c = (a + b).label('c')
@@ -50,14 +48,14 @@ def test_group_with_using(client: Client, bootstrap: NoneType) -> None:
     assert len(result) == 1
 
 
-def test_group_with_unary_using(bootstrap: NoneType) -> None:
+def test_group_with_unary_using(bootstrap: None) -> None:
     condition = (~A.c.p_bool).label('condition')
     rendered = A.group().using(condition).by(condition).all()
     assert rendered.query == 'group A using condition := not .p_bool by condition'
     assert rendered.context == FrozenDict()
 
 
-def test_group_with_function_in_select(client: Client, bootstrap: NoneType) -> None:
+def test_group_with_function_in_select(client: Client, bootstrap: None) -> None:
     rendered = (
         A
         .group(A.c.p_str, std.to_str(A.c.p_int32).label('str_int32'))
@@ -75,7 +73,7 @@ def test_group_with_function_in_select(client: Client, bootstrap: NoneType) -> N
     assert result[0].elements[1].str_int32 == '200'
 
 
-def test_group_with_function_in_using(client: Client, bootstrap: NoneType) -> None:
+def test_group_with_function_in_using(client: Client, bootstrap: None) -> None:
     str_int16 = std.to_str(A.c.p_int16).label('str_int16')
     str_len = std.len(str_int16).label('str_len')
     rendered = (

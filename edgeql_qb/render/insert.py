@@ -1,5 +1,4 @@
 from functools import reduce, singledispatch
-from types import NoneType
 from typing import Any, Iterator
 
 from edgeql_qb.expression import (
@@ -117,7 +116,7 @@ def render_unless_conflict(conflict: Any, generator: Iterator[int]) -> RenderedQ
 
 
 @render_unless_conflict.register
-def _(conflict: NoneType, generator: Iterator[int]) -> RenderedQuery:
+def _(conflict: None, generator: Iterator[int]) -> RenderedQuery:
     return RenderedQuery()
 
 

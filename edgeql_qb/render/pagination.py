@@ -1,5 +1,4 @@
 from functools import singledispatch
-from types import NoneType
 from typing import Any, Iterator
 
 from edgeql_qb.expression import Expression, QueryLiteral
@@ -17,7 +16,7 @@ def render_offset(offset: Any, generator: Iterator[int]) -> RenderedQuery:
 
 
 @render_offset.register
-def _(offset: NoneType, generator: Iterator[int]) -> RenderedQuery:
+def _(offset: None, generator: Iterator[int]) -> RenderedQuery:
     return RenderedQuery()
 
 
@@ -62,7 +61,7 @@ def render_limit(limit: Any, generator: Iterator[int]) -> RenderedQuery:
 
 
 @render_limit.register
-def _(limit: NoneType, generator: Iterator[int]) -> RenderedQuery:
+def _(limit: None, generator: Iterator[int]) -> RenderedQuery:
     return RenderedQuery()
 
 
