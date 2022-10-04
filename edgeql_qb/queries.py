@@ -48,14 +48,14 @@ class EdgeDBModel(BaseModel):
         select_args = tuple(Expression(sel) for sel in selectables)
         select_kwargs = tuple(Expression(v.label(k)) for k, v in kwargs.items())
         return SelectQuery(
-            model=self,
-            select=(*select_args, *select_kwargs),
+            _model=self,
+            _select=(*select_args, *select_kwargs),
         )
 
     def group(self, *selectables: SelectExpressions) -> 'GroupQuery':
         return GroupQuery(
-            model=self,
-            select=tuple(Expression(sel) for sel in selectables),
+            _model=self,
+            _select=tuple(Expression(sel) for sel in selectables),
         )
 
     @property
@@ -73,55 +73,55 @@ class EdgeDBModel(BaseModel):
 
 @dataclass(slots=True, frozen=True)
 class SelectQuery(SubQuery):
-    model: EdgeDBModel
-    select: tuple[Expression, ...] = field(default_factory=tuple)
-    select_from_query: SubQuery | None = None
-    with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
-    filters: tuple[Expression, ...] = field(default_factory=tuple)
-    ordered_by: tuple[Expression, ...] = field(default_factory=tuple)
-    limit_val: int | unsafe_text | None = None
-    offset_val: int | unsafe_text | None = None
+    _model: EdgeDBModel
+    _select: tuple[Expression, ...] = field(default_factory=tuple)
+    _select_from_query: SubQuery | None = None
+    _with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
+    _filters: tuple[Expression, ...] = field(default_factory=tuple)
+    _ordered_by: tuple[Expression, ...] = field(default_factory=tuple)
+    _limit_val: int | unsafe_text | None = None
+    _offset_val: int | unsafe_text | None = None
 
     def select_from(self, query: SubQuery) -> 'SelectQuery':
-        return replace(self, select_from_query=query)
+        return replace(self, _select_from_query=query)
 
     def where(self, compared: BinaryOp | UnaryOp | FuncInvocation) -> 'SelectQuery':
-        return replace(self, filters=(*self.filters, Expression(compared)))
+        return replace(self, _filters=(*self._filters, Expression(compared)))
 
     def with_(self, *with_aliases: BinaryOp) -> 'SelectQuery':
         expressions = tuple(Expression(exp) for exp in with_aliases)
-        return replace(self, with_aliases=expressions)
+        return replace(self, _with_aliases=expressions)
 
     def order_by(
         self,
         *columns: SortedExpression | Column | UnaryOp | FuncInvocation,
     ) -> 'SelectQuery':
         new_expressions = [Expression(exp) for exp in columns]
-        return replace(self, ordered_by=(*self.ordered_by, *new_expressions))
+        return replace(self, _ordered_by=(*self._ordered_by, *new_expressions))
 
     def limit(self, value: int | FuncInvocation | unsafe_text) -> 'SelectQuery':
-        return replace(self, limit_val=value)
+        return replace(self, _limit_val=value)
 
     @property
     def limit1(self) -> 'SelectQuery':
-        return replace(self, limit_val=unsafe_text('1'))
+        return replace(self, _limit_val=unsafe_text('1'))
 
     def offset(self, value: int | FuncInvocation | unsafe_text) -> 'SelectQuery':
-        return replace(self, offset_val=value)
+        return replace(self, _offset_val=value)
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         gen = generator or literal_index_generator()
-        rendered_with = render_with_expression(self.with_aliases, gen, self.model.module)
+        rendered_with = render_with_expression(self._with_aliases, gen, self._model.module)
         rendered_select = render_select(
-            self.model.name,
-            self.select,
+            self._model.name,
+            self._select,
             gen,
-            self.select_from_query,
+            self._select_from_query,
         )
-        rendered_filters = render_conditions(self.filters, gen)
-        rendered_order_by = render_order_by(self.ordered_by, gen)
-        rendered_offset = render_offset(self.offset_val, gen)
-        rendered_limit = render_limit(self.limit_val, gen)
+        rendered_filters = render_conditions(self._filters, gen)
+        rendered_order_by = render_order_by(self._ordered_by, gen)
+        rendered_offset = render_offset(self._offset_val, gen)
+        rendered_limit = render_limit(self._limit_val, gen)
         return combine_many_renderers(
             rendered_with,
             rendered_select,
@@ -134,29 +134,29 @@ class SelectQuery(SubQuery):
 
 @dataclass(slots=True, frozen=True)
 class GroupQuery:
-    model: EdgeDBModel
-    select: tuple[Expression, ...] = field(default_factory=tuple)
-    with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
-    group_by: tuple[Column, ...] = field(default_factory=tuple)
-    using_expressions: tuple[Expression, ...] = field(default_factory=tuple)
+    _model: EdgeDBModel
+    _select: tuple[Expression, ...] = field(default_factory=tuple)
+    _with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
+    _group_by: tuple[Column, ...] = field(default_factory=tuple)
+    _using_expressions: tuple[Expression, ...] = field(default_factory=tuple)
 
     def with_(self, *with_aliases: BinaryOp) -> 'GroupQuery':
         expressions = tuple(Expression(exp) for exp in with_aliases)
-        return replace(self, with_aliases=expressions)
+        return replace(self, _with_aliases=expressions)
 
     def using(self, *using_expressions: BinaryOp) -> 'GroupQuery':
         expressions = tuple(Expression(exp) for exp in using_expressions)
-        return replace(self, using_expressions=expressions)
+        return replace(self, _using_expressions=expressions)
 
     def by(self, *group_by: Column | BinaryOp) -> 'GroupQuery':
-        return replace(self, group_by=group_by)
+        return replace(self, _group_by=group_by)
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         gen = generator or literal_index_generator()
-        rendered_with = render_with_expression(self.with_aliases, gen, self.model.module)
-        rendered_group = render_group(self.model.name, self.select, gen)
-        rendered_using = render_using_expressions(self.using_expressions, gen)
-        rendered_group_by = render_group_by_expressions(self.group_by)
+        rendered_with = render_with_expression(self._with_aliases, gen, self._model.module)
+        rendered_group = render_group(self._model.name, self._select, gen)
+        rendered_using = render_using_expressions(self._using_expressions, gen)
+        rendered_group_by = render_group_by_expressions(self._group_by)
         return combine_many_renderers(
             rendered_with,
             rendered_group,
@@ -167,41 +167,41 @@ class GroupQuery:
 
 @dataclass(slots=True, frozen=True)
 class DeleteQuery:
-    model: EdgeDBModel
-    with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
-    filters: tuple[Expression, ...] = field(default_factory=tuple)
-    ordered_by: tuple[Expression, ...] = field(default_factory=tuple)
-    limit_val: int | unsafe_text | None = None
-    offset_val: int | unsafe_text | None = None
+    _model: EdgeDBModel
+    _with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
+    _filters: tuple[Expression, ...] = field(default_factory=tuple)
+    _ordered_by: tuple[Expression, ...] = field(default_factory=tuple)
+    _limit_val: int | unsafe_text | None = None
+    _offset_val: int | unsafe_text | None = None
 
     def where(self, compared: BinaryOp | UnaryOp) -> 'DeleteQuery':
-        return replace(self, filters=(*self.filters, Expression(compared)))
+        return replace(self, _filters=(*self._filters, Expression(compared)))
 
     def with_(self, *with_aliases: BinaryOp) -> 'DeleteQuery':
         expressions = tuple(Expression(exp) for exp in with_aliases)
-        return replace(self, with_aliases=expressions)
+        return replace(self, _with_aliases=expressions)
 
     def order_by(
         self,
         *columns: SortedExpression | Column | UnaryOp | FuncInvocation,
     ) -> 'DeleteQuery':
         new_expressions = [Expression(exp) for exp in columns]
-        return replace(self, ordered_by=(*self.ordered_by, *new_expressions))
+        return replace(self, _ordered_by=(*self._ordered_by, *new_expressions))
 
     def limit(self, value: int | FuncInvocation | unsafe_text) -> 'DeleteQuery':
-        return replace(self, limit_val=value)
+        return replace(self, _limit_val=value)
 
     def offset(self, value: int | FuncInvocation | unsafe_text) -> 'DeleteQuery':
-        return replace(self, offset_val=value)
+        return replace(self, _offset_val=value)
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         gen = generator or literal_index_generator()
-        rendered_with = render_with_expression(self.with_aliases, gen, self.model.module)
-        rendered_delete = render_delete(self.model.name)
-        rendered_filters = render_conditions(self.filters, gen)
-        rendered_order_by = render_order_by(self.ordered_by, gen)
-        rendered_offset = render_offset(self.offset_val, gen)
-        rendered_limit = render_limit(self.limit_val, gen)
+        rendered_with = render_with_expression(self._with_aliases, gen, self._model.module)
+        rendered_delete = render_delete(self._model.name)
+        rendered_filters = render_conditions(self._filters, gen)
+        rendered_order_by = render_order_by(self._ordered_by, gen)
+        rendered_offset = render_offset(self._offset_val, gen)
+        rendered_limit = render_limit(self._limit_val, gen)
         return combine_many_renderers(
             rendered_with,
             rendered_delete,
@@ -214,10 +214,10 @@ class DeleteQuery:
 
 @dataclass(slots=True, frozen=True)
 class InsertQuery(SubQuery):
-    model: EdgeDBModel
-    with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
-    values_to_insert: list[Expression] = field(default_factory=list)
-    unless_conflict_value: UnlessConflict | None = None
+    _model: EdgeDBModel
+    _with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
+    _values_to_insert: list[Expression] = field(default_factory=list)
+    _unless_conflict_value: UnlessConflict | None = None
 
     def values(self, **to_insert: Any) -> 'InsertQuery':
         assert to_insert
@@ -225,26 +225,26 @@ class InsertQuery(SubQuery):
             Expression(BinaryOp(':=', Column(name), exp))
             for name, exp in to_insert.items()
         ]
-        return replace(self, values_to_insert=values_to_insert)
+        return replace(self, _values_to_insert=values_to_insert)
 
     def with_(self, *with_aliases: BinaryOp) -> 'InsertQuery':
         expressions = tuple(Expression(exp) for exp in with_aliases)
-        return replace(self, with_aliases=expressions)
+        return replace(self, _with_aliases=expressions)
 
     def unless_conflict(
         self,
         on: tuple[Column, ...] | Column | None = None,
         else_: Union[UpdateSubQuery, EdgeDBModel, None] = None,
     ) -> 'InsertQuery':
-        return replace(self, unless_conflict_value=UnlessConflict(on=on, else_=else_))
+        return replace(self, _unless_conflict_value=UnlessConflict(on=on, else_=else_))
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
-        assert self.values_to_insert
+        assert self._values_to_insert
         gen = generator or literal_index_generator()
-        rendered_with = render_with_expression(self.with_aliases, gen, self.model.module)
-        rendered_insert = render_insert(self.model.name)
-        rendered_values = render_insert_values(self.values_to_insert, gen)
-        rendered_conflicts = render_unless_conflict(self.unless_conflict_value, gen)
+        rendered_with = render_with_expression(self._with_aliases, gen, self._model.module)
+        rendered_insert = render_insert(self._model.name)
+        rendered_values = render_insert_values(self._values_to_insert, gen)
+        rendered_conflicts = render_unless_conflict(self._unless_conflict_value, gen)
         return combine_many_renderers(
             rendered_with,
             rendered_insert,
@@ -255,17 +255,17 @@ class InsertQuery(SubQuery):
 
 @dataclass(slots=True, frozen=True)
 class UpdateQuery(UpdateSubQuery):
-    model: EdgeDBModel
-    with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
-    values_to_update: tuple[Expression, ...] = field(default_factory=tuple)
-    filters: tuple[Expression, ...] = field(default_factory=tuple)
+    _model: EdgeDBModel
+    _with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
+    _values_to_update: tuple[Expression, ...] = field(default_factory=tuple)
+    _filters: tuple[Expression, ...] = field(default_factory=tuple)
 
     def where(self, compared: BinaryOp | UnaryOp) -> 'UpdateQuery':
-        return replace(self, filters=(*self.filters, Expression(compared)))
+        return replace(self, _filters=(*self._filters, Expression(compared)))
 
     def with_(self, *with_aliases: BinaryOp) -> 'UpdateQuery':
         expressions = tuple(Expression(exp) for exp in with_aliases)
-        return replace(self, with_aliases=expressions)
+        return replace(self, _with_aliases=expressions)
 
     def values(self, **to_update: Any) -> 'UpdateQuery':
         assert to_update
@@ -273,15 +273,15 @@ class UpdateQuery(UpdateSubQuery):
             Expression(BinaryOp(':=', Column(name), exp))
             for name, exp in to_update.items()
         )
-        return replace(self, values_to_update=values_to_update)
+        return replace(self, _values_to_update=values_to_update)
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
-        assert self.values_to_update
+        assert self._values_to_update
         gen = generator or literal_index_generator()
-        rendered_with = render_with_expression(self.with_aliases, gen, self.model.module)
-        rendered_insert = render_update(self.model.name)
-        rendered_filters = render_conditions(self.filters, gen)
-        rendered_values = render_update_values(self.values_to_update, gen)
+        rendered_with = render_with_expression(self._with_aliases, gen, self._model.module)
+        rendered_insert = render_update(self._model.name)
+        rendered_filters = render_conditions(self._filters, gen)
+        rendered_values = render_update_values(self._values_to_update, gen)
         return combine_many_renderers(
             rendered_with,
             rendered_insert,
