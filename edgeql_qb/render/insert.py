@@ -85,7 +85,7 @@ def _(expression: QueryLiteral, generator: Iterator[int]) -> RenderedQuery:
 
 @render_insert_expression.register
 def _(expression: SubQuery, generator: Iterator[int]) -> RenderedQuery:
-    return expression.all(generator)
+    return expression.build(generator)
 
 
 @singledispatch
@@ -157,4 +157,4 @@ def _(else_: BaseModel, generator: Iterator[int]) -> RenderedQuery:
 
 @render_unless_conflict_else.register
 def _(expression: UpdateSubQuery, generator: Iterator[int]) -> RenderedQuery:
-    return render_parentheses(expression.all(generator))
+    return render_parentheses(expression.build(generator))

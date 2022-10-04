@@ -10,14 +10,14 @@ TestA = EdgeDBModel('A', module='test_module')
 
 
 def test_select_with_literal_with(client: Client) -> None:
-    insert = A.insert.values(p_int64=int64(1)).all()
+    insert = A.insert.values(p_int64=int64(1)).build()
     client.query(insert.query, **insert.context)
 
     x = Alias('x').assign(int64(1))
     rendered = A.select(
         A.c.p_int64,
         (A.c.p_int64 + x).label('y'),
-    ).with_(x).all()
+    ).with_(x).build()
     assert rendered.query == (
         'with x := <int64>$with_0 select A { p_int64, y := .p_int64 + x }'
     )
@@ -33,7 +33,7 @@ def test_select_with_literal_and_module() -> None:
     rendered = TestA.select(
         TestA.c.p_int64,
         (TestA.c.p_int64 + x).label('y'),
-    ).with_(x).all()
+    ).with_(x).build()
     assert rendered.query == (
         'with test_module, x := <int64>$with_0 select A { p_int64, y := .p_int64 + x }'
     )
@@ -41,7 +41,7 @@ def test_select_with_literal_and_module() -> None:
 
 
 def test_select_with_module_and_without_expressions() -> None:
-    rendered = TestA.select(TestA.c.p_int64).all()
+    rendered = TestA.select(TestA.c.p_int64).build()
     assert rendered.query == (
         'with test_module select A { p_int64 }'
     )

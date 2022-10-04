@@ -30,7 +30,7 @@ class _Math:
 
 @dataclass(slots=True, frozen=True)
 class _Std:
-    all = Function(module='std', name='all')
+    all = Function(module='std', name='build')
     any = Function(module='std', name='any')
     array_agg = Function(module='std', name='array_agg')
     array_fill = Function(module='std', name='array_fill')

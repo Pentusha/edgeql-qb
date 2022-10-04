@@ -46,9 +46,9 @@ def test_complex_filter_with_literal(
     expected_condition: str,
     expected_context: dict[str, Any],
 ) -> None:
-    insert = A.insert.values(p_int64=int64(11), p_int32=int32(1), p_str='Hello').all()
+    insert = A.insert.values(p_int64=int64(11), p_int32=int32(1), p_str='Hello').build()
     client.query(insert.query, **insert.context)
-    rendered = A.select(A.c.p_int64).where(condition).all()
+    rendered = A.select(A.c.p_int64).where(condition).build()
     assert rendered.query == f'select A {{ p_int64 }} filter {expected_condition}'
     assert rendered.context == FrozenDict(expected_context)
     result = client.query(rendered.query, **rendered.context)
@@ -56,12 +56,12 @@ def test_complex_filter_with_literal(
 
 
 def test_filter_with_unary_op(client: Client) -> None:
-    insert = A.insert.values(p_int64=int64(11), p_bool=False).all()
+    insert = A.insert.values(p_int64=int64(11), p_bool=False).build()
     client.query(insert.query, **insert.context)
     rendered = (
         A.select(A.c.p_int64)
         .where(~A.c.p_bool)
-        .all()
+        .build()
     )
     assert rendered.query == 'select A { p_int64 } filter not .p_bool'
     assert rendered.context == FrozenDict()
@@ -73,11 +73,11 @@ def test_filter_with_unary_op(client: Client) -> None:
 def test_nested_filter(client: Client) -> None:
     rendered = Nested1.select(
         Nested1.c.name,
-    ).where(Nested1.c.nested2.name == 'n2').all()
+    ).where(Nested1.c.nested2.name == 'n2').build()
     insert = Nested1.insert.values(
         name='n1',
         nested2=Nested2.insert.values(name='n2'),
-    ).all()
+    ).build()
     client.query(insert.query, **insert.context)
     assert rendered.query == 'select Nested1 { name } filter .nested2.name = <str>$filter_0'
     assert rendered.context == FrozenDict(filter_0='n2')
@@ -94,7 +94,7 @@ def test_shape_filter_enumeration(client: Client) -> None:
                 Nested1.c.nested2.nested3.name,
             ).where(Nested3.c.name == 'n3'),
         ).where(Nested2.c.name == 'n2'),
-    ).where(Nested1.c.name == 'n1').all()
+    ).where(Nested1.c.name == 'n1').build()
     assert rendered.query == (
         'select Nested1 { name, nested2: { name, nested3: { name } '
         'filter .name = <str>$filter_1 } '

@@ -43,7 +43,7 @@ def test_select_datatypes(
     value: Any,
     expected_type: str,
 ) -> None:
-    rendered = A.select((column != value).label(label)).all()
+    rendered = A.select((column != value).label(label)).build()
     assert rendered.query == (
         f'select A {{ {label} := .{column.column_name} != <{expected_type}>$select_0 }}'
     )

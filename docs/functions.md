@@ -7,7 +7,7 @@ Functions may be nested and composed with other parts of the query.
 from edgeql_qb.func import math
 
 
-Movie.select(math.len(Movie.c.title).label('title_len')).all()
+Movie.select(math.len(Movie.c.title).label('title_len')).build()
 ```
 
 ## User-defined functions
@@ -21,7 +21,7 @@ function exclamation(word: str) -> str
 from edgeql_qb.func import Function
 
 exclamation = Function('default', 'exclamation')
-Movie.select(exclamation(Movie.c.title).label('title_exclamation')).all()
+Movie.select(exclamation(Movie.c.title).label('title_exclamation')).build()
 ```
 
 ## Standard functions

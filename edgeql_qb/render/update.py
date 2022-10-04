@@ -97,4 +97,4 @@ def _(
 
 @render_update_expression.register
 def _(expression: SubQuery, generator: Iterator[int], column_prefix: str = '') -> RenderedQuery:
-    return expression.all(generator)
+    return expression.build(generator)

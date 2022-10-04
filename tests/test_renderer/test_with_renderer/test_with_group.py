@@ -9,7 +9,7 @@ A = EdgeDBModel('A')
 
 
 def test_group_with_literal_with(client: Client) -> None:
-    insert = A.insert.values(p_int64=int64(1)).all()
+    insert = A.insert.values(p_int64=int64(1)).build()
     client.query(insert.query, **insert.context)
 
     x = Alias('x').assign(int64(1))

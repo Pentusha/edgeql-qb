@@ -11,10 +11,10 @@ Nested2 = EdgeDBModel('Nested2')
 
 
 def test_simple_select_with_simple_order_by(client: Client) -> None:
-    rendered = A.select(A.c.p_str).order_by(A.c.p_str).all()
-    insert1 = A.insert.values(p_str='2').all()
-    insert2 = A.insert.values(p_str='1').all()
-    insert3 = A.insert.values(p_str='3').all()
+    rendered = A.select(A.c.p_str).order_by(A.c.p_str).build()
+    insert1 = A.insert.values(p_str='2').build()
+    insert2 = A.insert.values(p_str='1').build()
+    insert3 = A.insert.values(p_str='3').build()
     client.query(insert1.query, **insert1.context)
     client.query(insert2.query, **insert2.context)
     client.query(insert3.query, **insert3.context)
@@ -26,9 +26,9 @@ def test_simple_select_with_simple_order_by(client: Client) -> None:
 
 
 def test_simple_select_with_complex_order_by(client: Client) -> None:
-    insert1 = A.insert.values(p_int32=int32(2), p_int64=int64(0), p_bool=False).all()
-    insert2 = A.insert.values(p_int32=int32(1), p_int64=int64(0), p_bool=False).all()
-    insert3 = A.insert.values(p_int32=int32(3), p_int64=int64(0), p_bool=False).all()
+    insert1 = A.insert.values(p_int32=int32(2), p_int64=int64(0), p_bool=False).build()
+    insert2 = A.insert.values(p_int32=int32(1), p_int64=int64(0), p_bool=False).build()
+    insert3 = A.insert.values(p_int32=int32(3), p_int64=int64(0), p_bool=False).build()
     client.query(insert1.query, **insert1.context)
     client.query(insert2.query, **insert2.context)
     client.query(insert3.query, **insert3.context)
@@ -41,7 +41,7 @@ def test_simple_select_with_complex_order_by(client: Client) -> None:
             ~A.c.p_bool,
             math.floor(A.c.p_int32),
         )
-        .all()
+        .build()
     )
     assert rendered.query == (
         'select A { p_str } '
@@ -65,7 +65,7 @@ def test_order_by_for_nested_shape(client: Client) -> None:
                 Nested1.c.nested2.name,
             ).order_by(Nested1.c.nested2.name.asc())
         )
-        .all()
+        .build()
     )
     assert rendered.query == (
         'select Nested1 { name, nested2: { name } order by .name asc }'

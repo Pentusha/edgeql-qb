@@ -41,7 +41,7 @@ insert = Movie.insert.values(
         first_name='Harrison',
         last_name='Ford',
     ),
-).all()
+).build()
 
 
 select = (
@@ -58,13 +58,13 @@ select = (
         ),
     )
     .where(Movie.c.title == 'Blade Runner 2049')
-    .all()
+    .build()
 )
 
-delete = Movie.delete.where(Movie.c.title == 'Blade Runner 2049').all()
+delete = Movie.delete.where(Movie.c.title == 'Blade Runner 2049').build()
 
 decade = (Movie.c.year // 10).label('decade')
-group = Movie.group().using(decade).by(decade).all()
+group = Movie.group().using(decade).by(decade).build()
 
 client.query(insert.query, **insert.context)
 result = client.query(select.query, **select.context)

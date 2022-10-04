@@ -13,7 +13,7 @@ Nested3 = EdgeDBModel('Nested3')
 
 def test_insert_with_literal_with(client: Client) -> None:
     x = Alias('x').assign(int64(1))
-    rendered = A.insert.values(p_int64=x).with_(x).all()
+    rendered = A.insert.values(p_int64=x).with_(x).build()
     assert rendered.query == 'with x := <int64>$with_0 insert A { p_int64 := x }'
     assert rendered.context == FrozenDict(with_0=1)
     result = client.query(rendered.query, **rendered.context)
@@ -28,7 +28,7 @@ def test_nested_insert_from_with_expressions(client: Client) -> None:
         .insert
         .with_(nested3_insert, nested2_insert)
         .values(name='n1', nested2=nested2_insert)
-        .all()
+        .build()
     )
     assert rendered.query == (
         'with n3_insert := (insert Nested3 { name := <str>$insert_0 }), n2_insert := '

@@ -11,8 +11,8 @@ A = EdgeDBModel('A')
 
 @pytest.fixture
 def bootstrap(client: Client) -> None:
-    insert1 = A.insert.values(p_int16=int16(1), p_int32=int32(100), p_str='1').all()
-    insert2 = A.insert.values(p_int16=int16(1), p_int32=int32(200), p_str='2').all()
+    insert1 = A.insert.values(p_int16=int16(1), p_int32=int32(100), p_str='1').build()
+    insert2 = A.insert.values(p_int16=int16(1), p_int32=int32(200), p_str='2').build()
     client.query(insert1.query, **insert1.context)
     client.query(insert2.query, **insert2.context)
 

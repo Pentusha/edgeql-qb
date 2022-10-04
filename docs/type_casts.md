@@ -5,7 +5,7 @@ specify type to your literals with explicit casts:
 ```python
 from edgeql_qb.types import int16
 
-Movie.update.value(year=int16(2022)).where(Movie.c.id == movie_id).all()
+Movie.update.value(year=int16(2022)).where(Movie.c.id == movie_id).build()
 ```
 
 ## Implicit

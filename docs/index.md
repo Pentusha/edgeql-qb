@@ -48,7 +48,7 @@ select = (
         ),
     )
     .where(Movie.c.title == 'Blade Runner 2049')
-    .all()
+    .build()
 )
 print(select.query)
 # select Movie { title, year, director: { first_name, last_name }, actors: { first_name, last_name } } filter .title = <str>$filter_1_0_0
@@ -82,7 +82,7 @@ insert = Movie.insert.values(
         first_name='Harrison',
         last_name='Ford',
     ),
-).all()
+).build()
 print(insert.query)
 # insert Movie { title := <str>$insert_1_0_0, year := <int16>$insert_1_1_0, director := (select Person filter .id = $filter_2_0_0 limit 1), actors := (insert Person { first_name := <str>$insert_2_0_0, last_name := <str>$insert_2_1_0 }) }
 print(insert.context)
@@ -90,10 +90,10 @@ print(insert.context)
 ```
 
 ### Delete query
-You can delete all records `delete = Movie.delete.all()` or by condition:
+You can delete build records `delete = Movie.delete.build()` or by condition:
 
 ```python
-delete = Movie.delete.where(Movie.c.title == 'Blade Runner 2049').all()
+delete = Movie.delete.where(Movie.c.title == 'Blade Runner 2049').build()
 
 print(delete.query)
 # delete Movie filter .title = <str>$filter_1_0_0

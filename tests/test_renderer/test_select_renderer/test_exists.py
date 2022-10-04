@@ -12,14 +12,14 @@ def test_select_exists(client: Client) -> None:
     rendered = Nested1.select(
         Nested1.c.name,
         Nested1.c.nested2.exists().label('nested2_exists'),
-    ).all()
+    ).build()
     insert = Nested1.insert.values(
         name='n1',
         nested2=Nested2.insert.values(
             name='n2',
             nested3=Nested3.insert.values(name='n3'),
         ),
-    ).all()
+    ).build()
     client.query(insert.query, **insert.context)
     assert rendered.query == 'select Nested1 { name, nested2_exists := exists .nested2 }'
     assert rendered.context == FrozenDict()
@@ -33,13 +33,13 @@ def test_select_not_exists(client: Client) -> None:
     rendered = Nested1.select(
         Nested1.c.name,
         Nested1.c.nested2.not_exists().label('nested2_not_exists'),
-    ).all()
+    ).build()
     insert = Nested1.insert.values(
         name='n1',
         nested2=Nested2.insert.values(name='n2'),
-    ).all()
+    ).build()
     client.query(insert.query, **insert.context)
-    insert = Nested1.insert.values(name='p1').all()
+    insert = Nested1.insert.values(name='p1').build()
     client.query(insert.query, **insert.context)
     assert rendered.query == 'select Nested1 { name, nested2_not_exists := not exists .nested2 }'
     assert rendered.context == FrozenDict()

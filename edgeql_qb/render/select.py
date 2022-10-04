@@ -49,7 +49,7 @@ def render_select(
 ) -> RenderedQuery:
     rendered_select = (
         select_from_query
-        and render_parentheses(select_from_query.all(generator))
+        and render_parentheses(select_from_query.build(generator))
         or RenderedQuery(model_name)
     )
     return combine_many_renderers(
@@ -149,4 +149,4 @@ def _(expression: Node, generator: Iterator[int], column_prefix: str = '') -> Re
 
 @render_select_expression.register
 def _(expression: SubQuery, generator: Iterator[int], column_prefix: str = '') -> RenderedQuery:
-    return expression.all(generator)
+    return expression.build(generator)

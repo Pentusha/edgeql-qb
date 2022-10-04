@@ -1,11 +1,14 @@
 # Queries
 
+All queries are formed through chain method calls. The last method in the call 
+chain should be the `build()` method, which returns final query.
+
 ## Select
 
-You can query whole objects `Movie.select().all()` that gives you
+You can query whole objects `Movie.select().build()` that gives you
 the following EdgeQL query: `select Movie`
 You also can ask database for exact set of properties:
-`Movie.select(Movie.c.title, Movie.c.year).all()` that would be rendered to `select Movie { title, year }`.
+`Movie.select(Movie.c.title, Movie.c.year).build()` that would be rendered to `select Movie { title, year }`.
 
 ### Shapes
 Nested shapes can be used to fetch linked objects and their properties.
@@ -23,7 +26,7 @@ Movie.select(
         Movie.c.actors.first_name,
         Movie.c.actors.last_name,
     ).order_by(Movie.c.actors.first_name, Movie.c.actors.last_name).limit(5)
-).all()
+).build()
 ```
 <details>
   <summary>generated query</summary>
@@ -49,6 +52,8 @@ select Movie {
 
 ### Subqueries
 
+If the query is used as a subquery, then the such query should not end with the `build()` method.
+
 ```python
 Post.select(
     Post.c.title,
@@ -71,7 +76,7 @@ These are EdgeQL expressions that are computed on the fly during the execution o
 Person.select(
     Person.c.name,
     (Person.c.weight / Person.c.height ** 2).label('bmi'),
-).all()
+).build()
 ```
 <details>
   <summary>generated query</summary>
@@ -86,7 +91,7 @@ select Person { name, bmi := .weight / .height ^ $select_0 }
 To filter the set of selected objects, use a `where` chained method,
 which accepts either binary or unary expressions.
 ```python
-Villain.select(Villain.c.id, Villain.c.name).where(Villain.c.name == 'Doc Ock').all()
+Villain.select(Villain.c.id, Villain.c.name).where(Villain.c.name == 'Doc Ock').build()
 ```
 <details>
   <summary>generated query</summary>
@@ -123,7 +128,7 @@ Movie.select().order_by(
     Movie.c.rating.desc(),
     Movie.c.year.desc(),
     Movie.c.title,
-).all()
+).build()
 ```
 <details>
   <summary>generated query</summary>
@@ -142,7 +147,7 @@ top_250 = (
     .order_by(Movie.c.rating.desc())
     .limit(250)
     .offset(0)
-    .all()
+    .build()
 )
 ```
 
@@ -182,7 +187,7 @@ Movie.insert.values(
         first_name='Harrison',
         last_name='Ford',
     ),
-).all()
+).build()
 ```
 
 <details>
@@ -212,7 +217,7 @@ For convenience, the `.limit1` property has been added, which is a shorthand for
         usd_raised=int16(1000),
     )
     .unless_conflict(on=Movie.c.slug, else_=Movie.update.values(usd_raised=int16(1000))
-    .all()
+    .build()
 )
 ```
 
@@ -232,7 +237,7 @@ else (update Movie set { usd_raised := <int16>$update_3 })
 
 ### Idempotent Insert
 ```python
-Account.insert.values(username='System').unless_conflict().all()
+Account.insert.values(username='System').unless_conflict().build()
 ```
 
 <details>
@@ -262,7 +267,7 @@ Consider, for example, the functionality to create a new account or retrieve an 
         .values(username='Alice')
         .unless_conflict(Account.c.username, Account)
     )
-    .all()
+    .build()
 )
 ```
 <details>
@@ -287,7 +292,7 @@ select (
 ```python
 Movie.update.values(
     budget_usd=int16(185_000_000),
-).where(Movie.c.title == 'Blade Runner 2049').all()
+).where(Movie.c.title == 'Blade Runner 2049').build()
 ```
 
 <details>
@@ -302,7 +307,7 @@ update Movie filter .title = <str>$filter_0 set { budget_usd := <int16>$update_1
 ## Delete
 
 ```python
-Movie.delete.where(Movie.c.title == 'Blade Runner 2049').all()
+Movie.delete.where(Movie.c.title == 'Blade Runner 2049').build()
 ```
 <details>
   <summary>generated query</summary>
@@ -317,7 +322,7 @@ The `limit`, `offset` and `order_by` methods are supported as well.
 
 This query will delete latest log entry:
 ```python
-Log.delete.order_by(Log.c.created_at.desc()).limit1.all()
+Log.delete.order_by(Log.c.created_at.desc()).limit1.build()
 ```
 <details>
   <summary>generated query</summary>
@@ -329,7 +334,7 @@ Log.delete.order_by(Log.c.created_at.desc()).limit1.all()
 ## Group
 
 ```python
-Movie.group(Movie.c.title).by(Movie.c.year).all()
+Movie.group(Movie.c.title).by(Movie.c.year).build()
 ```
 <details>
   <summary>generated query</summary>
@@ -342,7 +347,7 @@ group Movie { title } by .year
 More complex example:
 ```python
 decade = (Movie.c.year // 10).label('decade')
-Movie.group().using(decade).by(decade).all()
+Movie.group().using(decade).by(decade).build()
 ```
 
 <details>
@@ -389,7 +394,7 @@ query = Movie.insert.with_(actors, director, title, year).values(
     year=year,
     director=director,
     actors=actors,
-).all()
+).build()
 ```
 
 <details>

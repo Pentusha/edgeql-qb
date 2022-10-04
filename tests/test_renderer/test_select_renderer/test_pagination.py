@@ -12,14 +12,14 @@ Nested2 = EdgeDBModel('Nested2')
 
 def test_limit_offset(client: Client) -> None:
     for num in range(1, 6):
-        insert = A.insert.values(p_int16=int16(num)).all()
+        insert = A.insert.values(p_int16=int16(num)).build()
         client.query(insert.query, **insert.context)
     rendered = (
         A.select(A.c.p_int16)
         .order_by(A.c.p_int16.asc())
         .limit(2)
         .offset(4)
-        .all()
+        .build()
     )
     assert rendered.query == (
         'select A { p_int16 } '
@@ -35,7 +35,7 @@ def test_limit_offset(client: Client) -> None:
 
 def test_limit_offset_function(client: Client) -> None:
     for num in range(1, 6):
-        insert = A.insert.values(p_int16=int16(num)).all()
+        insert = A.insert.values(p_int16=int16(num)).build()
         client.query(insert.query, **insert.context)
     rendered = (
         A
@@ -43,7 +43,7 @@ def test_limit_offset_function(client: Client) -> None:
         .order_by(A.c.p_int16.asc())
         .limit(math.abs(int16(-2)))
         .offset(math.abs(int16(-4)))
-        .all()
+        .build()
     )
     assert rendered.query == (
         'select A { p_int16 } order by .p_int16 asc '
@@ -64,7 +64,7 @@ def test_pagination_for_nested_shape(client: Client) -> None:
                 Nested1.c.nested2.name,
             ).limit(10).offset(20)
         )
-        .all()
+        .build()
     )
     assert rendered.query == (
         'select Nested1 { name, nested2: { name } offset <int64>$offset_0 limit <int64>$limit_1 }'

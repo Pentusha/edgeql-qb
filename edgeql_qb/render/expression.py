@@ -33,7 +33,7 @@ def _(
     generator: Iterator[int],
     column_prefix: str = '',
 ) -> RenderedQuery:
-    return expression.all(generator)
+    return expression.build(generator)
 
 
 @render_expression.register

@@ -112,7 +112,7 @@ class BaseModel:
 
 class SubQuery(ABC):
     @abstractmethod
-    def all(self, generator: Iterator[int] | None = None) -> 'RenderedQuery':
+    def build(self, generator: Iterator[int] | None = None) -> 'RenderedQuery':
         raise NotImplementedError()  # pragma: no cover
 
     def label(self, name: str) -> BinaryOp:

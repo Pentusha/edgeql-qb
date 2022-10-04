@@ -109,7 +109,7 @@ class SelectQuery(SubQuery):
     def offset(self, value: int | FuncInvocation | unsafe_text) -> 'SelectQuery':
         return replace(self, _offset_val=value)
 
-    def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
+    def build(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         gen = generator or literal_index_generator()
         rendered_with = render_with_expression(self._with_aliases, gen, self._model.module)
         rendered_select = render_select(
@@ -238,7 +238,7 @@ class InsertQuery(SubQuery):
     ) -> 'InsertQuery':
         return replace(self, _unless_conflict_value=UnlessConflict(on=on, else_=else_))
 
-    def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
+    def build(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         assert self._values_to_insert
         gen = generator or literal_index_generator()
         rendered_with = render_with_expression(self._with_aliases, gen, self._model.module)
@@ -275,7 +275,7 @@ class UpdateQuery(UpdateSubQuery):
         )
         return replace(self, _values_to_update=values_to_update)
 
-    def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
+    def build(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         assert self._values_to_update
         gen = generator or literal_index_generator()
         rendered_with = render_with_expression(self._with_aliases, gen, self._model.module)
