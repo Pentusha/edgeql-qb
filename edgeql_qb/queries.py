@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field, replace
+from itertools import count
 from typing import Any, Iterator, Union
 
 from edgeql_qb.expression import (
@@ -31,13 +32,6 @@ from edgeql_qb.render.update import render_update
 from edgeql_qb.render.update import render_values as render_update_values
 from edgeql_qb.render.with_expr import render_with_expression
 from edgeql_qb.types import unsafe_text
-
-
-def literal_index_generator(start: int = 0) -> Iterator[int]:
-    index = start
-    while True:
-        yield index
-        index += 1
 
 
 @dataclass(slots=True, frozen=True)
@@ -110,7 +104,7 @@ class SelectQuery(SubQuery):
         return replace(self, _offset_val=value)
 
     def build(self, generator: Iterator[int] | None = None) -> RenderedQuery:
-        gen = generator or literal_index_generator()
+        gen = generator or count()
         rendered_with = render_with_expression(self._with_aliases, gen, self._model.module)
         rendered_select = render_select(
             self._model.name,
@@ -152,7 +146,7 @@ class GroupQuery:
         return replace(self, _group_by=group_by)
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
-        gen = generator or literal_index_generator()
+        gen = generator or count()
         rendered_with = render_with_expression(self._with_aliases, gen, self._model.module)
         rendered_group = render_group(self._model.name, self._select, gen)
         rendered_using = render_using_expressions(self._using_expressions, gen)
@@ -195,7 +189,7 @@ class DeleteQuery:
         return replace(self, _offset_val=value)
 
     def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
-        gen = generator or literal_index_generator()
+        gen = generator or count()
         rendered_with = render_with_expression(self._with_aliases, gen, self._model.module)
         rendered_delete = render_delete(self._model.name)
         rendered_filters = render_conditions(self._filters, gen)
@@ -240,7 +234,7 @@ class InsertQuery(SubQuery):
 
     def build(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         assert self._values_to_insert
-        gen = generator or literal_index_generator()
+        gen = generator or count()
         rendered_with = render_with_expression(self._with_aliases, gen, self._model.module)
         rendered_insert = render_insert(self._model.name)
         rendered_values = render_insert_values(self._values_to_insert, gen)
@@ -277,7 +271,7 @@ class UpdateQuery(UpdateSubQuery):
 
     def build(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         assert self._values_to_update
-        gen = generator or literal_index_generator()
+        gen = generator or count()
         rendered_with = render_with_expression(self._with_aliases, gen, self._model.module)
         rendered_insert = render_update(self._model.name)
         rendered_filters = render_conditions(self._filters, gen)
