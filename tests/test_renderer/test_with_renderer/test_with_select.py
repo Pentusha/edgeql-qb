@@ -35,7 +35,7 @@ def test_select_with_literal_and_module() -> None:
         (TestA.c.p_int64 + x).label('y'),
     ).with_(x).build()
     assert rendered.query == (
-        'with test_module, x := <int64>$with_0 select A { p_int64, y := .p_int64 + x }'
+        'with module test_module, x := <int64>$with_0 select A { p_int64, y := .p_int64 + x }'
     )
     assert rendered.context == FrozenDict(with_0=1)
 
@@ -43,6 +43,6 @@ def test_select_with_literal_and_module() -> None:
 def test_select_with_module_and_without_expressions() -> None:
     rendered = TestA.select(TestA.c.p_int64).build()
     assert rendered.query == (
-        'with test_module select A { p_int64 }'
+        'with module test_module select A { p_int64 }'
     )
     assert rendered.context == FrozenDict()

@@ -402,9 +402,9 @@ query = Movie.insert.with_(actors, director, title, year).values(
 
 ```
 with
-    imdb,
-    actors := (with imdb insert Person { first_name := <str>$insert_0, last_name := <str>$insert_1 }),
-    director := (with imdb select Person filter .id = $filter_2 limit 1),
+    module imdb,
+    actors := (with module imdb insert Person { first_name := <str>$insert_0, last_name := <str>$insert_1 }),
+    director := (with module imdb select Person filter .id = $filter_2 limit 1),
     title := <str>$with_3,
     year := <int16>$with_4
 insert Movie {

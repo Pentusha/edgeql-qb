@@ -28,7 +28,7 @@ def render_with_module(module: str | None = None) -> Callable[[RenderedQuery], R
             module
             and combine_many_renderers(
                 rendered_with,
-                RenderedQuery(module),
+                RenderedQuery(f'module {module}'),
             )
             or rendered_with
         )
