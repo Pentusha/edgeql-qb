@@ -13,7 +13,7 @@ def test_group_with_literal_with(client: Client) -> None:
     client.query(insert.query, **insert.context)
 
     x = Alias('x').assign(int64(1))
-    rendered = A.group((A.c.p_int64 + x).label('y')).with_(x).by(A.c.p_int64).all()
+    rendered = A.group((A.c.p_int64 + x).label('y')).with_(x).by(A.c.p_int64).build()
     assert rendered.query == (
         'with x := <int64>$with_0 group A { y := .p_int64 + x } by .p_int64'
     )

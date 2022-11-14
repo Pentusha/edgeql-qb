@@ -13,7 +13,7 @@ def test_delete_with_literal_with(client: Client) -> None:
     client.query(insert.query, **insert.context)
 
     x = Alias('x').assign(int64(1))
-    rendered = A.delete.where(A.c.p_int64 == x).with_(x).all()
+    rendered = A.delete.where(A.c.p_int64 == x).with_(x).build()
     assert rendered.query == (
         'with x := <int64>$with_0 delete A filter .p_int64 = x'
     )
