@@ -18,13 +18,13 @@ def bootstrap(client: Client) -> None:
 
 
 def test_group_statement_wo_columns(bootstrap: None) -> None:
-    rendered = A.group().by(A.c.p_int16).all()
+    rendered = A.group().by(A.c.p_int16).build()
     assert rendered.query == 'group A by .p_int16'
     assert rendered.context == FrozenDict()
 
 
 def test_simple_group_statement(client: Client, bootstrap: None) -> None:
-    rendered = A.group(A.c.p_str).by(A.c.p_int16).all()
+    rendered = A.group(A.c.p_str).by(A.c.p_int16).build()
     assert rendered.query == 'group A { p_str } by .p_int16'
     assert rendered.context == FrozenDict()
 
@@ -37,7 +37,7 @@ def test_group_with_using(client: Client, bootstrap: None) -> None:
     b = (a + int16(2)).label('b')
     c = (a + b).label('c')
 
-    rendered = A.group(A.c.p_str).using(a, b, c).by(c).all()
+    rendered = A.group(A.c.p_str).using(a, b, c).by(c).build()
     assert rendered.query == (
         'group A { p_str } '
         'using a := .p_int16 + <int16>$using_0, b := a + <int16>$using_1, c := a + b '
@@ -50,7 +50,7 @@ def test_group_with_using(client: Client, bootstrap: None) -> None:
 
 def test_group_with_unary_using(bootstrap: None) -> None:
     condition = (~A.c.p_bool).label('condition')
-    rendered = A.group().using(condition).by(condition).all()
+    rendered = A.group().using(condition).by(condition).build()
     assert rendered.query == 'group A using condition := not .p_bool by condition'
     assert rendered.context == FrozenDict()
 
@@ -60,7 +60,7 @@ def test_group_with_function_in_select(client: Client, bootstrap: None) -> None:
         A
         .group(A.c.p_str, std.to_str(A.c.p_int32).label('str_int32'))
         .by(A.c.p_int16)
-        .all()
+        .build()
     )
     assert rendered.query == (
         'group A { p_str, str_int32 := to_str(.p_int32) } '
@@ -81,7 +81,7 @@ def test_group_with_function_in_using(client: Client, bootstrap: None) -> None:
         .group(A.c.p_str)
         .using(str_int16, str_len)
         .by(str_len)
-        .all()
+        .build()
     )
     assert rendered.query == (
         'group A { p_str } '

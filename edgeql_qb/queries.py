@@ -145,7 +145,7 @@ class GroupQuery:
     def by(self, *group_by: Column | BinaryOp) -> 'GroupQuery':
         return replace(self, _group_by=group_by)
 
-    def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
+    def build(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         gen = generator or count()
         rendered_with = render_with_expression(self._with_aliases, gen, self._model.module)
         rendered_group = render_group(self._model.name, self._select, gen)
@@ -188,7 +188,7 @@ class DeleteQuery:
     def offset(self, value: int | FuncInvocation | unsafe_text) -> 'DeleteQuery':
         return replace(self, _offset_val=value)
 
-    def all(self, generator: Iterator[int] | None = None) -> RenderedQuery:
+    def build(self, generator: Iterator[int] | None = None) -> RenderedQuery:
         gen = generator or count()
         rendered_with = render_with_expression(self._with_aliases, gen, self._model.module)
         rendered_delete = render_delete(self._model.name)
