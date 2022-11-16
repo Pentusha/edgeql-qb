@@ -1,4 +1,4 @@
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/elgeql-qb)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/elgeql-qb)](https://badge.fury.io/py/elgeql-qb)
 [![PyPI version](https://badge.fury.io/py/elgeql-qb.svg)](https://badge.fury.io/py/elgeql-qb)
 [![Tests](https://github.com/Pentusha/edgeql-qb/actions/workflows/tests.yml/badge.svg)](https://github.com/Pentusha/edgeql-qb/actions/workflows/tests.yml)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=Pentusha_edgeql-qb&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=Pentusha_edgeql-qb)
