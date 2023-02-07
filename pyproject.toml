@@ -26,7 +26,7 @@ packages = [
 python = "^3.10"
 
 [tool.poetry.dev-dependencies]
-mypy = "^0.991"
+mypy = "^1.0"
 flake8 = "^5.0.4"
 flake8-broken-line = "^0.6.0"
 flake8-eradicate = "^1.4.0"
