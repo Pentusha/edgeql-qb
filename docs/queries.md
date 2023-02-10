@@ -1,6 +1,6 @@
 # Queries
 
-All queries are formed through chain method calls. The last method in the call 
+All queries are formed through chain method calls. The last method in the call
 chain should be the `build()` method, which returns final query.
 
 ## Select
@@ -327,7 +327,7 @@ Log.delete.order_by(Log.c.created_at.desc()).limit1.build()
 <details>
   <summary>generated query</summary>
 
-```delete Log order by .craeted_at desc limit 1```
+```delete Log order by .created_at desc limit 1```
 </details>
 
 
