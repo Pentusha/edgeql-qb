@@ -1,17 +1,17 @@
 default_language_version:
-    python: python3.10
+    python: python3.11
 
 repos:
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v2.27.1
+    rev: v2.41.0
     hooks:
       - id: commitizen
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v2.27.1
+    rev: v2.41.0
     hooks:
       - id: commitizen
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.2.0
+    rev: v4.4.0
     hooks:
       - id: check-byte-order-marker
       - id: check-docstring-first
