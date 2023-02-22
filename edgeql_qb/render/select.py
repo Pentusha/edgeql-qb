@@ -1,5 +1,5 @@
+from collections.abc import Iterator
 from functools import reduce, singledispatch
-from typing import Iterator
 
 from edgeql_qb.expression import (
     AnyExpression,
@@ -60,7 +60,7 @@ def render_select(
             select
             and combine_renderers(r, render_select_columns(select, generator))
             or r
-        )
+        ),
     )
 
 

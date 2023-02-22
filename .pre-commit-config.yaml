@@ -25,8 +25,8 @@ repos:
   - repo: local
     hooks:
       - id: lint
-        name: Run flake8
-        entry: poetry run flake8 .
+        name: Run linter
+        entry: poetry run ruff check .
         language: system
         verbose: true
         pass_filenames: false

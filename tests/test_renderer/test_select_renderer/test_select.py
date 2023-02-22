@@ -74,7 +74,7 @@ def test_select_from_insert(client: Client) -> None:
             WithConstraints
             .insert
             .values(name='test')
-            .unless_conflict(WithConstraints.c.name, WithConstraints)
+            .unless_conflict(WithConstraints.c.name, WithConstraints),
         )
         .build()
     )

@@ -1,7 +1,6 @@
-from __future__ import annotations
-
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional, Union
 
 from edgeql_qb.types import GenericHolder
 
@@ -154,7 +153,7 @@ class OperationsMixin:
 class BinaryOp(OperationsMixin):
     operation: OpLiterals
     left: OperationsMixin
-    right: OperationsMixin | SubQuery | GenericHolder[Any]
+    right: Union[OperationsMixin, 'SubQuery', GenericHolder[Any]]
 
     def __eq__(self, other: Any) -> 'BinaryOp':  # type: ignore
         return BinaryOp('=', self, other)
@@ -170,7 +169,7 @@ class UnaryOp(OperationsMixin):
 class Alias(OperationsMixin):
     name: str
 
-    def assign(self, value: OperationsMixin | SubQuery | GenericHolder[Any]) -> BinaryOp:
+    def assign(self, value: Union[OperationsMixin, 'SubQuery', GenericHolder[Any]]) -> BinaryOp:
         return BinaryOp(':=', self, value)
 
 

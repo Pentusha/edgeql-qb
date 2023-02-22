@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from functools import reduce
-from typing import Callable, cast
+from typing import cast
 
 from edgeql_qb.expression import Column, SubQuery
 from edgeql_qb.operators import Node
@@ -52,7 +53,9 @@ def render_parentheses(inner: RenderedQuery) -> RenderedQuery:
     return combine_many_renderers(RenderedQuery('('), inner, RenderedQuery(')'))
 
 
-def render_assoc_parentheses(is_need: bool) -> Callable[[RenderedQuery], RenderedQuery]:
+def render_assoc_parentheses(
+        is_need: bool,  # noqa: FBT001
+) -> Callable[[RenderedQuery], RenderedQuery]:
     def inner(column: RenderedQuery) -> RenderedQuery:
         return is_need and render_parentheses(column) or column
     return inner

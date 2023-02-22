@@ -62,7 +62,7 @@ def test_update_subquery(client: Client) -> None:
     client.query(insert.query, **insert.context)
 
     rendered = Nested1.update.values(
-        nested2=Nested2.select().where(Nested2.c.name == 'new n2').limit1
+        nested2=Nested2.select().where(Nested2.c.name == 'new n2').limit1,
     ).build()
     assert rendered.query == (
         'update Nested1 set { nested2 := '

@@ -1,5 +1,6 @@
+from collections.abc import Iterator
 from functools import reduce, singledispatch
-from typing import Any, Iterator
+from typing import Any
 
 from edgeql_qb.expression import Column, Expression
 from edgeql_qb.operators import Alias, BinaryOp
@@ -21,7 +22,7 @@ def render_group(
                 select
                 and combine_renderers(r, render_select_columns(select, generator))
                 or r
-            )
+            ),
         )
     )
 

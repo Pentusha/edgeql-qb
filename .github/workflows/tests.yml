@@ -41,8 +41,8 @@ jobs:
       - name: Install dependencies
         run: poetry install
 
-      - name: Run flake8
-        run: poetry run flake8 .
+      - name: Run linter
+        run: poetry run ruff check .
 
       - name: Run mypy
         run: poetry run mypy .
@@ -60,5 +60,5 @@ jobs:
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

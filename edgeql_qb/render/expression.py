@@ -1,5 +1,5 @@
+from collections.abc import Iterator
 from functools import singledispatch
-from typing import Iterator
 
 from edgeql_qb.expression import (
     AnyExpression,
@@ -105,7 +105,7 @@ def _(
             expression.left,
             literal_prefix,
             generator,
-            column_prefix=expression.op != ':=' and '.' or ''
+            column_prefix=expression.op != ':=' and '.' or '',
         ),
         right=render_expression(expression.right, literal_prefix, generator, '.'),
         expression=expression,

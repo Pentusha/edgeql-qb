@@ -1,19 +1,19 @@
+from collections.abc import Iterator
 from contextlib import suppress
-from typing import Iterator
 
 import pytest
 from edgedb.blocking_client import Client, create_client
 
 
-class Rollback(Exception):
+class RollbackError(Exception):
     pass
 
 
 @pytest.fixture
 def client() -> Iterator[Client]:
     client = create_client()
-    with suppress(Rollback):
+    with suppress(RollbackError):
         for tx in client.transaction():
             with tx:
                 yield tx
-                raise Rollback
+                raise RollbackError

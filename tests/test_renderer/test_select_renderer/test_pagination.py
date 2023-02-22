@@ -62,7 +62,7 @@ def test_pagination_for_nested_shape(client: Client) -> None:
             Nested1.c.name,
             Nested1.c.nested2(
                 Nested1.c.nested2.name,
-            ).limit(10).offset(20)
+            ).limit(10).offset(20),
         )
         .build()
     )
