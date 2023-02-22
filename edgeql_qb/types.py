@@ -40,8 +40,7 @@ class float64(GenericHolder[float]):
 
 
 class unsafe_text(str):
-    """
-    Wrapper for rendering a text node as is.
+    """Wrapper for rendering a text node as is.
 
     WARNING: Don't pass unvalidated user input to this wrapper.
     Otherwise, you may be the first victim of EdgeQL Injection attack.

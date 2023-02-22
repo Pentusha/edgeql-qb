@@ -27,20 +27,59 @@ python = "^3.10"
 
 [tool.poetry.dev-dependencies]
 mypy = "^1.0.0"
-flake8 = "^5.0.4"
-flake8-broken-line = "^0.6.0"
-flake8-eradicate = "^1.4.0"
-flake8-print = "^5.0.0"
-flake8-quotes = "^3.3.2"
-flake8-simplify = "^0.19.3"
-flake8-annotations-complexity = "^0.0.7"
-flake8-multiline-containers = "^0.0.19"
 pre-commit = "^3.0.4"
 pytest = "^7.2.1"
 pytest-cov = "^4.0.0"
-isort = "^5.12.0"
 edgedb = "^1.3.0"
+ruff = "^0.0.251"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+exclude = [
+    ".git",
+    "__pycache__",
+]
+ignore = ["D10", "D203", "D213"]
+line-length = 99
+select = [
+    "C9",  # mccabe
+    "D",  # pycodestyle
+    "E",  # error
+    "F",  # pyflakes
+    "W",  # warning
+    "Q",  # flake8-quotes
+    "T20",  # flake8-print
+    "SIM",  # flake8-simplify
+    "ERA",  # flake8-eradicate
+    "DTZ",  # flake8-datetimez
+    "UP",  # pyupgrade
+    "FBT",  # flake8-boolean-trap
+    "I",  # isort
+    "RUF",  # ruff specific
+    "PL",  # pylint
+    "PIE",  # flake8-pie
+    "G",  # flake8-logging-format
+    "C4",  # flake8-comprehensions
+    "N",  # pep8-naming
+    "COM",  # flake8-commas
+]
+
+[tool.ruff.mccabe]
+max-complexity = 3
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = [
+    "F401",
+    "F403",
+]
+"tests/**/test_*.py" = ["D10", "PLR2004"]
+"edgeql_qb/types.py" = ["N801"]
+
+[tool.ruff.flake8-quotes]
+inline-quotes = "single"
+
+[tool.ruff.flake8-implicit-str-concat]
+allow-multiline = false

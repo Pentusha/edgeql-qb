@@ -1,6 +1,7 @@
+from collections.abc import Iterator
 from dataclasses import dataclass, field, replace
 from itertools import count
-from typing import Any, Iterator, Union
+from typing import Any
 
 from edgeql_qb.expression import (
     BaseModel,
@@ -228,7 +229,7 @@ class InsertQuery(SubQuery):
     def unless_conflict(
         self,
         on: tuple[Column, ...] | Column | None = None,
-        else_: Union[UpdateSubQuery, EdgeDBModel, None] = None,
+        else_: UpdateSubQuery | EdgeDBModel | None = None,
     ) -> 'InsertQuery':
         return replace(self, _unless_conflict_value=UnlessConflict(on=on, else_=else_))
 

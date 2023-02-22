@@ -63,7 +63,7 @@ def test_order_by_for_nested_shape(client: Client) -> None:
             Nested1.c.name,
             Nested1.c.nested2(
                 Nested1.c.nested2.name,
-            ).order_by(Nested1.c.nested2.name.asc())
+            ).order_by(Nested1.c.nested2.name.asc()),
         )
         .build()
     )

@@ -1,5 +1,5 @@
+from collections.abc import Iterator
 from functools import reduce, singledispatch
-from typing import Iterator
 
 from edgeql_qb.expression import (
     AnyExpression,

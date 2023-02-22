@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from collections import deque
+from collections.abc import Iterator
 from dataclasses import dataclass, field, replace
 from enum import Enum, auto
 from functools import singledispatch
@@ -7,7 +8,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Generic,
-    Iterator,
     Optional,
     TypeVar,
     Union,
@@ -218,14 +218,12 @@ class Symbol:
 
 def build_binary_op(op: OpLiterals, left: Node, right: Node) -> Node:
     if op == getattr(right, 'op', None) == '-' and right.right is None:
-        # a - -b = a + b
         return Node(left, '+', right.left)
     elif (
         (op == '+' and getattr(right, 'op', None) == '-')
         or (op == '-' and getattr(right, 'op', None) == '+')
         and right.right is None
     ):
-        # a + -b = a - +b = a - b
         return Node(left, '-', right.left)
     return Node(left, op, right)
 
@@ -273,8 +271,9 @@ def evaluate(stack: Stack[AnyExpression], symbol: Symbol) -> None:
 
 def _replace_alias_with_label(node: Any, depth: int) -> Any:
     """Replace assignment operation with label.
+
     Top level expression should not be replaced, so depth checking is necessary as well.
-    Node(':=', left=Alias('test'), right=1) -> Alias('test')
+    Node(':=', left=Alias('test'), right=1) -> Alias('test').
     """
     match node:
         case BinaryOp(':=', left, _) if depth > 0:

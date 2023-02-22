@@ -16,7 +16,7 @@ from edgeql_qb.types import (
     int64,
 )
 
-_dt = datetime(2022, 5, 26, 0, 0, 0)
+_dt = datetime(2022, 5, 26, 0, 0, 0)  # noqa: DTZ001
 A = EdgeDBModel('A')
 _TYPES = (
     ('bool_exp', A.c.p_bool, False, 'bool'),

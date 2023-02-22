@@ -1,5 +1,5 @@
+from collections.abc import Iterator
 from functools import reduce, singledispatch
-from typing import Iterator
 
 from edgeql_qb.expression import (
     AnyExpression,
@@ -30,7 +30,7 @@ def render_order_by_expressions(
     ]
     return combine_renderers(
         RenderedQuery(' order by '),
-        reduce(join_renderers(' then '), renderers)
+        reduce(join_renderers(' then '), renderers),
     )
 
 

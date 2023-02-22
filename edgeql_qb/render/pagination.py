@@ -1,5 +1,6 @@
+from collections.abc import Iterator
 from functools import singledispatch
-from typing import Any, Iterator
+from typing import Any
 
 from edgeql_qb.expression import Expression, QueryLiteral
 from edgeql_qb.func import FuncInvocation
@@ -46,7 +47,7 @@ def _(offset: int, generator: Iterator[int]) -> RenderedQuery:
     name = f'offset_{index}'
     return combine_many_renderers(
         RenderedQuery(' offset '),
-        render_query_literal(int64(offset), name)
+        render_query_literal(int64(offset), name),
     )
 
 

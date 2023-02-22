@@ -1,5 +1,5 @@
+from collections.abc import Callable, Iterator
 from functools import reduce
-from typing import Callable, Iterator
 
 from edgeql_qb.expression import Expression
 from edgeql_qb.render.expression import render_expression
@@ -39,7 +39,7 @@ def render_with_separator(
     expressions: list[RenderedQuery],
     module: str | None = None,
 ) -> Callable[[RenderedQuery], RenderedQuery]:
-    """Put comma between module and expressions if both are presented"""
+    """Put comma between module and expressions if both are presented."""
     def inner(rendered_with: RenderedQuery) -> RenderedQuery:
         comma = RenderedQuery(', ')
         return (
@@ -54,7 +54,7 @@ def render_with_ending(
     expressions: list[RenderedQuery],
     module: str | None = None,
 ) -> Callable[[RenderedQuery], RenderedQuery]:
-    """Put space on the end of expressions if any module or expressions presented"""
+    """Put space on the end of expressions if any module or expressions presented."""
     def inner(rendered_with: RenderedQuery) -> RenderedQuery:
         space = RenderedQuery(' ')
         empty = RenderedQuery()

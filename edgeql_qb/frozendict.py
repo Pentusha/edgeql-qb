@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import Any, Iterator
+from collections.abc import Iterator, Mapping
+from typing import Any
 
 
 class FrozenDict(Mapping[str, Any]):
-    """ Python has no hashable mapping type, so I steel this class from here:
-    https://stackoverflow.com/a/2704866
+    """Python hashable mapping type.
+
+    Python 3.10 has no hashable mapping type, so I steel this class from here:
+    https://stackoverflow.com/a/2704866.
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
