@@ -218,12 +218,14 @@ class Symbol:
 
 def build_binary_op(op: OpLiterals, left: Node, right: Node) -> Node:
     if op == getattr(right, 'op', None) == '-' and right.right is None:
+        # equals to: a - -b = a + b
         return Node(left, '+', right.left)
     elif (
         (op == '+' and getattr(right, 'op', None) == '-')
         or (op == '-' and getattr(right, 'op', None) == '+')
         and right.right is None
     ):
+        # equals to: a + -b = a - +b = a - b
         return Node(left, '-', right.left)
     return Node(left, op, right)
 
