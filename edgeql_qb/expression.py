@@ -325,8 +325,8 @@ class Expression:
                 yield Symbol(expr, arity=expr.arity, depth=depth)
                 for arg in args:
                     # a := fun(b := 1, c := 2) -> a := fun(b, c)
-                    arg = _replace_alias_with_label(arg, depth)
-                    yield from self._to_polish_notation(arg, depth + 1)
+                    flat_arg = _replace_alias_with_label(arg, depth)
+                    yield from self._to_polish_notation(flat_arg, depth + 1)
             case _:
                 yield Symbol(expr, depth=depth)
 
