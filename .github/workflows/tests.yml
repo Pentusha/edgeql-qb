@@ -58,6 +58,7 @@ jobs:
           sed -i 's/\/home\/runner\/work\/edgeql-qb\/edgeql-qb\//\/github\/workspace\//g' tests/artefacts/coverage.xml
 
       - name: SonarCloud Scan
+        if: ${{ github.actor != 'dependabot[bot]' }}
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
