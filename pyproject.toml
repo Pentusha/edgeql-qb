@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "elgeql_qb"
-version = "0.4.2"
+name = "edgeql_qb"
+version = "0.4.3"
 description = "EdgeQL Query Builder"
 authors = ["Ivan Larin <pentusha@gmail.com>"]
 license = "MIT"
