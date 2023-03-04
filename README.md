@@ -9,13 +9,13 @@
 Query builder for EdgeDB
 
 ## Description
-* Project currently in pre-alpha status. It is not production-ready yet, and It may be buggy and unstable as well.
-* The project is not affiliated with the official developers of EdgeDB.
-* This project only supports a small part of the EdgeDB syntax.
-* The library does not contain any code to connect to the database or to execute queries.
-* The library does not introspect the database and will not check if you made a typo somewhere in a column name. What you write is what you get.
-* Minimal required version of python is 3.10. Not sure if I'll ever do a backport.
-* There is no external dependencies, even on EdgeDB itself.
+* This project is currently in pre-alpha status, meaning that it is not yet production-ready and may be buggy and unstable.
+* Please note that this project is not affiliated with the official developers of EdgeDB.
+* Additionally, it is important to know that this project only supports a small part of the EdgeDB syntax.
+* The library does not include any code for connecting to the database or executing queries.
+* It also does not provide database introspection, so it will not check for typos in column names. What you write is what you get.
+* Python version 3.10 or higher is required to use this library, and there are currently no plans for backporting to earlier versions.
+* There are no external dependencies, including EdgeDB itself.
 
 # Usage examples
 Many examples of queries are given in the [documentation](https://pentusha.github.io/edgeql-qb/queries) directory.
