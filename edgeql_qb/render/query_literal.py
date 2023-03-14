@@ -10,7 +10,7 @@ from edgeql_qb.types import GenericHolder
 
 @singledispatch
 def render_query_literal(value: Any, name: str) -> RenderedQuery:
-    if isinstance(value, (str, bool, bytes)):
+    if isinstance(value, str | bool | bytes):
         # singledispatch not working for unions
         return RenderedQuery(
             f'<{value.__class__.__name__}>${name}',
