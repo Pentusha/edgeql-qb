@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Any
 
 import pytest
@@ -37,6 +38,11 @@ Nested3 = EdgeDBModel('Nested3')
             std.contains(A.c.p_str, 'He'),
             'contains(.p_str, <str>$filter_0)',
             {'filter_0': 'He'},
+        ),
+        (
+            std.datetime_current() > datetime(2000, 1, 1, tzinfo=timezone.utc),
+            'datetime_current() > <datetime>$filter_0',
+            {'filter_0': datetime(2000, 1, 1, tzinfo=timezone.utc)},
         ),
     ),
 )
