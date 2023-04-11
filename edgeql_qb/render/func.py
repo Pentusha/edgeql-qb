@@ -10,7 +10,7 @@ from edgeql_qb.render.types import RenderedQuery
 
 
 def render_function_args(args: list[RenderedQuery]) -> RenderedQuery:
-    return render_parentheses(reduce(join_renderers(', '), args))
+    return render_parentheses(reduce(join_renderers(', '), args) if args else RenderedQuery())
 
 
 def render_function(func: Function, arg_renderers: list[RenderedQuery]) -> RenderedQuery:
