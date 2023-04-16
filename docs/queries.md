@@ -70,8 +70,13 @@ select Post { title, description, latest_posts := (select Post order by created_
 </details>
 
 ### Expressions
-Shapes can contain computed fields.
-These are EdgeQL expressions that are computed on the fly during the execution of the query.
+Query Builder supports the creation of complex expressions,
+including the use of parentheses for grouping and order of operations.
+It intelligently handles parentheses by only including them when necessary,
+ensuring that the final query is both accurate and readable.
+This capability allows users to construct intricate queries with ease,
+providing a powerful tool for data analysis and manipulation.
+
 ```python
 Person.select(
     Person.c.name,
