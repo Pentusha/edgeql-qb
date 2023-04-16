@@ -1,9 +1,8 @@
 from collections.abc import Callable, Iterator
-from functools import reduce
 
 from edgeql_qb.expression import Expression
 from edgeql_qb.render.expression import render_expression
-from edgeql_qb.render.tools import combine_many_renderers, join_renderers
+from edgeql_qb.render.tools import all_to_infix, do, join_with
 from edgeql_qb.render.types import RenderedQuery
 
 
@@ -13,10 +12,7 @@ def render_with_expressions(
     def inner(rendered_with: RenderedQuery) -> RenderedQuery:
         return (
             expressions
-            and combine_many_renderers(
-                rendered_with,
-                reduce(join_renderers(', '), expressions),
-            )
+            and rendered_with + expressions @ join_with(', ')
             or rendered_with
         )
     return inner
@@ -26,10 +22,7 @@ def render_with_module(module: str | None = None) -> Callable[[RenderedQuery], R
     def inner(rendered_with: RenderedQuery) -> RenderedQuery:
         return (
             module
-            and combine_many_renderers(
-                rendered_with,
-                RenderedQuery(f'module {module}'),
-            )
+            and rendered_with.with_postfix(f'module {module}')
             or rendered_with
         )
     return inner
@@ -41,10 +34,9 @@ def render_with_separator(
 ) -> Callable[[RenderedQuery], RenderedQuery]:
     """Put comma between module and expressions if both are presented."""
     def inner(rendered_with: RenderedQuery) -> RenderedQuery:
-        comma = RenderedQuery(', ')
         return (
             (module and expressions)
-            and combine_many_renderers(rendered_with, comma)
+            and rendered_with.with_postfix(', ')
             or rendered_with
         )
     return inner
@@ -60,7 +52,7 @@ def render_with_ending(
         empty = RenderedQuery()
         return (
             (module or expressions)
-            and combine_many_renderers(rendered_with, space)
+            and rendered_with.with_postfix(' ')
             or ((not module and not expressions) and empty or space)
         )
     return inner
@@ -71,10 +63,13 @@ def render_with_expression(
         generator: Iterator[int],
         module: str | None = None,
 ) -> RenderedQuery:
-    renderers = [
-        render_expression(alias.to_infix_notation(), 'with', generator)
-        for alias in with_aliases
-    ]
+    closure = do(render_expression, literal_prefix='with', generator=generator)
+    renderers: list[RenderedQuery] = (
+        with_aliases
+        @ all_to_infix
+        @ do.each(closure)
+        @ do(list[RenderedQuery])
+    )
     return (
         RenderedQuery('with ')
         .map(render_with_module(module))

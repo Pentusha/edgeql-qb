@@ -1,21 +1,37 @@
-from functools import reduce
+from collections.abc import Callable, Iterable
 
+from edgeql_qb.expression import AnyExpression, Expression
 from edgeql_qb.func import Function
 from edgeql_qb.render.tools import (
-    combine_many_renderers,
-    join_renderers,
+    all_to_infix,
+    do,
+    join_with,
     render_parentheses,
 )
 from edgeql_qb.render.types import RenderedQuery
 
 
 def render_function_args(args: list[RenderedQuery]) -> RenderedQuery:
-    return render_parentheses(reduce(join_renderers(', '), args) if args else RenderedQuery())
+    return (
+        (args @ join_with(', ') if args else RenderedQuery())
+        @ do(render_parentheses)
+    )
 
 
 def render_function(func: Function, arg_renderers: list[RenderedQuery]) -> RenderedQuery:
-    return combine_many_renderers(
-        RenderedQuery(f'{func.module}::' if func.module != 'std' else ''),
-        RenderedQuery(func.name),
-        render_function_args(arg_renderers),
+    prefix = f'{func.module}::{func.name}' if func.module != 'std' else func.name
+    return render_function_args(arg_renderers).with_prefix(prefix)
+
+
+def render_generic_function(
+        inp: Iterable[AnyExpression],
+        closure: Callable[..., RenderedQuery],
+        func: Function,
+) -> RenderedQuery:
+    return (
+        inp
+        @ do(map, Expression)
+        @ all_to_infix
+        @ do.each(closure)
+        @ do(render_function, func)
     )

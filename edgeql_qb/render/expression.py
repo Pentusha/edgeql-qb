@@ -4,15 +4,14 @@ from functools import singledispatch
 from edgeql_qb.expression import (
     AnyExpression,
     Column,
-    Expression,
     QueryLiteral,
     SubQuery,
 )
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import Alias, Node
-from edgeql_qb.render.func import render_function
+from edgeql_qb.render.func import render_generic_function
 from edgeql_qb.render.query_literal import render_query_literal
-from edgeql_qb.render.tools import combine_many_renderers, render_binary_node
+from edgeql_qb.render.tools import do, render_binary_node
 from edgeql_qb.render.types import RenderedQuery
 
 
@@ -43,17 +42,13 @@ def _(
     generator: Iterator[int],
     column_prefix: str = '',
 ) -> RenderedQuery:
-    func = expression.func
-    arg_renderers = [
-        render_expression(
-            Expression(arg).to_infix_notation(),
-            literal_prefix,
-            generator,
-            column_prefix,
-        )
-        for arg in expression.args
-    ]
-    return render_function(func, arg_renderers)
+    closure = do(
+        render_expression,
+        literal_prefix=literal_prefix,
+        generator=generator,
+        column_prefix=column_prefix,
+    )
+    return render_generic_function(expression.args, closure, expression.func)
 
 
 @render_expression.register
@@ -96,10 +91,12 @@ def _(
     column_prefix: str = '',
 ) -> RenderedQuery:
     if expression.right is None:
-        return combine_many_renderers(
-            RenderedQuery(expression.op),
-            render_expression(expression.left, literal_prefix, generator, column_prefix),
-        )
+        return render_expression(
+            expression.left,
+            literal_prefix,
+            generator,
+            column_prefix,
+        ).with_prefix(expression.op)
     return render_binary_node(
         left=render_expression(
             expression.left,

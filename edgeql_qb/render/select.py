@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from functools import reduce, singledispatch
+from functools import singledispatch
 
 from edgeql_qb.expression import (
     AnyExpression,
@@ -19,8 +19,10 @@ from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
     combine_many_renderers,
     combine_renderers,
-    join_renderers,
+    do,
+    join_with,
     render_binary_node,
+    render_many,
     render_parentheses,
 )
 from edgeql_qb.render.types import RenderedQuery
@@ -30,15 +32,9 @@ def render_select_columns(
         select: tuple[Expression, ...],
         generator: Iterator[int],
 ) -> RenderedQuery:
-    renderers = (
-        render_select_expression(selectable.to_infix_notation(), generator)
-        for selectable in select
-    )
-    return combine_many_renderers(
-        RenderedQuery(' { '),
-        reduce(join_renderers(', '), renderers),
-        RenderedQuery(' }'),
-    )
+    closure = do(render_select_expression, generator=generator)
+    renderer = render_many(select, closure, ', ')
+    return renderer.wrap(' { ', ' }')
 
 
 def render_select(
@@ -49,16 +45,13 @@ def render_select(
 ) -> RenderedQuery:
     rendered_select = (
         select_from_query
-        and render_parentheses(select_from_query.build(generator))
+        and generator @ do(select_from_query.build) @ do(render_parentheses)
         or RenderedQuery(model_name)
     )
-    return combine_many_renderers(
-        RenderedQuery('select '),
-        rendered_select,
-    ).map(
+    return rendered_select.with_prefix('select ').map(
         lambda r: (
             select
-            and combine_renderers(r, render_select_columns(select, generator))
+            and select @ do(render_select_columns, generator=generator) @ do(combine_renderers, r)
             or r
         ),
     )
@@ -84,12 +77,13 @@ def _(
         generator: Iterator[int],
         column_prefix: str = '',
 ) -> RenderedQuery:
-    func = expression.func
-    arg_renderers = [
-        render_select_expression(arg, generator, column_prefix)
-        for arg in expression.args
-    ]
-    return render_function(func, arg_renderers)
+    closure = do(render_select_expression, generator=generator, column_prefix=column_prefix)
+    return (
+        expression.args
+        @ do.each(closure)
+        @ do(list)
+        @ do(render_function, expression.func)
+    )
 
 
 @render_select_expression.register
@@ -99,18 +93,14 @@ def _(expression: Alias, generator: Iterator[int], column_prefix: str = '') -> R
 
 @render_select_expression.register
 def _(expression: Shape, generator: Iterator[int], column_prefix: str = '') -> RenderedQuery:
-    expressions = (
-        render_select_expression(exp, generator, column_prefix)
-        for exp in expression.columns
-    )
-    conditions = render_conditions(expression.filters, generator=generator)
-    order_by = render_order_by(expression.ordered_by, generator=generator)
-    rendered_offset = render_offset(expression.offset_val, generator=generator)
-    rendered_limit = render_limit(expression.limit_val, generator=generator)
+    closure = do(render_select_expression, generator=generator, column_prefix=column_prefix)
+    conditions = expression.filters @ do(render_conditions, generator=generator)
+    order_by = expression.ordered_by @ do(render_order_by, generator=generator)
+    rendered_offset = expression.offset_val @ do(render_offset, generator=generator)
+    rendered_limit = expression.limit_val @ do(render_limit, generator=generator)
+    expressions: RenderedQuery = expression.columns @ do.each(closure) @ join_with(', ')
     return combine_many_renderers(
-        RenderedQuery(f'{expression.parent.column_name}: {{ '),
-        reduce(join_renderers(', '), expressions),
-        RenderedQuery(' }'),
+        expressions.wrap(f'{expression.parent.column_name}: {{ ', ' }'),
         conditions,
         order_by,
         rendered_offset,
@@ -132,9 +122,9 @@ def _(
 @render_select_expression.register
 def _(expression: Node, generator: Iterator[int], column_prefix: str = '') -> RenderedQuery:
     if expression.right is None:
-        return combine_many_renderers(
-            RenderedQuery(expression.op),
-            render_select_expression(expression.left, generator, column_prefix),
+        return (
+            render_select_expression(expression.left, generator, column_prefix)
+            .with_prefix(expression.op)
         )
     return render_binary_node(
         left=render_select_expression(

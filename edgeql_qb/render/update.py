@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from functools import reduce, singledispatch
+from functools import singledispatch
 
 from edgeql_qb.expression import (
     AnyExpression,
@@ -13,9 +13,9 @@ from edgeql_qb.operators import Alias, Node
 from edgeql_qb.render.func import render_function
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
-    combine_many_renderers,
-    join_renderers,
+    do,
     render_binary_node,
+    render_many,
 )
 from edgeql_qb.render.types import RenderedQuery
 
@@ -26,15 +26,9 @@ def render_update(model_name: str) -> RenderedQuery:
 
 def render_values(values: tuple[Expression, ...], generator: Iterator[int]) -> RenderedQuery:
     assert values
-    renderers = [
-        render_update_expression(value.to_infix_notation(), generator, '.')
-        for value in values
-    ]
-    return combine_many_renderers(
-        RenderedQuery(' set { '),
-        reduce(join_renderers(', '), renderers),
-        RenderedQuery(' }'),
-    )
+    closure = do(render_update_expression, generator=generator, column_prefix='.')
+    renderer = render_many(values, closure, ', ')
+    return renderer.wrap(' set { ', ' }')
 
 
 @singledispatch
@@ -76,12 +70,12 @@ def _(
         generator: Iterator[int],
         column_prefix: str = '',
 ) -> RenderedQuery:
-    func = expression.func
-    arg_renderers = [
-        render_update_expression(arg, generator, column_prefix)
-        for arg in expression.args
-    ]
-    return render_function(func, arg_renderers)
+    return (
+        expression.args
+        @ do.each(do(render_update_expression, generator=generator, column_prefix=column_prefix))
+        @ do(list)
+        @ do(render_function, expression.func)
+    )
 
 
 @render_update_expression.register

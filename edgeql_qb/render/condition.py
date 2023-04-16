@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from functools import reduce, singledispatch
+from functools import singledispatch
 
 from edgeql_qb.expression import (
     AnyExpression,
@@ -12,25 +12,20 @@ from edgeql_qb.operators import Alias, Node
 from edgeql_qb.render.func import render_function
 from edgeql_qb.render.query_literal import render_query_literal
 from edgeql_qb.render.tools import (
-    combine_many_renderers,
-    combine_renderers,
-    join_renderers,
+    do,
     linearize_filter_left,
     render_binary_node,
+    render_many,
 )
 from edgeql_qb.render.types import RenderedQuery
 from edgeql_qb.types import unsafe_text
 
 
 def render_filters(filters: tuple[Expression, ...], generator: Iterator[int]) -> RenderedQuery:
-    conditions = [
-        render_condition(filter_.to_infix_notation(), generator)
-        for filter_ in filters
-    ]
-    return combine_renderers(
-        RenderedQuery(' filter '),
-        reduce(join_renderers(' and '), conditions),
-    )
+    separator = ' and '
+    closure = do(render_condition, generator=generator)
+    rendered = render_many(filters, closure, separator)
+    return rendered.with_prefix(' filter ')
 
 
 def render_conditions(filters: tuple[Expression, ...], generator: Iterator[int]) -> RenderedQuery:
@@ -49,21 +44,18 @@ def _(expression: Alias, generator: Iterator[int]) -> RenderedQuery:
 
 @render_condition.register
 def _(expression: FuncInvocation, generator: Iterator[int]) -> RenderedQuery:
-    func = expression.func
-    arg_renderers = [
-        render_condition(arg, generator)
-        for arg in expression.args
-    ]
-    return render_function(func, arg_renderers)
+    return (
+        expression.args
+        @ do.each(do(render_condition, generator=generator))
+        @ do(list)
+        @ do(render_function, expression.func)
+    )
 
 
 @render_condition.register
 def _(expression: Node, generator: Iterator[int]) -> RenderedQuery:
     if expression.right is None:
-        return combine_many_renderers(
-            RenderedQuery(expression.op),
-            render_condition(expression.left, generator),
-        )
+        return render_condition(expression.left, generator).with_prefix(expression.op)
     return render_binary_node(
         left=render_condition(expression.left, generator),
         right=render_condition(expression.right, generator),

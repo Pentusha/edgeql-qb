@@ -1,8 +1,8 @@
-from collections.abc import Callable
-from functools import reduce
-from typing import cast
+from collections.abc import Callable, Iterable
+from functools import partial, reduce
+from typing import ParamSpec, TypeVar, cast
 
-from edgeql_qb.expression import Column, SubQuery
+from edgeql_qb.expression import AnyExpression, Column, Expression, SubQuery
 from edgeql_qb.operators import Node
 from edgeql_qb.render.types import RenderedQuery
 
@@ -50,7 +50,7 @@ def need_right_parentheses(right: Node, expression: Node) -> bool:
 
 
 def render_parentheses(inner: RenderedQuery) -> RenderedQuery:
-    return combine_many_renderers(RenderedQuery('('), inner, RenderedQuery(')'))
+    return inner.wrap('(', ')')
 
 
 def render_assoc_parentheses(
@@ -107,3 +107,43 @@ def linearize_filter_left(column: Column) -> list[Column]:
             return [column]
         case _:
             return [*linearize_filter_left(column.parent), column]
+
+
+T = TypeVar('T')
+Left = TypeVar('Left')
+P = ParamSpec('P')
+R = TypeVar('R')
+
+
+class do(partial[T]):  # noqa: N801
+    def __rmatmul__(self, other: Left) -> 'T':
+        return self(other)
+
+    @classmethod
+    def each(cls, func: Callable[P, R]) -> 'do[T]':
+        return cls(map, func.__rmatmul__)  # type: ignore
+
+
+def to_infix(exp: Expression) -> 'AnyExpression':
+    return exp.to_infix_notation()
+
+
+all_to_infix = do(map, to_infix)
+
+
+def render_many(
+        parts: Iterable[T],
+        closure: Callable[P, R],
+        separator: str,
+) -> R:
+    return (
+        parts
+        @ all_to_infix
+        @ do.each(closure)
+        @ join_with(separator)
+    )
+
+
+def join_with(separator: str) -> do[T]:
+    reducer = separator @ do(join_renderers)
+    return do(reduce, reducer)

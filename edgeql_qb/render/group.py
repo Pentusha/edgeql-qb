@@ -1,12 +1,12 @@
 from collections.abc import Iterator
-from functools import reduce, singledispatch
+from functools import singledispatch
 from typing import Any
 
 from edgeql_qb.expression import Column, Expression
 from edgeql_qb.operators import Alias, BinaryOp
 from edgeql_qb.render.expression import render_expression
 from edgeql_qb.render.select import render_select_columns
-from edgeql_qb.render.tools import combine_renderers, join_renderers
+from edgeql_qb.render.tools import combine_renderers, do, join_with, render_many
 from edgeql_qb.render.types import RenderedQuery
 
 
@@ -16,7 +16,8 @@ def render_group(
         generator: Iterator[int],
 ) -> RenderedQuery:
     return (
-        RenderedQuery(f'group {model_name}')
+        RenderedQuery(model_name)
+        .with_prefix('group ')
         .map(
             lambda r: (
                 select
@@ -28,14 +29,9 @@ def render_group(
 
 
 def render_using(using: tuple[Expression, ...], generator: Iterator[int]) -> RenderedQuery:
-    using_expressions = [
-        render_expression(use.to_infix_notation(), 'using', generator)
-        for use in using
-    ]
-    return combine_renderers(
-        RenderedQuery(' using '),
-        reduce(join_renderers(', '), using_expressions),
-    )
+    closure = do(render_expression, generator=generator, literal_prefix='using')
+    rendered = render_many(using, closure, ', ')
+    return rendered.with_prefix(' using ')
 
 
 def render_using_expressions(
@@ -62,8 +58,5 @@ def _(group_by: BinaryOp) -> RenderedQuery:
 
 
 def render_group_by_expressions(group_by: tuple[Column, ...]) -> RenderedQuery:
-    renderers = map(render_group_by, group_by)
-    return combine_renderers(
-        RenderedQuery(' by '),
-        reduce(join_renderers(', '), renderers),
-    )
+    renderers: RenderedQuery = group_by @ do(map, render_group_by) @ join_with(', ')
+    return renderers.with_prefix(' by ')
