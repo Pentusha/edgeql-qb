@@ -61,7 +61,7 @@ def _(group_by: BinaryOp) -> RenderedQuery:
     return RenderedQuery(group_by.left.name)
 
 
-def render_group_by_expressions(group_by: tuple[Column, ...]) -> RenderedQuery:
+def render_group_by_expressions(group_by: tuple[Column | BinaryOp, ...]) -> RenderedQuery:
     renderers = map(render_group_by, group_by)
     return combine_renderers(
         RenderedQuery(' by '),

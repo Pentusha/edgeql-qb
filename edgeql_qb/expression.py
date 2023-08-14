@@ -56,8 +56,8 @@ class Shape:
     columns: tuple[Union['Column', 'Shape'], ...]
     filters: tuple['Expression', ...] = field(default_factory=tuple)
     ordered_by: tuple['Expression', ...] = field(default_factory=tuple)
-    limit_val: int | unsafe_text | None = None
-    offset_val: int | unsafe_text | None = None
+    limit_val: int | unsafe_text | FuncInvocation | None = None
+    offset_val: int | unsafe_text | FuncInvocation | None = None
 
     def where(self, compared: Union['BinaryOp', 'UnaryOp', 'FuncInvocation']) -> 'Shape':
         return replace(self, filters=(*self.filters, Expression(compared)))
