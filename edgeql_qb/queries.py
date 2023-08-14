@@ -74,8 +74,8 @@ class SelectQuery(SubQuery):
     _with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
     _filters: tuple[Expression, ...] = field(default_factory=tuple)
     _ordered_by: tuple[Expression, ...] = field(default_factory=tuple)
-    _limit_val: int | unsafe_text | None = None
-    _offset_val: int | unsafe_text | None = None
+    _limit_val: int | unsafe_text | FuncInvocation | None = None
+    _offset_val: int | unsafe_text | FuncInvocation | None = None
 
     def select_from(self, query: SubQuery) -> 'SelectQuery':
         return replace(self, _select_from_query=query)
@@ -132,7 +132,7 @@ class GroupQuery:
     _model: EdgeDBModel
     _select: tuple[Expression, ...] = field(default_factory=tuple)
     _with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
-    _group_by: tuple[Column, ...] = field(default_factory=tuple)
+    _group_by: tuple[Column | BinaryOp, ...] = field(default_factory=tuple)
     _using_expressions: tuple[Expression, ...] = field(default_factory=tuple)
 
     def with_(self, *with_aliases: BinaryOp) -> 'GroupQuery':
@@ -166,8 +166,8 @@ class DeleteQuery:
     _with_aliases: tuple[Expression, ...] = field(default_factory=tuple)
     _filters: tuple[Expression, ...] = field(default_factory=tuple)
     _ordered_by: tuple[Expression, ...] = field(default_factory=tuple)
-    _limit_val: int | unsafe_text | None = None
-    _offset_val: int | unsafe_text | None = None
+    _limit_val: int | unsafe_text | FuncInvocation | None = None
+    _offset_val: int | unsafe_text | FuncInvocation | None = None
 
     def where(self, compared: BinaryOp | UnaryOp) -> 'DeleteQuery':
         return replace(self, _filters=(*self._filters, Expression(compared)))
