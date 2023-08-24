@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator, Mapping
+from functools import reduce
 from typing import Any
 
 
@@ -29,10 +30,7 @@ class FrozenDict(Mapping[str, Any]):
         return FrozenDict(new)
 
     def __hash__(self) -> int:
-        hash_ = 0
-        for pair in self.items():
-            hash_ ^= hash(pair)
-        return hash_
+        return reduce(lambda acc, pair: acc ^ hash(pair), self.items(), 0)
 
     def __repr__(self) -> str:
         return repr(self._d)
