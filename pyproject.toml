@@ -30,7 +30,7 @@ mypy = "^1.8.0"
 pre-commit = "^3.6.0"
 pytest = "^7.4.4"
 pytest-cov = "^4.1.0"
-edgedb = "^1.7.0"
+edgedb = "^1.8.0"
 ruff = "^0.1.11"
 
 [build-system]
