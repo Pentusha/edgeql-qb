@@ -17,6 +17,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 packages = [
     { include = "edgeql_qb" },
@@ -42,9 +43,10 @@ exclude = [
     ".git",
     "__pycache__",
 ]
-ignore = ["D10", "D203", "D213"]
 line-length = 99
-select = [
+
+lint.ignore = ["D10", "D203", "D213"]
+lint.select = [
     "C9",  # mccabe
     "D",  # pycodestyle
     "E",  # error
@@ -67,10 +69,10 @@ select = [
     "COM",  # flake8-commas
 ]
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 max-complexity = 3
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = [
     "F401",
     "F403",
@@ -78,8 +80,8 @@ max-complexity = 3
 "tests/**/test_*.py" = ["D10", "PLR2004"]
 "edgeql_qb/types.py" = ["N801"]
 
-[tool.ruff.flake8-quotes]
+[tool.ruff.lint.flake8-quotes]
 inline-quotes = "single"
 
-[tool.ruff.flake8-implicit-str-concat]
+[tool.ruff.lint.flake8-implicit-str-concat]
 allow-multiline = false

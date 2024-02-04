@@ -59,7 +59,7 @@ Post.select(
     Post.c.title,
     Post.c.description,
     lastest_posts=Post.select().order_by(Post.c.created_at.desc()).limit(3),
-)
+).build()
 ```
 <details>
   <summary>generated query</summary>
