@@ -35,7 +35,7 @@ def render_order_by_expressions(
 
 
 def render_order_by(ordered_by: tuple[Expression, ...], generator: Iterator[int]) -> RenderedQuery:
-    return ordered_by and render_order_by_expressions(ordered_by, generator) or RenderedQuery()
+    return render_order_by_expressions(ordered_by, generator) if ordered_by else RenderedQuery()
 
 
 @singledispatch

@@ -63,7 +63,7 @@ def _(expression: Node, generator: Iterator[int], column_prefix: str = '') -> Re
         left=render_update_expression(
             expression.left,
             generator,
-            expression.op != ':=' and '.' or '',
+            '.' if expression.op != ':=' else '',
         ),
         right=render_update_expression(expression.right, generator, '.'),
         expression=expression,

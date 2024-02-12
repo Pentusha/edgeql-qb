@@ -12,12 +12,12 @@ def render_with_expressions(
 ) -> Callable[[RenderedQuery], RenderedQuery]:
     def inner(rendered_with: RenderedQuery) -> RenderedQuery:
         return (
-            expressions
-            and combine_many_renderers(
+            combine_many_renderers(
                 rendered_with,
                 reduce(join_renderers(', '), expressions),
             )
-            or rendered_with
+            if expressions
+            else rendered_with
         )
     return inner
 
@@ -25,12 +25,12 @@ def render_with_expressions(
 def render_with_module(module: str | None = None) -> Callable[[RenderedQuery], RenderedQuery]:
     def inner(rendered_with: RenderedQuery) -> RenderedQuery:
         return (
-            module
-            and combine_many_renderers(
+            combine_many_renderers(
                 rendered_with,
                 RenderedQuery(f'module {module}'),
             )
-            or rendered_with
+            if module
+            else rendered_with
         )
     return inner
 
@@ -43,9 +43,9 @@ def render_with_separator(
     def inner(rendered_with: RenderedQuery) -> RenderedQuery:
         comma = RenderedQuery(', ')
         return (
-            (module and expressions)
-            and combine_many_renderers(rendered_with, comma)
-            or rendered_with
+            combine_many_renderers(rendered_with, comma)
+            if (module and expressions)
+            else rendered_with
         )
     return inner
 
@@ -59,9 +59,9 @@ def render_with_ending(
         space = RenderedQuery(' ')
         empty = RenderedQuery()
         return (
-            (module or expressions)
-            and combine_many_renderers(rendered_with, space)
-            or ((not module and not expressions) and empty or space)
+            combine_many_renderers(rendered_with, space)
+            if (module or expressions)
+            else (empty if (not module and not expressions) else space)
         )
     return inner
 

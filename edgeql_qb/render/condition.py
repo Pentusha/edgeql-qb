@@ -34,7 +34,7 @@ def render_filters(filters: tuple[Expression, ...], generator: Iterator[int]) ->
 
 
 def render_conditions(filters: tuple[Expression, ...], generator: Iterator[int]) -> RenderedQuery:
-    return filters and render_filters(filters, generator) or RenderedQuery()
+    return render_filters(filters, generator) if filters else RenderedQuery()
 
 
 @singledispatch

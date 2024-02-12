@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [ '3.10', '3.11' ]
+        python-version: [ '3.10', '3.11', '3.12' ]
 
     steps:
       - uses: actions/checkout@v4
@@ -36,16 +36,19 @@ jobs:
 
       - uses: snok/install-poetry@v1.3
         with:
-          version: 1.4.0
+          version: 1.7.1
 
       - name: Install dependencies
         run: poetry install
 
-      - name: Run linter
+      - name: Run ruff
         run: poetry run ruff check .
 
       - name: Run mypy
         run: poetry run mypy .
+
+      - name: Run pyright
+        run: poetry run pyright .
 
       - name: Run tests
         run: poetry run pytest

@@ -48,5 +48,5 @@ def test_select_datatypes(
         f'select A {{ {label} := .{column.column_name} != <{expected_type}>$select_0 }}'
     )
     assert rendered.context == FrozenDict(
-        select_0=isinstance(value, GenericHolder) and value.value or value,
+        select_0=value.value if isinstance(value, GenericHolder) else value,
     )

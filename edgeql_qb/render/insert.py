@@ -101,7 +101,7 @@ def _(on: Column, generator: Iterator[int]) -> RenderedQuery:
 
 @render_unless_conflict_on.register
 def _(
-    on: tuple,  # type: ignore
+    on: tuple,  # type: ignore[type-arg]
     generator: Iterator[int],
 ) -> RenderedQuery:
     renderers = [
@@ -124,20 +124,20 @@ def _(conflict: None, generator: Iterator[int]) -> RenderedQuery:
 @render_unless_conflict.register
 def _(conflict: UnlessConflict, generator: Iterator[int]) -> RenderedQuery:
     rendered_on = (
-        conflict.on
-        and combine_many_renderers(
+        combine_many_renderers(
             RenderedQuery(' on '),
             render_unless_conflict_on(conflict.on, generator),
         )
-        or RenderedQuery()
+        if conflict.on
+        else RenderedQuery()
     )
     rendered_else = (
-        conflict.else_
-        and combine_many_renderers(
+        combine_many_renderers(
             RenderedQuery(' else '),
             render_unless_conflict_else(conflict.else_, generator),
         )
-        or RenderedQuery()
+        if conflict.else_
+        else RenderedQuery()
     )
     return combine_many_renderers(
         RenderedQuery(' unless conflict'),
