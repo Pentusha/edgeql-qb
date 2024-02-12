@@ -33,6 +33,7 @@ pytest = "^8.0.0"
 pytest-cov = "^4.1.0"
 edgedb = "^1.8.0"
 ruff = "^0.2.1"
+pyright = "^1.1.350"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -67,6 +68,9 @@ lint.select = [
     "C4",  # flake8-comprehensions
     "N",  # pep8-naming
     "COM",  # flake8-commas
+    "ASYNC",  # flake8-async
+    "PGH",  # pygrep-hooks
+    "G",  # flake8-logging-format
 ]
 
 [tool.ruff.lint.mccabe]
@@ -77,11 +81,34 @@ max-complexity = 3
     "F401",
     "F403",
 ]
-"tests/**/test_*.py" = ["D10", "PLR2004"]
-"edgeql_qb/types.py" = ["N801"]
+"tests/**/test_*.py" = [
+    "D10",  # missing docstring
+    "PLR2004",  # magick values
+]
+"edgeql_qb/types.py" = [
+    "N801",  # invalid-class-name
+]
 
 [tool.ruff.lint.flake8-quotes]
 inline-quotes = "single"
 
 [tool.ruff.lint.flake8-implicit-str-concat]
 allow-multiline = false
+
+[tool.mypy]
+# plugins =
+# --strict
+disallow_any_generics = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+implicit_reexport = false
+strict_equality = true
+ignore_missing_imports = false
+# --strict end

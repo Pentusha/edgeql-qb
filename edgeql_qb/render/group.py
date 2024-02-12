@@ -19,9 +19,9 @@ def render_group(
         RenderedQuery(f'group {model_name}')
         .map(
             lambda r: (
-                select
-                and combine_renderers(r, render_select_columns(select, generator))
-                or r
+                combine_renderers(r, render_select_columns(select, generator))
+                if select
+                else r
             ),
         )
     )
@@ -42,7 +42,7 @@ def render_using_expressions(
         using: tuple[Expression, ...],
         generator: Iterator[int],
 ) -> RenderedQuery:
-    return using and render_using(using, generator) or RenderedQuery()
+    return render_using(using, generator) if using else RenderedQuery()
 
 
 @singledispatch

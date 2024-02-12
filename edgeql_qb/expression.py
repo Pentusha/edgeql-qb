@@ -87,10 +87,10 @@ class Column(OperationsMixin):
     def __getattr__(self, name: str) -> 'Column':
         return Column(name, self)
 
-    def __eq__(self, other: Any) -> BinaryOp:  # type: ignore
+    def __eq__(self, other: Any) -> BinaryOp:  # type: ignore[override]
         return BinaryOp('=', self, other)
 
-    def __ne__(self, other: Any) -> BinaryOp:  # type: ignore
+    def __ne__(self, other: Any) -> BinaryOp:  # type: ignore[override]
         return BinaryOp('!=', self, other)
 
 

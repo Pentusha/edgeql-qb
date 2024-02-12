@@ -48,18 +48,18 @@ def render_select(
     select_from_query: SubQuery | None = None,
 ) -> RenderedQuery:
     rendered_select = (
-        select_from_query
-        and render_parentheses(select_from_query.build(generator))
-        or RenderedQuery(model_name)
+        render_parentheses(select_from_query.build(generator))
+        if select_from_query
+        else RenderedQuery(model_name)
     )
     return combine_many_renderers(
         RenderedQuery('select '),
         rendered_select,
     ).map(
         lambda r: (
-            select
-            and combine_renderers(r, render_select_columns(select, generator))
-            or r
+            combine_renderers(r, render_select_columns(select, generator))
+            if select
+            else r
         ),
     )
 

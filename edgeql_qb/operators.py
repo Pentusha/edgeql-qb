@@ -155,7 +155,7 @@ class BinaryOp(OperationsMixin):
     left: OperationsMixin
     right: Union[OperationsMixin, 'SubQuery', GenericHolder[Any]]
 
-    def __eq__(self, other: Any) -> 'BinaryOp':  # type: ignore
+    def __eq__(self, other: Any) -> 'BinaryOp':  # type: ignore[override]
         return BinaryOp('=', self, other)
 
 

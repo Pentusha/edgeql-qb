@@ -20,7 +20,7 @@ def render_query_literal(value: Any, name: str) -> RenderedQuery:
 
 
 @render_query_literal.register
-def _(value: GenericHolder, name: str) -> RenderedQuery:  # type: ignore
+def _(value: GenericHolder, name: str) -> RenderedQuery:  # type: ignore[type-arg]
     return RenderedQuery(f'<{value.edgeql_name}>${name}', FrozenDict({name: value.value}))
 
 
