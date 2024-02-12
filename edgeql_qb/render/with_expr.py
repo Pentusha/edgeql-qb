@@ -60,8 +60,8 @@ def render_with_ending(
         empty = RenderedQuery()
         return (
             combine_many_renderers(rendered_with, space)
-            if (module or expressions)
-            else (empty if (not module and not expressions) else space)
+            if module or expressions else space
+            if module and expressions else empty
         )
     return inner
 
