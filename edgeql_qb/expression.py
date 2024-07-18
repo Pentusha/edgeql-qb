@@ -234,7 +234,7 @@ def build_unary_op(op: OpLiterals, argument: Node) -> Node:
     return Node(argument, op)
 
 
-def evaluate(stack: Stack[AnyExpression], symbol: Symbol) -> None:
+def evaluate(stack: Stack[AnyExpression], symbol: Symbol) -> None:  # noqa: C901
     match symbol.type:
         case (
             SymbolType.column
@@ -294,7 +294,7 @@ class Expression:
             evaluate(stack, symbol)
         return stack.pop()
 
-    def _to_polish_notation(
+    def _to_polish_notation(  # noqa: C901
             self,
             expr: AnyExpression,
             depth: int = 0,
