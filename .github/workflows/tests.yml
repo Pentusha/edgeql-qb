@@ -36,7 +36,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: snok/install-poetry@v1.3
+      - uses: snok/install-poetry@v1.4
         with:
           version: 1.7.1
 
@@ -97,7 +97,7 @@ jobs:
         with:
           python-version: 3.11
 
-      - uses: snok/install-poetry@v1.3
+      - uses: snok/install-poetry@v1.4
         with:
           version: 1.7.1
 
