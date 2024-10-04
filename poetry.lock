@@ -113,37 +113,37 @@ files = [
 
 [[package]]
 name = "edgedb"
-version = "2.0.1"
+version = "2.1.0"
 description = "EdgeDB Python driver"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "edgedb-2.0.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:1be6127bb8b4978ac080041763a636e5070a18c9d93b50ad74ae398a12754c14"},
-    {file = "edgedb-2.0.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:ff6e2248e5c600968dec5bc658e07962f89e8e4c96fae54c2f28fefc62be27c8"},
-    {file = "edgedb-2.0.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:41323668667c21b6dd0a0a55707acb5808dbd0b00c9bce93f8fd21b070e030ea"},
-    {file = "edgedb-2.0.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5b60f5f5bea04c336d2b6a1209b56c263b2cc487d6dc78dd32e51ed39af59ac0"},
-    {file = "edgedb-2.0.1-cp310-cp310-win_amd64.whl", hash = "sha256:3d3b4bc730f08512c9bd7504bc95dd3f1443e098c9d165fe9f50fc9d013a4009"},
-    {file = "edgedb-2.0.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:eda717893f74c4b678a9c545aee3b49a9cab7505f2254f6c8d93b2631724f931"},
-    {file = "edgedb-2.0.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:e763483bf9a4fefdbf55f694ae46a6e3f5147fd869003a5a43b4259fe008a2e4"},
-    {file = "edgedb-2.0.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2e713a98b3b5a282699176e9eff70d738dba98b636d9527f7fd56436b94f7fb0"},
-    {file = "edgedb-2.0.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d23df73adef33b9225ef7d4509c922db2545102299b936f483f1f075bfba5ab0"},
-    {file = "edgedb-2.0.1-cp311-cp311-win_amd64.whl", hash = "sha256:b9352f307258c9a64771a87ae7d1419bb84d1131cc3c093e0a30d05f76609715"},
-    {file = "edgedb-2.0.1-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:793ecbc0669ec22042159fe1349acf7e31dea6416ccb47ac8f1a7508bbba9234"},
-    {file = "edgedb-2.0.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:c00d7e27626d3671929b4bd1ff8ac4997d2582a0ad3cac83b84d69d9ae35756d"},
-    {file = "edgedb-2.0.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b6e6f63575f9463c706551729798346d9d063dc8f72661592d8f60b9504e315f"},
-    {file = "edgedb-2.0.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:43a3f83c5735100a03727e072b32daf5615dff989e757cf7e37d395a556a056f"},
-    {file = "edgedb-2.0.1-cp312-cp312-win_amd64.whl", hash = "sha256:205bec08afd7f2c5d0afbee7523f18c84ecc11187e495d56b5d37ab1a0dc2f28"},
-    {file = "edgedb-2.0.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:c09e1f84152a94fdfde85d4f6e4fa687ff3b01833666e493798b71bd5dc4fc69"},
-    {file = "edgedb-2.0.1-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:8e9bddcc6230f090c126470ad83a29874be1a2af293f656320efc2d77577ba9d"},
-    {file = "edgedb-2.0.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:80688e9bcac7b2109166d6349fc5b3653ae2d307dc52dadebd96d75093cc3ec8"},
-    {file = "edgedb-2.0.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:08decce3d94d737d71adeeb1e16cdb586d3f4769889d7c8143536fc03441deb6"},
-    {file = "edgedb-2.0.1-cp38-cp38-win_amd64.whl", hash = "sha256:17be98fe34637c34008c06eb2ee2c68145f46ca8fce70348cc4821b1c338d3fd"},
-    {file = "edgedb-2.0.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:c3584b5d058236c0cd710821b1bd28e27713c90202f4ce8dffd368be207431ed"},
-    {file = "edgedb-2.0.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:65b00783c239721b9ff12f829ef200f201a94650333e3f5f034654c7c4982e86"},
-    {file = "edgedb-2.0.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3c2b323956b483fb080dd46aeaedddeda887f0dff58b441889eef9f9068dec3a"},
-    {file = "edgedb-2.0.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:656c2c0dc23e1dc9f7beba949e910bcd4f21a383ae16166a6b827eef932fa642"},
-    {file = "edgedb-2.0.1-cp39-cp39-win_amd64.whl", hash = "sha256:d69c11039bafbee4bc2afa012ffe5788efc97fd82017ef5e7b380a1109e74231"},
-    {file = "edgedb-2.0.1.tar.gz", hash = "sha256:4884054aea8836577a3c8608ba3ffac735672d279fc734c856de795600c3b1f0"},
+    {file = "edgedb-2.1.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:451240e400a53fa486e6b9d41e149693c4dc6f69917d55716c0a94e52bb126eb"},
+    {file = "edgedb-2.1.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:28fb6920dff41156431a8abbbbac5366bad335bd098d77bd6511e889f18bcef8"},
+    {file = "edgedb-2.1.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c2f6d464df581ce5c2ba18687efe46abb3d7c3c7d9df07312ab51fb6ec125753"},
+    {file = "edgedb-2.1.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8fb5aad2a814ec67cd18fb805456f6018f47f28d458cc1fdde1f61f49bb2586e"},
+    {file = "edgedb-2.1.0-cp310-cp310-win_amd64.whl", hash = "sha256:1c082bbfb8cde0d52a485cec54b8489656ca262995bb23ae0c62a4a3ce01b4b2"},
+    {file = "edgedb-2.1.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:82760a36a09b7d09b28d5f9829183feddb11d9380a93d5c6f6c33545bb8fa6b5"},
+    {file = "edgedb-2.1.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:ccb231eb18695bdfbaec9803b73f3e0a5dbd0bd423bfb112c9d4c801a49a3581"},
+    {file = "edgedb-2.1.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:38cdf820ec27dd8d29648f24ab9514029ef8db9423fb5ea0868b48e21de9145f"},
+    {file = "edgedb-2.1.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b0661c5bc03ac9bbdac64feb06cd0b91cca2be08615199fa6170a1e3b0274c7a"},
+    {file = "edgedb-2.1.0-cp311-cp311-win_amd64.whl", hash = "sha256:66c8d8e635b49b3863edf541e3a371cb87d80a4a152239fc84cd1b536dcb49d7"},
+    {file = "edgedb-2.1.0-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:84faf8be5f6d8d4738bc18a12bb01c36d8ae75732d70164b3e0c6d4066d16112"},
+    {file = "edgedb-2.1.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:80f2936be48a01f96e8c7e9326ae6ace569f70cf36625ea80217f9ca5690a8d8"},
+    {file = "edgedb-2.1.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f5dc19ef0070e427835452d0050e55ac083f3cce3606f4ba46cca7a771bac12c"},
+    {file = "edgedb-2.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:55fd664bfae943d50430e9e8ddac3bea15a8ba27262fd292fa76e842b37470a5"},
+    {file = "edgedb-2.1.0-cp312-cp312-win_amd64.whl", hash = "sha256:eb96f9ca512de8664c0ac48c7bae1c6c8b98b86e119737af7e2f6492f3cb13a7"},
+    {file = "edgedb-2.1.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:6e48fb3ac3cacefcbbde31b702ff9a7e8b429014963a3e7974d2613600bd1ccd"},
+    {file = "edgedb-2.1.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:a0aa8b972b9e108052e634f95c6b584c3a57f9f090e6ed19571da0bcf0fabdf9"},
+    {file = "edgedb-2.1.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7eb95a923fec3314bd0c1e88263ce2fe5b6e08ebd7a1e1338e43b4142dbd98ff"},
+    {file = "edgedb-2.1.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:214f59b2491a36b94afe3d69700fbe03c28d4192d8e8b0eee339fe56b1f2986f"},
+    {file = "edgedb-2.1.0-cp38-cp38-win_amd64.whl", hash = "sha256:d1152c772eedfde40a77efba745727c4a1a51e089e79dacccc0f117275a727cb"},
+    {file = "edgedb-2.1.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:2d14472aa4cf92a88247addc524025d7cda8f31d1e121575ce8ff3321122ba19"},
+    {file = "edgedb-2.1.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:03a49170535569b1f81d6042b0f7436f6ff3c415839435633d76a0c1d63d7652"},
+    {file = "edgedb-2.1.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:df9a5521392b0e89611599ffc20eec405dd19d324988c9a0b24f766366b9f801"},
+    {file = "edgedb-2.1.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a8cfc9c792c9c005d55a867556db663a0a0a0ecc0cc41e3f3c3e1d43bb79a2bd"},
+    {file = "edgedb-2.1.0-cp39-cp39-win_amd64.whl", hash = "sha256:33df727f22b04691b7b2a355a2acff694d1bb50659d842b5add8626b5e56d482"},
+    {file = "edgedb-2.1.0.tar.gz", hash = "sha256:47925ee05332c08d296014b94689cc91620e466e6ad6bb1cb9a4677d123c49f4"},
 ]
 
 [package.dependencies]
@@ -548,4 +548,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "29e2e81749f63f2413864f0954d9332ae237c0f6834efe5c44b3cbba46e14195"
+content-hash = "7a7c24a6c953a576546fea2ed676c1f1969fe15ab626c4595d0473e5c5ff9ef3"
