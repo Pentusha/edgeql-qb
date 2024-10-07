@@ -28,7 +28,7 @@ python = "^3.10"
 
 [tool.poetry.dev-dependencies]
 mypy = "^1.11.2"
-pre-commit = "^3.8.0"
+pre-commit = "^4.0.0"
 pytest = "^8.3.3"
 pytest-cov = "^5.0.0"
 edgedb = "^2.1.0"
