@@ -173,7 +173,7 @@ as context's variable `limit_N` and will pass to EdgeDB dynamically, which will 
 Similar to how it works in SQLAlchemy's `unsafe_text` wrapper make this expression hardcoded into final query as is,
 without dynamic contexts.
 
-Please note that `offset` by design producing not optional execution plan,
+Please note that `offset` by design producing a non-optional execution plan,
 and you have to avoid to use this keyword and method as far as you can.
 
 ### Counting
