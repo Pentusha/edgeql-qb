@@ -215,7 +215,7 @@ select count((select Movie filter .year <= <int16>$filter_0))
 </details>
 
 Please note that `select count(Movie) filter .year < 2000` 
-and `select count((select Movie filter .year < 2000))` have different semantics in EdgeDB.
+and `select count((select Movie filter .year < 2000))` have different semantics in EdgeQL.
 This library implements only the second one.
 
 ## Insert
