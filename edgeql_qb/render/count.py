@@ -1,7 +1,6 @@
 from collections.abc import Iterator
 
-from mypy.nodes import Expression
-
+from edgeql_qb.expression import Expression
 from edgeql_qb.render.condition import render_conditions
 from edgeql_qb.render.select import render_select
 from edgeql_qb.render.tools import combine_many_renderers
@@ -15,7 +14,11 @@ def render_count(inner: RenderedQuery) -> RenderedQuery:
         RenderedQuery(')'),
     )
 
-def render_count_inner(model_name, filters: tuple[Expression, ...], gen: Iterator[int]):
+def render_count_inner(
+        model_name: str,
+        filters: tuple[Expression, ...],
+        gen: Iterator[int],
+) -> RenderedQuery:
     match filters:
         case ():
             return RenderedQuery(model_name)

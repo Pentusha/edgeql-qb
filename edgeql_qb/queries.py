@@ -49,7 +49,7 @@ class EdgeDBModel(BaseModel):
         )
 
     @property
-    def count(self):
+    def count(self) -> 'CountQuery':
         return CountQuery(_model=self)
 
     def group(self, *selectables: SelectExpressions) -> 'GroupQuery':
@@ -137,7 +137,7 @@ class CountQuery:
     _model: EdgeDBModel
     _filters: tuple[Expression, ...] = field(default_factory=tuple)
 
-    def where(self, compared: BinaryOp | UnaryOp | FuncInvocation) -> 'SelectQuery':
+    def where(self, compared: BinaryOp | UnaryOp | FuncInvocation) -> 'CountQuery':
         return replace(self, _filters=(*self._filters, Expression(compared)))
 
     def build(self, generator: Iterator[int] | None = None) -> RenderedQuery:

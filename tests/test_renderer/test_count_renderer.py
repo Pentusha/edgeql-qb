@@ -1,4 +1,4 @@
-from multiprocessing.connection import Client
+from edgedb.blocking_client import Client
 
 from edgeql_qb import EdgeDBModel
 from edgeql_qb.frozendict import FrozenDict
