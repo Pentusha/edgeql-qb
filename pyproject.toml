@@ -28,13 +28,13 @@ packages = [
 python = "^3.10"
 
 [tool.poetry.dev-dependencies]
-mypy = "^1.13.0"
-pre-commit = "^4.0.1"
-pytest = "^8.3.3"
+mypy = "^1.14.1"
+pre-commit = "^4.1.0"
+pytest = "^8.3.4"
 pytest-cov = "^6.0.0"
 edgedb = "^2.2.0"
 ruff = "^0.7.4"
-pyright = "^1.1.389"
+pyright = "^1.1.392"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
