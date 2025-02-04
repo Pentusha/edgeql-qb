@@ -173,9 +173,50 @@ as context's variable `limit_N` and will pass to EdgeDB dynamically, which will 
 Similar to how it works in SQLAlchemy's `unsafe_text` wrapper make this expression hardcoded into final query as is,
 without dynamic contexts.
 
-Please note that `offset` by design producing not optional execution plan
+Please note that `offset` by design producing a non-optional execution plan,
 and you have to avoid to use this keyword and method as far as you can.
 
+### Counting
+
+The count method allows you to calculate the total number of objects returned by a query. 
+It supports the application of filters and other query modifiers such as where.
+
+#### Count Without Filters
+
+To count all objects of a model:
+
+```python
+Movie.count.build()
+```
+
+<details>
+  <summary>generated query</summary>
+
+```
+select count(Movie)
+```
+</details>
+
+#### Count with Filters
+
+You can apply filters using the where method to count a subset of objects. For example:
+
+```python
+Movie.count.where(Movie.c.year <= int16(2000)).build()
+```
+
+<details>
+  <summary>generated query</summary>
+
+```
+select count((select Movie filter .year <= <int16>$filter_0))
+{'filter_0': 2000}
+```
+</details>
+
+Please note that `select count(Movie) filter .year < 2000` 
+and `select count((select Movie filter .year < 2000))` have different semantics in EdgeQL.
+This library implements only the second one.
 
 ## Insert
 

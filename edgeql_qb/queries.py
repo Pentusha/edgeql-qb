@@ -16,6 +16,7 @@ from edgeql_qb.expression import (
 from edgeql_qb.func import FuncInvocation
 from edgeql_qb.operators import BinaryOp, SortedExpression, UnaryOp
 from edgeql_qb.render.condition import render_conditions
+from edgeql_qb.render.count import render_count, render_count_inner
 from edgeql_qb.render.delete import render_delete
 from edgeql_qb.render.group import (
     render_group,
@@ -46,6 +47,10 @@ class EdgeDBModel(BaseModel):
             _model=self,
             _select=(*select_args, *select_kwargs),
         )
+
+    @property
+    def count(self) -> 'CountQuery':
+        return CountQuery(_model=self)
 
     def group(self, *selectables: SelectExpressions) -> 'GroupQuery':
         return GroupQuery(
@@ -125,6 +130,20 @@ class SelectQuery(SubQuery):
             rendered_offset,
             rendered_limit,
         )
+
+
+@dataclass(slots=True, frozen=True)
+class CountQuery:
+    _model: EdgeDBModel
+    _filters: tuple[Expression, ...] = field(default_factory=tuple)
+
+    def where(self, compared: BinaryOp | UnaryOp | FuncInvocation) -> 'CountQuery':
+        return replace(self, _filters=(*self._filters, Expression(compared)))
+
+    def build(self, generator: Iterator[int] | None = None) -> RenderedQuery:
+        gen = generator or count()
+        inner = render_count_inner(self._model.name, self._filters, gen)
+        return render_count(inner)
 
 
 @dataclass(slots=True, frozen=True)
