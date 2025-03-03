@@ -359,13 +359,13 @@ virtualenv = ">=20.10.0"
 
 [[package]]
 name = "pyright"
-version = "1.1.394"
+version = "1.1.396"
 description = "Command line wrapper for pyright"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pyright-1.1.394-py3-none-any.whl", hash = "sha256:5f74cce0a795a295fb768759bbeeec62561215dea657edcaab48a932b031ddbb"},
-    {file = "pyright-1.1.394.tar.gz", hash = "sha256:56f2a3ab88c5214a451eb71d8f2792b7700434f841ea219119ade7f42ca93608"},
+    {file = "pyright-1.1.396-py3-none-any.whl", hash = "sha256:c635e473095b9138c471abccca22b9fedbe63858e0b40d4fc4b67da041891844"},
+    {file = "pyright-1.1.396.tar.gz", hash = "sha256:142901f5908f5a0895be3d3befcc18bedcdb8cc1798deecaec86ef7233a29b03"},
 ]
 
 [package.dependencies]
@@ -564,4 +564,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "270bd6b4cae51d743ccb4b5dafa0ab9ffba1cba05f03b481d96e611fd55c5210"
+content-hash = "fc636f9aaaab734a6eee3fd3b342e269efabfc679f1ba9dc96855f9076290de8"
