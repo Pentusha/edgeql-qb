@@ -33,7 +33,7 @@ pre-commit = "^4.2.0"
 pytest = "^8.4.0"
 pytest-cov = "^6.1.1"
 edgedb = "^2.2.0"
-ruff = "^0.7.4"
+ruff = "^0.11.12"
 pyright = "^1.1.401"
 
 [build-system]
