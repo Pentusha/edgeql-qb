@@ -34,7 +34,7 @@ pytest = "^8.4.1"
 pytest-cov = "^6.2.1"
 edgedb = "^2.2.0"
 ruff = "^0.7.4"
-pyright = "^1.1.404"
+pyright = "^1.1.405"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
