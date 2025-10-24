@@ -21,7 +21,7 @@ jobs:
         python-version: [ '3.10', '3.11', '3.12', '3.13' ]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: edgedb/setup-edgedb@v1
 
@@ -32,7 +32,7 @@ jobs:
         working-directory: tests
 
       - name: Set up python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -58,17 +58,6 @@ jobs:
           PYTHONPATH: ..
         working-directory: tests
 
-      - name: Fix code coverage paths
-        run: |
-          sed -i 's/\/home\/runner\/work\/edgeql-qb\/edgeql-qb\//\/github\/workspace\//g' tests/artefacts/coverage.xml
-
-      - name: SonarCloud Scan
-        if: ${{ github.actor != 'dependabot[bot]' }}
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
   automerge:
     runs-on: ubuntu-latest
     needs: quality
@@ -90,10 +79,10 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11
 
