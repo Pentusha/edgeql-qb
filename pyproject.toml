@@ -28,7 +28,7 @@ packages = [
 python = "^3.10"
 
 [tool.poetry.dev-dependencies]
-mypy = "^1.19.0"
+mypy = "^1.19.1"
 pre-commit = "^4.5.0"
 pytest = "^9.0.2"
 pytest-cov = "^7.0.0"
